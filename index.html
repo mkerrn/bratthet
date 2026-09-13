@@ -19,6 +19,14 @@
   }
   *{box-sizing:border-box}
   html,body{margin:0;height:100%;font-family:"Inter","Helvetica Neue",Arial,sans-serif;color:var(--text)}
+  #gate{
+    position:absolute;inset:0;z-index:2000;display:flex;align-items:center;justify-content:center;
+    padding:20px;background:rgba(8,18,24,.92);
+  }
+  #gateBox{max-width:440px;background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:22px 24px}
+  #gateBox h2{font-size:16px;margin:0 0 12px;color:var(--text)}
+  #gateBox p{margin:0 0 12px;font-size:13px;line-height:1.6;color:var(--muted)}
+  #gateBox .btn{margin-top:4px}
   #map{position:absolute;inset:0;background:var(--paper)}
 
   #panel{
@@ -79,6 +87,15 @@
 </style>
 </head>
 <body>
+<div id="gate">
+  <div id="gateBox">
+    <h2>This is a planning toy, not a safety tool</h2>
+    <p>Slope colors are calculated from coarse open elevation data and can be several degrees off. The avalanche terrain layer is a model. The heatmap only shows where people happened to record activities. None of it knows anything about today's snowpack, weather, or what has already slid.</p>
+    <p>Use it to find ideas worth investigating. Then read the forecast at <a href="https://varsom.no" target="_blank" rel="noopener">varsom.no</a>, bring the gear and the training to use it, and make your own decisions in the terrain. No guarantee of any kind, and entirely at your own risk.</p>
+    <button class="btn primary" id="gateOk">Understood</button>
+  </div>
+</div>
+
 <div id="map"></div>
 
 <div id="readout">Tap the map for slope and elevation</div>
@@ -127,19 +144,21 @@
           <option value="water">Water</option>
         </select>
       </div>
-      <p class="note" id="stravaStatus">Heatmap off.</p>
-      <input type="text" id="stravaUrl" spellcheck="false"
-             value="https://heatmap-external-a.strava.com/tiles/winter/hot/{z}/{x}/{y}.png">
-      <p class="note">Backcountry ski on its own isn't offered: the global heatmap only publishes these five groups, so winter mixes touring with nordic, alpine and snowshoe. Around a trailhead the nordic tracks dominate; the lines that climb are almost always touring.</p>
-      <p class="note">The open endpoint only serves low zooms and Strava throttles it, so it fades out when you zoom right in. A signed <code>tiles-auth</code> URL from a logged-in session is sharper; paste it above and press Redraw map.</p>
+      <input type="text" id="stravaUrl" spellcheck="false" value=""
+             placeholder="https://…/{z}/{x}/{y}.png">
+      <p class="note">Bring your own heatmap tile URL. Open Strava's global heatmap in a logged-in browser, copy a tile address from it, and paste it here in <code>{z}/{x}/{y}</code> form. Nothing is stored and nothing is sent anywhere but your own browser.</p>
     </section>
 
     <section>
       <h2>Base map</h2>
       <div class="row"><input type="radio" name="base" id="b-kv" checked><label for="b-kv">Kartverket topo</label></div>
       <div class="row"><input type="radio" name="base" id="b-otm"><label for="b-otm">OpenTopoMap</label></div>
-      <div class="row"><input type="radio" name="base" id="b-img"><label for="b-img">Aerial imagery</label></div>
       <p class="note">Slope is computed in your browser from open 10–30 m elevation tiles, so it is coarser than Kartverket's 1 m laser data. Treat the low classes as indicative and verify steep terrain against NVE.</p>
+    </section>
+
+    <section style="border-top:1px solid var(--line);padding-top:12px">
+      <h2>Before you use this</h2>
+      <p class="note">Made for inspiration and rough planning, nothing more. The slope colors come from coarse open elevation data and can be several degrees off, the heatmap only shows where people have been, and none of it knows anything about today's snowpack. This is not an avalanche safety tool and comes with no guarantee of any kind. Check the forecast at varsom.no, bring the gear and the training, and make your own decisions in the field. You use it entirely at your own risk.</p>
     </section>
 
   </div>
@@ -187,9 +206,7 @@ const bases = {
   kv: L.tileLayer('https://cache.kartverket.no/v1/wmts/1.0.0/topo/default/webmercator/{z}/{y}/{x}.png',
       {maxZoom:18, attribution:'© Kartverket'}),
   otm: L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png',
-      {maxZoom:17, attribution:'© OpenTopoMap, OpenStreetMap contributors'}),
-  img: L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
-      {maxZoom:18, attribution:'Esri, Maxar, Earthstar Geographics'})
+      {maxZoom:17, attribution:'© OpenTopoMap, OpenStreetMap contributors'})
 };
 
 const map = L.map('map', {center:[61.63, 8.31], zoom:12, layers:[bases.kv], zoomControl:true});
@@ -236,13 +253,17 @@ async function detectDepth(tmpl){
   return 9;
 }
 
-const status = document.getElementById('stravaStatus');
+const status = document.getElementById('stravaStatus') || {textContent:''};
 
 async function buildStrava(){
   if(strava){ map.removeLayer(strava); strava = null; }
   if(!document.getElementById('stravaOn').checked){ status.textContent = 'Heatmap off.'; return; }
 
-  const tmpl = document.getElementById('stravaUrl').value;
+  const tmpl = document.getElementById('stravaUrl').value.trim();
+  if(!tmpl){
+    document.getElementById('stravaUrl').focus();
+    return;
+  }
   if(detectedZ === null){
     status.textContent = 'Checking how sharp the heatmap gets here…';
     detectedZ = await detectDepth(tmpl);
@@ -388,7 +409,11 @@ function setBase(key){
 }
 document.getElementById('b-kv').onchange = ()=>setBase('kv');
 document.getElementById('b-otm').onchange = ()=>setBase('otm');
-document.getElementById('b-img').onchange = ()=>setBase('img');
+
+document.getElementById('gateOk').onclick = ()=>{
+  document.getElementById('gate').style.display = 'none';
+  map.invalidateSize();
+};
 
 const panel = document.getElementById('panel');
 document.getElementById('panelHead').onclick = ()=>{
