@@ -103,7 +103,7 @@
     <section>
       <h2>Avalanche terrain (NVE)</h2>
       <div class="row">
-        <input type="checkbox" id="nveOn">
+        <input type="checkbox" id="nveOn" checked>
         <label for="nveOn">Steepness with runout zones</label>
       </div>
       <input type="range" id="nveOpacity" min="0" max="100" value="55">
@@ -117,9 +117,21 @@
         <label for="stravaOn">Winter activity</label>
       </div>
       <input type="range" id="stravaOpacity" min="0" max="100" value="70">
+      <div class="row">
+        <label for="stravaSport">Activity</label>
+        <select id="stravaSport" style="flex:0 0 auto;padding:4px 6px;font-size:12px;background:var(--panel-2);color:var(--text);border:1px solid var(--line);border-radius:3px">
+          <option value="winter" selected>Winter sports</option>
+          <option value="all">Everything</option>
+          <option value="run">Run and hike</option>
+          <option value="ride">Ride</option>
+          <option value="water">Water</option>
+        </select>
+      </div>
+      <p class="note" id="stravaStatus">Heatmap off.</p>
       <input type="text" id="stravaUrl" spellcheck="false"
              value="https://heatmap-external-a.strava.com/tiles/winter/hot/{z}/{x}/{y}.png">
-      <p class="note">The open endpoint only serves low zooms and Strava throttles it. For sharp tracks, paste a signed <code>tiles-auth</code> URL from a logged-in session and press Redraw map.</p>
+      <p class="note">Backcountry ski on its own isn't offered: the global heatmap only publishes these five groups, so winter mixes touring with nordic, alpine and snowshoe. Around a trailhead the nordic tracks dominate; the lines that climb are almost always touring.</p>
+      <p class="note">The open endpoint only serves low zooms and Strava throttles it, so it fades out when you zoom right in. A signed <code>tiles-auth</code> URL from a logged-in session is sharper; paste it above and press Redraw map.</p>
     </section>
 
     <section>
@@ -136,11 +148,8 @@
 <script>
 /* ---------- slope classes ---------- */
 const DEFAULT_BANDS = [
-  {min:19, max:29, color:'#2f7fd1'},
-  {min:29, max:35, color:'#e9c341'},
-  {min:35, max:40, color:'#e2802f'},
-  {min:40, max:45, color:'#c8392f'},
-  {min:45, max:90, color:'#7b3fa0'}
+  {min:15, max:20, color:'#86c06c'},
+  {min:20, max:29, color:'#3f8f4a'}
 ];
 let bands = JSON.parse(JSON.stringify(DEFAULT_BANDS));
 
@@ -187,15 +196,68 @@ const map = L.map('map', {center:[61.63, 8.31], zoom:12, layers:[bases.kv], zoom
 
 const nve = L.tileLayer(
   'https://gis3.nve.no/arcgis/rest/services/wmts/Bratthet_med_utlop_2024/MapServer/tile/{z}/{y}/{x}',
-  {maxZoom:16, opacity:0.55, attribution:'Avalanche terrain © NVE'});
+  {maxZoom:22, maxNativeZoom:16, opacity:0.55, attribution:'Avalanche terrain © NVE'});
 
 let strava = null;
-function buildStrava(){
-  if(strava) map.removeLayer(strava);
-  strava = L.tileLayer(document.getElementById('stravaUrl').value,
-    {maxZoom:15, opacity:+document.getElementById('stravaOpacity').value/100,
-     attribution:'Heatmap © Strava'});
-  if(document.getElementById('stravaOn').checked) strava.addTo(map);
+let detectedZ = null;
+
+function fmtTile(tmpl,z,x,y){
+  return tmpl.replace('{s}','a').replace('{z}',z).replace('{x}',x).replace('{y}',y);
+}
+function lngLatToTile(lat,lng,z){
+  const n = Math.pow(2,z), r = lat*Math.PI/180;
+  return {
+    x: Math.floor((lng+180)/360*n),
+    y: Math.floor((1 - Math.log(Math.tan(r)+1/Math.cos(r))/Math.PI)/2*n)
+  };
+}
+function probe(url){
+  return new Promise(res=>{
+    const img = new Image();
+    let done = false;
+    const finish = v=>{ if(!done){ done = true; res(v); } };
+    img.onload = ()=>finish(true);
+    img.onerror = ()=>finish(false);
+    setTimeout(()=>finish(false), 6000);
+    img.src = url;
+  });
+}
+/* Ask the server, once, how deep it actually goes here. Every tile then comes
+   from that single level, so the whole layer stays at one consistent sharpness
+   and simply stretches as you zoom past it. */
+async function detectDepth(tmpl){
+  const c = map.getCenter();
+  for(let z=16; z>=9; z--){
+    const t = lngLatToTile(c.lat, c.lng, z);
+    const spots = [[t.x,t.y],[t.x+1,t.y],[t.x,t.y+1],[t.x+1,t.y+1]];
+    const hits = await Promise.all(spots.map(([x,y])=>probe(fmtTile(tmpl,z,x,y))));
+    if(hits.some(Boolean)) return z;
+  }
+  return 9;
+}
+
+const status = document.getElementById('stravaStatus');
+
+async function buildStrava(){
+  if(strava){ map.removeLayer(strava); strava = null; }
+  if(!document.getElementById('stravaOn').checked){ status.textContent = 'Heatmap off.'; return; }
+
+  const tmpl = document.getElementById('stravaUrl').value;
+  if(detectedZ === null){
+    status.textContent = 'Checking how sharp the heatmap gets here…';
+    detectedZ = await detectDepth(tmpl);
+  }
+  const native = detectedZ;
+
+  strava = L.tileLayer(tmpl, {
+    maxZoom: 22,
+    maxNativeZoom: native,
+    opacity: +document.getElementById('stravaOpacity').value/100,
+    attribution: 'Heatmap © Strava'
+  });
+  strava.addTo(map);
+  status.textContent = 'Drawing from zoom ' + native + ', the deepest this source serves. '
+    + 'It stays on screen past that, just softer.';
 }
 
 /* ---------- slope layer, computed from terrarium elevation tiles ---------- */
@@ -285,6 +347,7 @@ const SlopeLayer = L.GridLayer.extend({
   }
 });
 const slope = new SlopeLayer({maxZoom:18, opacity:0.65, tileSize:256});
+nve.addTo(map);
 slope.addTo(map);
 
 /* ---------- readout ---------- */
@@ -306,15 +369,18 @@ map.on('click', e=>{
 });
 
 /* ---------- controls ---------- */
-document.getElementById('apply').onclick = ()=>{ slope.redraw(); buildStrava(); };
+document.getElementById('apply').onclick = ()=>{ slope.redraw(); detectedZ = null; buildStrava(); };
 document.getElementById('slopeOpacity').oninput = e=> slope.setOpacity(e.target.value/100);
 document.getElementById('nveOpacity').oninput = e=> nve.setOpacity(e.target.value/100);
 document.getElementById('stravaOpacity').oninput = e=>{ if(strava) strava.setOpacity(e.target.value/100); };
-document.getElementById('nveOn').onchange = e=> e.target.checked ? nve.addTo(map) : map.removeLayer(nve);
-document.getElementById('stravaOn').onchange = e=>{
-  if(e.target.checked){ if(!strava) buildStrava(); else strava.addTo(map); }
-  else if(strava) map.removeLayer(strava);
+document.getElementById('stravaSport').onchange = e=>{
+  const u = document.getElementById('stravaUrl');
+  u.value = u.value.replace(/\/(tiles|tiles-auth)\/[^/]+\//, '/$1/' + e.target.value + '/');
+  detectedZ = null;
+  buildStrava();
 };
+document.getElementById('nveOn').onchange = e=> e.target.checked ? nve.addTo(map) : map.removeLayer(nve);
+document.getElementById('stravaOn').onchange = ()=> buildStrava();
 function setBase(key){
   Object.values(bases).forEach(l=>{ if(map.hasLayer(l)) map.removeLayer(l); });
   bases[key].addTo(map);
