@@ -98,6 +98,11 @@
   #measureBox.on{display:block}
   #measureTotal b{font-weight:600;font-variant-numeric:tabular-nums;font-size:14px}
   #measureSub{font-size:11px;color:var(--muted);margin-top:2px}
+  #measureGain{font-size:11.5px;margin-top:3px;display:none;font-variant-numeric:tabular-nums}
+  #measureGain.on{display:block}
+  #measureGain .up{color:#ffb020}
+  #measureGain .dn{color:#8fd0ff}
+  #measureGain .wait{color:var(--muted)}
   .mrow{display:flex;gap:6px;margin-top:7px}
   .mbtn{
     padding:3px 9px;font-size:11px;background:var(--panel-2);color:var(--text);
@@ -148,6 +153,7 @@
   <div id="measureBox" class="card">
     <div id="measureTotal">Tap the map to start the line</div>
     <div id="measureSub">Points are joined by straight lines.</div>
+    <div id="measureGain"></div>
     <div class="mrow">
       <button class="mbtn" id="measUndo">Undo point</button>
       <button class="mbtn" id="measClear">Clear</button>
@@ -269,7 +275,7 @@
       <div class="row"><input type="radio" name="base" id="b-kv"><label for="b-kv">Kartverket topo</label></div>
       <div class="row"><input type="radio" name="base" id="b-otm"><label for="b-otm">OpenTopoMap</label></div>
       <p class="note">Kartverket only covers Norway, so "follow the map" swaps to OpenTopoMap once you leave it.</p>
-      <p class="note">The corner shows a scale bar and, when the base map draws named contours, its published interval for the zoom you are at: 20 m on Kartverket topo, 10 m on OpenTopoMap from zoom 15 and coarser below. Raster tiles carry no metadata, so this is the map series' equidistance, not something read out of the tile, and it can differ locally. The ruler button measures straight legs between the points you tap.</p>
+      <p class="note">The corner shows a scale bar and, when the base map draws named contours, its published interval for the zoom you are at: 20 m on Kartverket topo, 10 m on OpenTopoMap from zoom 15 and coarser below. Raster tiles carry no metadata, so this is the map series' equidistance, not something read out of the tile, and it can differ locally. The ruler button measures straight legs between the points you tap, and reads ascent and descent off the same coarse elevation tiles the slope colours use — expect it to smooth away small rolls and to run short on a line drawn with few points.</p>
       <p class="note">Slope is computed in your browser from open 10–30 m elevation tiles, so it is coarser than Kartverket's 1 m laser data. Treat the low classes as indicative and verify steep terrain against the official layer for the country you are in.</p>
     </section>
 
@@ -783,6 +789,103 @@ const measBtn = document.getElementById('measBtn');
 const measureBox = document.getElementById('measureBox');
 const measureTotal = document.getElementById('measureTotal');
 const measureSub = document.getElementById('measureSub');
+const measureGain = document.getElementById('measureGain');
+
+/* ---------- ascent and descent along the line ----------
+   The same terrarium tiles that make the slope colours are sampled along each
+   leg. They are 10–30 m data, so every reading carries a metre or two of noise;
+   summing it raw would invent a few hundred metres of climb on a flat traverse.
+   So the profile is smoothed, and height only counts once it has moved past a
+   threshold — the standard hysteresis a GPS watch uses on a barometric trace. */
+const GAIN_THRESHOLD = 6;      // metres of movement before it counts
+const GAIN_SMOOTH = 2;         // ± samples in the moving average
+const MAX_SAMPLES = 1500;
+
+function tileCoords(ll, z){
+  const n = Math.pow(2,z);
+  const lat = ll.lat*Math.PI/180;
+  const xf = (ll.lng+180)/360*n;
+  const yf = (1 - Math.log(Math.tan(lat)+1/Math.cos(lat))/Math.PI)/2*n;
+  const x = Math.floor(xf), y = Math.floor(yf);
+  return {x:x, y:y,
+          px:Math.min(255,Math.max(0,Math.floor((xf-x)*256))),
+          py:Math.min(255,Math.max(0,Math.floor((yf-y)*256)))};
+}
+
+/* evenly spaced points along the polyline, roughly one per DEM cell */
+function sampleLine(pts){
+  const z = DEM_MAX_Z;
+  const cell = 156543.03392 * Math.cos(pts[0].lat*Math.PI/180) / Math.pow(2,z);
+  let total = 0;
+  for(let i=1;i<pts.length;i++) total += map.distance(pts[i-1], pts[i]);
+  if(total <= 0) return [];
+  const step = Math.max(cell, total/MAX_SAMPLES);
+  const out = [];
+  for(let i=1;i<pts.length;i++){
+    const a = pts[i-1], b = pts[i];
+    const d = map.distance(a,b);
+    const n = Math.max(1, Math.round(d/step));
+    for(let k=0;k<n;k++){
+      const t = k/n;
+      out.push(L.latLng(a.lat + (b.lat-a.lat)*t, a.lng + (b.lng-a.lng)*t));
+    }
+  }
+  out.push(pts[pts.length-1]);
+  return out;
+}
+
+async function elevationProfile(pts){
+  const z = DEM_MAX_Z;
+  const samples = sampleLine(pts);
+  if(samples.length < 2) return null;
+
+  /* One fetch per tile, then read every sample straight out of the cache. */
+  const coords = samples.map(s=>tileCoords(s, z));
+  const need = new Map();
+  coords.forEach(c=>{ need.set(c.x+'/'+c.y, c); });
+  await Promise.all([...need.values()].map(c=>loadDem(z, c.x, c.y)));
+
+  const raw = coords.map(c=>{
+    const rec = demCache.get(z+'/'+c.x+'/'+c.y);
+    return rec ? rec.el[c.py*256 + c.px] : NaN;
+  });
+  if(raw.some(isNaN)) return null;
+
+  const sm = raw.map((_,i)=>{
+    let s = 0, n = 0;
+    for(let k=i-GAIN_SMOOTH; k<=i+GAIN_SMOOTH; k++){
+      if(k>=0 && k<raw.length){ s += raw[k]; n++; }
+    }
+    return s/n;
+  });
+
+  let up = 0, down = 0, ref = sm[0];
+  for(let i=1;i<sm.length;i++){
+    const d = sm[i] - ref;
+    if(d >  GAIN_THRESHOLD){ up   += d; ref = sm[i]; }
+    else if(d < -GAIN_THRESHOLD){ down += -d; ref = sm[i]; }
+  }
+  return {up:up, down:down, start:sm[0], end:sm[sm.length-1],
+          min:Math.min.apply(null,sm), max:Math.max.apply(null,sm)};
+}
+
+let gainToken = 0;
+function updateGain(){
+  const token = ++gainToken;
+  if(mpts.length < 2){ measureGain.classList.remove('on'); measureGain.textContent=''; return; }
+  measureGain.classList.add('on');
+  measureGain.innerHTML = '<span class="wait">Reading the profile…</span>';
+  elevationProfile(mpts.slice()).then(p=>{
+    if(token !== gainToken) return;                 // a newer point won the race
+    if(!p){ measureGain.innerHTML = '<span class="wait">No elevation data here</span>'; return; }
+    measureGain.innerHTML =
+      '<span class="up">↑ ' + Math.round(p.up) + ' m</span> · ' +
+      '<span class="dn">↓ ' + Math.round(p.down) + ' m</span> · ' +
+      '<span class="wait">' + Math.round(p.start) + '→' + Math.round(p.end) + ' m</span>';
+  }).catch(()=>{
+    if(token === gainToken) measureGain.innerHTML = '<span class="wait">No elevation data here</span>';
+  });
+}
 
 function legLength(a,b){ return map.distance(a,b); }
 
@@ -804,6 +907,7 @@ function drawMeasure(){
   if(!mpts.length){
     measureTotal.textContent = 'Tap the map to start the line';
     measureSub.textContent = 'Points are joined by straight lines.';
+    updateGain();
     return;
   }
   const last = mpts.length > 1 ? legLength(mpts[mpts.length-2], mpts[mpts.length-1]) : 0;
@@ -811,6 +915,7 @@ function drawMeasure(){
   measureSub.textContent = mpts.length > 1
     ? mpts.length + ' points · last leg ' + fmtLen(last)
     : 'Tap the next point';
+  updateGain();
 }
 
 function addMeasurePoint(latlng){
