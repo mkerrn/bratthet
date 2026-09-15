@@ -34,6 +34,10 @@
   #panel header span{font-size:12px;color:var(--muted)}
   #body{padding:12px 14px 16px}
   #panel.closed #body{display:none}
+  /* Collapsed it should be a tab, not an empty bar: let the header set the
+     width and keep only a small gap between the title and the toggle. */
+  #panel.closed{width:auto;min-width:0;overflow:visible}
+  #panel.closed header{gap:14px;padding:9px 12px;border-bottom:none}
 
   section{margin-bottom:18px}
   section:last-child{margin-bottom:0}
@@ -66,11 +70,55 @@
   .btn.primary{background:var(--snow);color:var(--ink);border-color:var(--snow);font-weight:600}
   .actions{display:flex;gap:8px;margin-top:10px}
 
-  #readout{
-    position:absolute;z-index:1000;left:12px;bottom:24px;padding:7px 11px;font-size:12.5px;
+  /* Everything in the bottom left corner is one stack, so the scale sits
+     directly above the readout however tall either of them gets. */
+  #bottomLeft{
+    position:absolute;z-index:1000;left:12px;bottom:24px;
+    display:flex;flex-direction:column;align-items:flex-start;gap:6px;
+    max-width:calc(100% - 84px);
+  }
+  .card{
+    padding:7px 11px;font-size:12.5px;
     background:rgba(18,35,44,.92);border:1px solid var(--line);border-radius:4px;
   }
   #readout b{font-weight:600;font-variant-numeric:tabular-nums}
+
+  #scaleBox{font-size:11px;color:var(--muted);padding:6px 10px 7px}
+  #scaleRow{display:flex;align-items:center;gap:8px}
+  #scaleBar{
+    height:7px;width:80px;
+    border:1.5px solid var(--text);border-top:none;
+    transition:width .12s linear;
+  }
+  #scaleLabel{color:var(--text);font-variant-numeric:tabular-nums;font-size:11.5px}
+  #contourInfo{margin-top:3px;display:none}
+  #contourInfo.on{display:block}
+
+  #measureBox{display:none}
+  #measureBox.on{display:block}
+  #measureTotal b{font-weight:600;font-variant-numeric:tabular-nums;font-size:14px}
+  #measureSub{font-size:11px;color:var(--muted);margin-top:2px}
+  .mrow{display:flex;gap:6px;margin-top:7px}
+  .mbtn{
+    padding:3px 9px;font-size:11px;background:var(--panel-2);color:var(--text);
+    border:1px solid var(--line);border-radius:3px;cursor:pointer;
+  }
+  .mbtn:hover{background:#264556}
+  .leaflet-tooltip.meas{
+    background:rgba(18,35,44,.92);border:1px solid var(--line);color:var(--text);
+    font-size:11px;padding:1px 5px;box-shadow:none;font-variant-numeric:tabular-nums;
+  }
+  .leaflet-tooltip.meas:before{display:none}
+  #map.measuring{cursor:crosshair}
+
+  #measBtn{
+    position:absolute;z-index:1000;right:12px;bottom:80px;width:46px;height:46px;
+    display:flex;align-items:center;justify-content:center;
+    background:rgba(18,35,44,.92);border:1px solid var(--line);border-radius:50%;
+    color:var(--text);cursor:pointer;padding:0;
+  }
+  #measBtn.on{background:#ffb020;border-color:#ffb020;color:var(--ink)}
+  #measBtn svg{width:22px;height:22px;display:block}
 
   #locBtn{
     position:absolute;z-index:1000;right:12px;bottom:24px;width:46px;height:46px;
@@ -84,14 +132,38 @@
   .leaflet-control-attribution{font-size:10px}
   @media (max-width:640px){
     #panel{left:12px;right:12px;width:auto}
-    #readout{font-size:12px;bottom:20px}
+    #panel.closed{left:auto;right:12px}
+    #bottomLeft{bottom:20px;font-size:12px}
   }
 </style>
 </head>
 <body>
 <div id="map"></div>
 
-<div id="readout">Tap the map for slope and elevation</div>
+<div id="bottomLeft">
+  <div id="scaleBox" class="card">
+    <div id="scaleRow"><div id="scaleBar"></div><span id="scaleLabel">—</span></div>
+    <div id="contourInfo"></div>
+  </div>
+  <div id="measureBox" class="card">
+    <div id="measureTotal">Tap the map to start the line</div>
+    <div id="measureSub">Points are joined by straight lines.</div>
+    <div class="mrow">
+      <button class="mbtn" id="measUndo">Undo point</button>
+      <button class="mbtn" id="measClear">Clear</button>
+      <button class="mbtn" id="measDone">Done</button>
+    </div>
+  </div>
+  <div id="readout" class="card">Tap the map for slope and elevation</div>
+</div>
+
+<button id="measBtn" title="Measure distance along a line" aria-label="Measure distance along a line">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+       stroke-linecap="round" stroke-linejoin="round">
+    <path d="M3 15.5 L15.5 3 L21 8.5 L8.5 21 Z"></path>
+    <path d="M7 11.5l2 2M10.5 8l2 2M14 4.5l2 2"></path>
+  </svg>
+</button>
 
 <button id="locBtn" title="Show my position and heading" aria-label="Show my position and heading">
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
@@ -101,7 +173,7 @@
 </button>
 
 <div id="panel">
-  <header id="panelHead"><h1>Slope bands</h1><span id="toggleHint">hide</span></header>
+  <header id="panelHead"><h1>Layers</h1><span id="toggleHint">hide</span></header>
   <div id="body">
 
     <section>
@@ -197,6 +269,7 @@
       <div class="row"><input type="radio" name="base" id="b-kv"><label for="b-kv">Kartverket topo</label></div>
       <div class="row"><input type="radio" name="base" id="b-otm"><label for="b-otm">OpenTopoMap</label></div>
       <p class="note">Kartverket only covers Norway, so "follow the map" swaps to OpenTopoMap once you leave it.</p>
+      <p class="note">The corner shows a scale bar and, when the base map draws named contours, its published interval for the zoom you are at: 20 m on Kartverket topo, 10 m on OpenTopoMap from zoom 15 and coarser below. Raster tiles carry no metadata, so this is the map series' equidistance, not something read out of the tile, and it can differ locally. The ruler button measures straight legs between the points you tap.</p>
       <p class="note">Slope is computed in your browser from open 10–30 m elevation tiles, so it is coarser than Kartverket's 1 m laser data. Treat the low classes as indicative and verify steep terrain against the official layer for the country you are in.</p>
     </section>
 
@@ -630,6 +703,7 @@ map.on('moveend', ()=>{
 /* ---------- readout ---------- */
 const readout = document.getElementById('readout');
 map.on('click', e=>{
+  if(measuring){ addMeasurePoint(e.latlng); return; }
   const z = Math.min(map.getZoom(), DEM_MAX_Z);
   const n = Math.pow(2,z);
   const x = Math.floor((e.latlng.lng+180)/360*n);
@@ -644,6 +718,122 @@ map.on('click', e=>{
       e.latlng.lat.toFixed(4) + ', ' + e.latlng.lng.toFixed(4);
   }).catch(()=>{ readout.textContent = 'No elevation data here'; });
 });
+
+/* ---------- scale bar ---------- */
+/* Measured across the middle of the screen, so it stays honest as Mercator
+   stretches the map towards the poles. */
+const scaleBarEl = document.getElementById('scaleBar');
+const scaleLabelEl = document.getElementById('scaleLabel');
+const MAX_SCALE_PX = 110;
+
+function niceNumber(x){
+  const p = Math.pow(10, Math.floor(Math.log10(x)));
+  const f = x/p;
+  return (f>=5 ? 5 : f>=3 ? 3 : f>=2 ? 2 : 1) * p;
+}
+function fmtLen(m){
+  if(m >= 10000) return (m/1000).toFixed(1) + ' km';
+  if(m >= 1000)  return (m/1000).toFixed(2) + ' km';
+  return Math.round(m) + ' m';
+}
+function updateScale(){
+  const y = map.getSize().y/2;
+  const a = map.containerPointToLatLng([0, y]);
+  const b = map.containerPointToLatLng([MAX_SCALE_PX, y]);
+  const maxMeters = a.distanceTo(b);
+  if(!isFinite(maxMeters) || maxMeters <= 0) return;
+  const round = niceNumber(maxMeters);
+  scaleBarEl.style.width = Math.round(MAX_SCALE_PX * round/maxMeters) + 'px';
+  scaleLabelEl.textContent = round >= 1000
+    ? (round/1000) + ' km'
+    : round + ' m';
+}
+
+/* ---------- contour interval of the base map ---------- */
+/* Raster tiles carry no metadata, so this is the published equidistance of
+   each map series at the zoom you are looking at, not something read out of
+   the tile. Null means the base map draws no contours worth naming there. */
+const CONTOURS = {
+  kv:  z => z >= 12 ? 20 : null,          // Kartverket topo, N50-derived
+  otm: z => z >= 15 ? 10 : z >= 13 ? 50 : z >= 12 ? 100 : null
+};
+const BASE_NAMES = {kv:'Kartverket', otm:'OpenTopoMap'};
+const contourEl = document.getElementById('contourInfo');
+let currentBase = 'kv';
+
+function updateContour(){
+  const f = CONTOURS[currentBase];
+  const v = f ? f(map.getZoom()) : null;
+  if(v == null){ contourEl.classList.remove('on'); contourEl.textContent = ''; return; }
+  contourEl.textContent = 'Contours ' + v + ' m · ' + (BASE_NAMES[currentBase] || '');
+  contourEl.classList.add('on');
+}
+
+map.on('move zoom zoomend moveend resize', ()=>{ updateScale(); updateContour(); });
+updateScale();
+updateContour();
+
+/* ---------- measuring tape ---------- */
+/* Consecutive taps, straight legs between them, running total at every point.
+   Great-circle distances via Leaflet, so legs stay right at any latitude. */
+let measuring = false;
+let mpts = [];
+const measureLayer = L.layerGroup().addTo(map);
+const measBtn = document.getElementById('measBtn');
+const measureBox = document.getElementById('measureBox');
+const measureTotal = document.getElementById('measureTotal');
+const measureSub = document.getElementById('measureSub');
+
+function legLength(a,b){ return map.distance(a,b); }
+
+function drawMeasure(){
+  measureLayer.clearLayers();
+  if(mpts.length > 1){
+    L.polyline(mpts, {color:'#ffb020', weight:3, opacity:.95, interactive:false})
+      .addTo(measureLayer);
+  }
+  let total = 0;
+  mpts.forEach((p,i)=>{
+    if(i) total += legLength(mpts[i-1], p);
+    const mk = L.circleMarker(p, {radius:4, color:'#ffb020', weight:2,
+                fillColor:'#12232c', fillOpacity:1, interactive:false}).addTo(measureLayer);
+    if(i) mk.bindTooltip(fmtLen(total), {permanent:true, direction:'right',
+                className:'meas', offset:[7,0]}).openTooltip();
+  });
+
+  if(!mpts.length){
+    measureTotal.textContent = 'Tap the map to start the line';
+    measureSub.textContent = 'Points are joined by straight lines.';
+    return;
+  }
+  const last = mpts.length > 1 ? legLength(mpts[mpts.length-2], mpts[mpts.length-1]) : 0;
+  measureTotal.innerHTML = 'Distance <b>' + fmtLen(total) + '</b>';
+  measureSub.textContent = mpts.length > 1
+    ? mpts.length + ' points · last leg ' + fmtLen(last)
+    : 'Tap the next point';
+}
+
+function addMeasurePoint(latlng){
+  mpts.push(L.latLng(latlng.lat, latlng.lng));
+  drawMeasure();
+}
+
+function setMeasuring(on){
+  measuring = on;
+  measBtn.classList.toggle('on', on);
+  measureBox.classList.toggle('on', on);
+  document.getElementById('map').classList.toggle('measuring', on);
+  if(on){
+    drawMeasure();
+  }
+}
+
+/* Switching the tool off leaves the line on the map so you can keep looking
+   at it; Clear or Done is what removes it. */
+measBtn.onclick = ()=> setMeasuring(!measuring);
+document.getElementById('measUndo').onclick = ()=>{ mpts.pop(); drawMeasure(); };
+document.getElementById('measClear').onclick = ()=>{ mpts = []; drawMeasure(); };
+document.getElementById('measDone').onclick = ()=>{ mpts = []; drawMeasure(); setMeasuring(false); };
 
 /* ---------- where I am and where the phone points ---------- */
 const locBtn = document.getElementById('locBtn');
@@ -792,6 +982,8 @@ function setBase(key){
   Object.values(bases).forEach(l=>{ if(map.hasLayer(l)) map.removeLayer(l); });
   bases[key].addTo(map);
   bases[key].bringToBack();
+  currentBase = key;
+  updateContour();
 }
 /* Kartverket stops at the border, so outside Norway the auto setting hands
    over to OpenTopoMap rather than showing you blank paper. */
