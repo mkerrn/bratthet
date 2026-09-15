@@ -1,2 +1,2 @@
 # bratthet
-Ski touring easy planner
+Inspiration for ski touring planning
