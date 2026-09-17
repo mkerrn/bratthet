@@ -70,6 +70,19 @@
   .btn.primary{background:var(--snow);color:var(--ink);border-color:var(--snow);font-weight:600}
   .actions{display:flex;gap:8px;margin-top:10px}
 
+  /* Layer order list: top row is drawn on top of the map. */
+  #order{list-style:none;margin:0;padding:0;border:1px solid var(--line);border-radius:4px;overflow:hidden}
+  #order li{display:flex;align-items:center;gap:8px;padding:5px 6px 5px 10px;font-size:12.5px;background:var(--panel-2)}
+  #order li + li{border-top:1px solid var(--line)}
+  #order li span{flex:1}
+  #order li.fixed{background:transparent;color:var(--muted)}
+  #order button{
+    width:24px;height:22px;padding:0;font-size:11px;line-height:1;background:var(--panel);color:var(--text);
+    border:1px solid var(--line);border-radius:3px;cursor:pointer;
+  }
+  #order button:hover:not(:disabled){background:#264556}
+  #order button:disabled{opacity:.3;cursor:default}
+
   /* Everything in the bottom left corner is one stack, so the scale sits
      directly above the readout however tall either of them gets. */
   #bottomLeft{
@@ -183,7 +196,17 @@
   <div id="body">
 
     <section>
+      <h2>Layer order</h2>
+      <ul id="order"></ul>
+      <p class="note">The top row is drawn on top. Use the arrows to move a layer up or down.</p>
+    </section>
+
+    <section>
       <h2>Your angle classes</h2>
+      <div class="row">
+        <input type="checkbox" id="slopeOn" checked>
+        <label for="slopeOn">Show angle classes</label>
+      </div>
       <div id="bands"></div>
       <div class="actions">
         <button class="btn" id="addBand">Add class</button>
@@ -340,20 +363,66 @@ const bases = {
 
 const map = L.map('map', {center:[61.63, 8.31], zoom:12, layers:[bases.kv], zoomControl:true});
 
+/* ---------- layer order ----------
+   Each overlay group lives in its own pane. Panes sit above the base map
+   (tilePane, z 200) and below lines and markers (overlayPane, z 400), and
+   their z-index decides which group is drawn on top. */
+const LAYER_GROUPS = {
+  heat:  {name:'Heatmap',             pane:'heatPane'},
+  aval:  {name:'Avalanche terrain',   pane:'avalPane'},
+  slope: {name:'Angle classes',       pane:'slopePane'}
+};
+let layerOrder = ['heat', 'aval', 'slope'];   // first = on top
+Object.values(LAYER_GROUPS).forEach(g=>{ map.createPane(g.pane).style.pointerEvents = 'none'; });
+
+function applyOrder(){
+  layerOrder.forEach((key, i)=>{
+    map.getPane(LAYER_GROUPS[key].pane).style.zIndex = 300 - i*10;
+  });
+  renderOrder();
+}
+function moveLayer(i, dir){
+  const j = i + dir;
+  if(j < 0 || j >= layerOrder.length) return;
+  [layerOrder[i], layerOrder[j]] = [layerOrder[j], layerOrder[i]];
+  applyOrder();
+}
+function renderOrder(){
+  const ul = document.getElementById('order');
+  ul.innerHTML = '';
+  layerOrder.forEach((key, i)=>{
+    const li = document.createElement('li');
+    li.innerHTML = '<span>' + LAYER_GROUPS[key].name + '</span>' +
+      '<button type="button" title="Move up" aria-label="Move ' + LAYER_GROUPS[key].name + ' up">▲</button>' +
+      '<button type="button" title="Move down" aria-label="Move ' + LAYER_GROUPS[key].name + ' down">▼</button>';
+    const [up, down] = li.querySelectorAll('button');
+    up.disabled = i === 0;
+    down.disabled = i === layerOrder.length - 1;
+    up.onclick = ()=> moveLayer(i, -1);
+    down.onclick = ()=> moveLayer(i, 1);
+    ul.appendChild(li);
+  });
+  const base = document.createElement('li');
+  base.className = 'fixed';
+  base.innerHTML = '<span>Base map</span>';
+  ul.appendChild(base);
+}
+applyOrder();
+
 /* Official steepness layers. Each country models this differently, so the one
    you get depends on where you are looking. */
 const steepLayers = {
   nve: L.tileLayer(
     'https://gis3.nve.no/arcgis/rest/services/wmts/Bratthet_med_utlop_2024/MapServer/tile/{z}/{y}/{x}',
-    {maxZoom:22, maxNativeZoom:16, opacity:0.55, attribution:'Avalanche terrain © NVE'}),
+    {maxZoom:22, maxNativeZoom:16, opacity:0.55, attribution:'Avalanche terrain © NVE', pane:'avalPane', zIndex:1}),
   ch: L.tileLayer(
     'https://wmts.geo.admin.ch/1.0.0/ch.swisstopo.hangneigung-ueber_30/default/current/3857/{z}/{x}/{y}.png',
-    {maxZoom:22, maxNativeZoom:17, opacity:0.55, attribution:'Slope classes © swisstopo'}),
+    {maxZoom:22, maxNativeZoom:17, opacity:0.55, attribution:'Slope classes © swisstopo', pane:'avalPane', zIndex:1}),
   fr: L.tileLayer(
     'https://data.geopf.fr/wmts?SERVICE=WMTS&VERSION=1.0.0&REQUEST=GetTile' +
     '&LAYER=GEOGRAPHICALGRIDSYSTEMS.SLOPES.MOUNTAIN&STYLE=normal&TILEMATRIXSET=PM' +
     '&TILEMATRIX={z}&TILEROW={y}&TILECOL={x}&FORMAT=image/png',
-    {maxZoom:22, maxNativeZoom:16, opacity:0.55, attribution:'Carte des pentes © IGN'})
+    {maxZoom:22, maxNativeZoom:16, opacity:0.55, attribution:'Carte des pentes © IGN', pane:'avalPane', zIndex:1})
 };
 const steepNotes = {
   nve: 'Norway: NVE release areas above 27° plus modelled runout, the layer Varsom and regObs use. © NVE, NLOD.',
@@ -384,8 +453,6 @@ function setSteep(key){
   const l = steepLayers[key];
   l.setOpacity(+document.getElementById('nveOpacity').value/100);
   l.addTo(map);
-  l.bringToFront();
-  slope.bringToFront();
 }
 function applySteep(){
   const choice = document.getElementById('steepSrc').value;
@@ -457,7 +524,8 @@ async function buildHeatmap(){
     maxZoom: 22,
     maxNativeZoom: native,
     opacity: +document.getElementById('heatOpacity').value/100,
-    attribution: 'Heatmap'
+    attribution: 'Heatmap',
+    pane: 'heatPane'
   });
   heatLayer.addTo(map);
   status.textContent = 'Drawing from zoom ' + native + ', the deepest this source serves. '
@@ -554,7 +622,7 @@ const SlopeLayer = L.GridLayer.extend({
     return tile;
   }
 });
-const slope = new SlopeLayer({maxZoom:18, opacity:0.65, tileSize:256});
+const slope = new SlopeLayer({maxZoom:18, opacity:0.65, tileSize:256, pane:'slopePane'});
 /* ---------- modelled runout, alpha angle rule ----------
    Anything steeper than the release threshold is treated as a possible start
    zone. Snow is then let run downhill from it, and it is allowed to keep going
@@ -685,7 +753,7 @@ const RunoutLayer = L.GridLayer.extend({
     return tile;
   }
 });
-const runout = new RunoutLayer({maxZoom:18, opacity:0.45, tileSize:256});
+const runout = new RunoutLayer({maxZoom:18, opacity:0.45, tileSize:256, pane:'avalPane', zIndex:2});
 
 function applyRunout(){
   const on = document.getElementById('runOn').checked;
@@ -696,10 +764,14 @@ function applyRunout(){
   runRelease = Math.min(60, Math.max(20, parseFloat(document.getElementById('runRelease').value) || 30));
   runout.setOpacity(+document.getElementById('runOpacity').value/100);
   runout.addTo(map);
-  runout.bringToFront();
 }
 
-slope.addTo(map);
+function applySlopeVisible(){
+  const on = document.getElementById('slopeOn').checked;
+  if(on && !map.hasLayer(slope)) slope.addTo(map);
+  if(!on && map.hasLayer(slope)) map.removeLayer(slope);
+}
+applySlopeVisible();
 applySteep();
 map.on('moveend', ()=>{
   if(document.getElementById('steepSrc').value === 'auto') applySteep();
@@ -1060,6 +1132,7 @@ document.getElementById('apply').onclick = ()=>{
   buildHeatmap();
 };
 document.getElementById('slopeOpacity').oninput = e=> slope.setOpacity(e.target.value/100);
+document.getElementById('slopeOn').onchange = applySlopeVisible;
 document.getElementById('nveOpacity').oninput = e=>{
   if(steepCurrent) steepLayers[steepCurrent].setOpacity(e.target.value/100);
 };
