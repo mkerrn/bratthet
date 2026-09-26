@@ -39,6 +39,27 @@
   #panel.closed{width:auto;min-width:0;overflow:visible}
   #panel.closed header{gap:14px;padding:9px 12px;border-bottom:none}
 
+  /* Explanations, including the heatmap status line, are hidden until the
+     switch near the bottom of the panel is on. The safety notes (.always)
+     are never hidden. */
+  #panel:not(.show-info) section:not(.always) p.note,
+  #panel:not(.show-info) .bf-fields p,
+  #panel:not(.show-info) .info-only{display:none}
+  #panel p.note.status:empty{display:none}
+  .infobox{border-top:1px solid var(--line);padding-top:12px}
+  .infobox .row{margin-bottom:0}
+
+  /* Light direction for the hillshading: the sun sits on the rim where the
+     light comes from, north at the top. */
+  .sun-dial{width:40px;height:40px;flex:0 0 40px;cursor:pointer;touch-action:none;border-radius:50%}
+  .sun-dial .dial{fill:var(--panel-2);stroke:var(--line);stroke-width:1}
+  .sun-dial .tick{stroke:var(--muted);stroke-width:1.5}
+  .sun-dial .ray{stroke:#ffb020;stroke-width:1.5;stroke-linecap:round}
+  .sun-dial .sun{fill:#ffb020}
+  .sun-dial:focus-visible{outline:2px solid var(--snow);outline-offset:2px}
+  .sun-deg{font-size:11px;color:var(--muted);min-width:26px;text-align:right;font-variant-numeric:tabular-nums}
+  .shade-row.off .sun-dial{opacity:.5}
+
   section{margin-bottom:18px}
   section:last-child{margin-bottom:0}
   h2{margin:0 0 8px;font-size:12px;font-weight:600;color:var(--snow)}
@@ -54,6 +75,40 @@
   .band input[type=color]{width:100%;height:24px;padding:0;border:1px solid var(--line);border-radius:3px;background:none}
   .band button{background:none;border:none;color:var(--muted);cursor:pointer;font-size:15px;line-height:1;padding:2px}
   .band button:hover{color:#ff9a8b}
+  .bandWrap{margin-bottom:10px}
+  .bandWrap .band{margin-bottom:3px}
+  .bf-toggle{
+    display:block;width:100%;text-align:left;padding:2px 0;background:none;border:none;
+    font:inherit;font-size:11px;color:var(--muted);cursor:pointer;
+  }
+  .bf-toggle:hover{color:var(--text)}
+  .bf-toggle.active{color:var(--snow)}
+  .bf-edit{display:grid;grid-template-columns:auto 1fr;gap:12px;align-items:start;
+    margin-top:5px;padding:8px;border:1px solid var(--line);border-radius:4px}
+  /* Direction dial: north up, the chosen range drawn as a wedge. */
+  .compass{width:112px;height:112px;display:block;touch-action:manipulation;cursor:crosshair;user-select:none;-webkit-user-select:none}
+  .compass .dial{fill:var(--panel-2);stroke:var(--line);stroke-width:1}
+  .compass .wedge{fill:var(--snow);fill-opacity:.38;stroke:var(--snow);stroke-width:1}
+  .compass.is-all .wedge{fill-opacity:.16;stroke:none}
+  .compass .preview{fill:var(--snow);fill-opacity:.18;stroke:var(--snow);stroke-width:1;stroke-dasharray:3 2}
+  .compass .tick{stroke:var(--muted);stroke-width:1}
+  .compass .lbl{fill:var(--text);font-size:10px;font-weight:600;text-anchor:middle;dominant-baseline:central;pointer-events:none}
+  .compass .mark{stroke:var(--snow);stroke-width:2;stroke-linecap:round;pointer-events:none}
+  .compass .allbtn{cursor:pointer}
+  .compass .allbtn circle{fill:var(--panel);stroke:var(--line);stroke-width:1}
+  .compass .allbtn:hover circle{stroke:var(--snow)}
+  .compass.is-all .allbtn circle{fill:var(--snow);stroke:var(--snow)}
+  .compass.is-all .allbtn text{fill:var(--ink)}
+  .dial-hint{margin:5px 0 0;width:112px;font-size:10.5px;line-height:1.35;color:var(--muted)}
+  .bf-fields label{display:block;font-size:11px;color:var(--muted);margin-bottom:4px}
+  .bf-fields .grp + .grp{margin-top:10px}
+  .bf-fields .pair{display:grid;grid-template-columns:1fr 10px 1fr;gap:4px;align-items:center}
+  .bf-fields input{
+    width:100%;padding:4px 5px;font-size:12px;background:var(--panel-2);color:var(--text);
+    border:1px solid var(--line);border-radius:3px;
+  }
+  .bf-fields .dash{text-align:center;color:var(--muted);font-size:12px}
+  .bf-fields p{margin:8px 0 0;font-size:10.5px;line-height:1.4;color:var(--muted)}
 
   .row{display:flex;align-items:center;gap:8px;margin-bottom:8px;font-size:12.5px}
   .row label{flex:1;cursor:pointer}
@@ -72,10 +127,13 @@
 
   /* Layer order list: top row is drawn on top of the map. */
   #order{list-style:none;margin:0;padding:0;border:1px solid var(--line);border-radius:4px;overflow:hidden}
-  #order li{display:flex;align-items:center;gap:8px;padding:5px 6px 5px 10px;font-size:12.5px;background:var(--panel-2)}
+  #order li{display:flex;align-items:center;gap:8px;padding:5px 6px 5px 8px;font-size:12.5px;background:var(--panel-2)}
+  #order li input[type=checkbox]{margin:0;flex:0 0 auto;accent-color:var(--snow);cursor:pointer}
+  #order li label{flex:1;cursor:pointer}
+  #order li.hidden-layer label{color:var(--muted)}
   #order li + li{border-top:1px solid var(--line)}
   #order li span{flex:1}
-  #order li.fixed{background:transparent;color:var(--muted)}
+  #order li.fixed{background:transparent;color:var(--muted);padding-left:30px}
   #order button{
     width:24px;height:22px;padding:0;font-size:11px;line-height:1;background:var(--panel);color:var(--text);
     border:1px solid var(--line);border-radius:3px;cursor:pointer;
@@ -95,6 +153,7 @@
     background:rgba(18,35,44,.92);border:1px solid var(--line);border-radius:4px;
   }
   #readout b{font-weight:600;font-variant-numeric:tabular-nums}
+  #readout .sub{margin-top:2px;font-size:11px;color:var(--muted);font-variant-numeric:tabular-nums}
 
   #scaleBox{font-size:11px;color:var(--muted);padding:6px 10px 7px}
   #scaleRow{display:flex;align-items:center;gap:8px}
@@ -122,6 +181,46 @@
     border:1px solid var(--line);border-radius:3px;cursor:pointer;
   }
   .mbtn:hover{background:#264556}
+  .mbtn:disabled{opacity:.4;cursor:default;background:var(--panel-2)}
+  #measureSteep,#measureTime{font-size:11.5px;margin-top:3px;display:none;font-variant-numeric:tabular-nums}
+  #measureSteep.on,#measureTime.on{display:block}
+  #measureSteep b,#measureTime b{font-weight:600}
+  #measureSteep .warn{color:#ff8a7a}
+  #measureSteep .ok{color:#9fd88a}
+  #measureSteep .sub,#measureTime .sub{font-size:11px;color:var(--muted);margin-top:1px}
+  #munterMode{margin-left:4px;padding:1px 3px;font-size:11px;background:var(--panel-2);color:var(--text);
+    border:1px solid var(--line);border-radius:3px}
+
+  /* Elevation profile along the measured line. It takes the bottom edge while
+     measuring and pushes the corner stack up above it. */
+  #profileBox{
+    position:absolute;z-index:1000;left:12px;right:70px;bottom:24px;height:136px;
+    padding:6px 10px 4px;display:none;flex-direction:column;
+  }
+  body.has-profile #profileBox{display:flex}
+  body.has-profile #bottomLeft{bottom:168px}
+  /* taps add points while measuring, so the tap readout has nothing to say */
+  body.has-profile #readout{display:none}
+  #profileHead{display:flex;align-items:center;gap:10px;min-height:16px;font-size:11px;color:var(--muted);
+    font-variant-numeric:tabular-nums}
+  #profileRead{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  #profileRead b{color:var(--text);font-weight:600}
+  #profileKey{display:flex;gap:2px;flex:0 0 auto;font-size:9.5px}
+  #profileKey span{padding:0 4px;border-radius:2px;color:#111;font-weight:600;white-space:nowrap}
+  #profileColor{flex:0 0 auto;padding:1px 3px;font-size:11px;background:var(--panel-2);color:var(--text);
+    border:1px solid var(--line);border-radius:3px}
+  #profileSvg{flex:1;width:100%;min-height:0;display:block;touch-action:none;cursor:crosshair}
+  #profileSvg .grid{stroke:var(--line);stroke-width:1}
+  #profileSvg .lbl{fill:var(--muted);font-size:9.5px;font-variant-numeric:tabular-nums}
+  #profileSvg .vtx{stroke:var(--text);stroke-opacity:.22;stroke-dasharray:2 3}
+  #profileSvg .curve{fill:none;stroke:#ffb020;stroke-width:1.8;stroke-linejoin:round}
+  #profileSvg .flat{fill:var(--snow);fill-opacity:.08}
+  #profileSvg .peak{fill:var(--text);font-size:10px;font-weight:600;text-anchor:middle}
+  #profileSvg .scrub{stroke:var(--text);stroke-width:1;pointer-events:none}
+  #profileSvg .scrubDot{fill:#ffb020;stroke:var(--panel);stroke-width:1.5;pointer-events:none}
+  @media (max-width:640px){
+    #profileKey{display:none}
+  }
   .leaflet-tooltip.meas{
     background:rgba(18,35,44,.92);border:1px solid var(--line);color:var(--text);
     font-size:11px;padding:1px 5px;box-shadow:none;font-variant-numeric:tabular-nums;
@@ -148,6 +247,31 @@
   #locBtn svg{width:22px;height:22px;display:block}
   .me-arrow{width:34px;height:34px;transition:transform .12s linear}
   .leaflet-control-attribution{font-size:10px}
+
+  /* Selects and the date stepper share the look of the other inputs. */
+  .sel{flex:0 0 auto;max-width:100%;padding:4px 6px;font-size:12px;background:var(--panel-2);color:var(--text);
+    border:1px solid var(--line);border-radius:3px}
+  .sel.wide{flex:1;min-width:0}
+  .datein{flex:1;min-width:0;padding:3px 5px;font-size:12px;background:var(--panel-2);color:var(--text);
+    border:1px solid var(--line);border-radius:3px;color-scheme:dark}
+  .row .mbtn{padding:3px 8px}
+  /* Status lines that matter for safety stay visible even with explanations off. */
+  .live{margin:6px 0 0;font-size:11px;line-height:1.5;color:var(--muted)}
+  .live:empty{display:none}
+  .live.warn{color:#ffcf70}
+  .legend-img{display:block;max-width:100%;margin-top:6px;border-radius:3px;background:#fff}
+
+  /* Danger scale: the five European levels, plus regions without a rating. */
+  [hidden]{display:none !important}
+  .dz-row{display:flex;align-items:center;gap:10px;margin-top:8px}
+  .dz-legend{display:flex;gap:3px;font-size:10.5px;flex:0 0 auto}
+  .dz-legend span{width:20px;padding:2px 0;text-align:center;border-radius:2px;color:#111;font-weight:600}
+  .dz-legend span.none{width:36px;color:var(--muted);font-weight:400;border:1px dashed var(--muted)}
+  .dz-row .sel{margin-left:auto}
+  .dz{display:inline-block;min-width:16px;padding:0 4px;margin-right:4px;border-radius:2px;
+    text-align:center;font-weight:700;color:#111;font-variant-numeric:tabular-nums}
+  #readout .fc{margin-top:4px;font-size:11.5px;color:var(--text)}
+  #readout .fc a{color:var(--snow)}
   @media (max-width:640px){
     #panel{left:12px;right:12px;width:auto}
     #panel.closed{left:auto;right:12px}
@@ -167,13 +291,34 @@
     <div id="measureTotal">Tap the map to start the line</div>
     <div id="measureSub">Points are joined by straight lines.</div>
     <div id="measureGain"></div>
+    <div id="measureSteep"></div>
+    <div id="measureTime">Munter time <b id="munterOut">—</b>
+      <select id="munterMode" aria-label="How you travel">
+        <option value="ski">on skis</option>
+        <option value="foot">on foot</option>
+      </select>
+      <div class="sub" id="munterSplit"></div>
+    </div>
     <div class="mrow">
       <button class="mbtn" id="measUndo">Undo point</button>
       <button class="mbtn" id="measClear">Clear</button>
+      <button class="mbtn" id="measGpx" disabled>Save GPX</button>
       <button class="mbtn" id="measDone">Done</button>
     </div>
   </div>
   <div id="readout" class="card">Tap the map for slope and elevation</div>
+</div>
+
+<div id="profileBox" class="card" role="group" aria-label="Elevation profile along the line">
+  <div id="profileHead">
+    <span id="profileRead">Drag along the curve to find the spot on the map</span>
+    <select id="profileColor" aria-label="Colour the curve by">
+      <option value="ramp">Avalanche colours</option>
+      <option value="bands">My slope classes</option>
+    </select>
+    <span id="profileKey" title="Colour under the curve: steepness of the ground the line crosses"></span>
+  </div>
+  <svg id="profileSvg" xmlns="http://www.w3.org/2000/svg"></svg>
 </div>
 
 <button id="measBtn" title="Measure distance along a line" aria-label="Measure distance along a line">
@@ -202,16 +347,14 @@
     </section>
 
     <section>
-      <h2>Your angle classes</h2>
-      <div class="row">
-        <input type="checkbox" id="slopeOn" checked>
-        <label for="slopeOn">Show angle classes</label>
-      </div>
+      <h2 data-layer="slope">Angle classes</h2>
+      <input type="checkbox" id="slopeOn" checked hidden>
       <div id="bands"></div>
       <div class="actions">
         <button class="btn" id="addBand">Add class</button>
         <button class="btn primary" id="apply">Redraw map</button>
       </div>
+      <p class="note">Each class can be limited to the directions a slope faces and an altitude range. Where classes overlap, the first one that matches colours the ground, so you can give the same angles different colours by direction. Ground under 3° counts as every direction.</p>
       <div class="row" style="margin-top:12px">
         <label for="slopeOpacity">Slope opacity</label>
       </div>
@@ -219,7 +362,7 @@
     </section>
 
     <section>
-      <h2>Official steepness layer</h2>
+      <h2 data-layer="aval">Official steepness</h2>
       <div class="row">
         <label for="steepSrc">Source</label>
         <select id="steepSrc" style="flex:0 0 auto;padding:4px 6px;font-size:12px;background:var(--panel-2);color:var(--text);border:1px solid var(--line);border-radius:3px">
@@ -235,20 +378,64 @@
     </section>
 
     <section>
-      <h2>Modelled runout (everywhere)</h2>
+      <h2 data-layer="runout">Alpha angle runout</h2>
+      <input type="checkbox" id="runOn" hidden>
       <div class="row">
-        <input type="checkbox" id="runOn">
-        <label for="runOn">Alpha angle runout</label>
-        <input type="color" id="runColor" value="#b05ad6" style="flex:0 0 44px;height:24px;padding:0;border:1px solid var(--line);border-radius:3px;background:none">
-      </div>
-      <div class="row">
-        <label for="runAlpha">Alpha angle</label>
-        <input type="number" id="runAlpha" value="18" min="5" max="45" step="1" style="flex:0 0 56px;padding:4px 5px;font-size:12px;background:var(--panel-2);color:var(--text);border:1px solid var(--line);border-radius:3px">
-        <label for="runRelease">Release from</label>
-        <input type="number" id="runRelease" value="30" min="20" max="60" step="1" style="flex:0 0 56px;padding:4px 5px;font-size:12px;background:var(--panel-2);color:var(--text);border:1px solid var(--line);border-radius:3px">
+        <label for="runAlpha" style="flex:0 0 auto;white-space:nowrap">Alpha</label>
+        <input type="number" id="runAlpha" value="18" min="5" max="45" step="1" style="flex:1 1 44px;min-width:0;padding:4px 5px;font-size:12px;background:var(--panel-2);color:var(--text);border:1px solid var(--line);border-radius:3px">
+        <label for="runRelease" style="flex:0 0 auto;white-space:nowrap">Release</label>
+        <input type="number" id="runRelease" value="30" min="20" max="60" step="1" style="flex:1 1 44px;min-width:0;padding:4px 5px;font-size:12px;background:var(--panel-2);color:var(--text);border:1px solid var(--line);border-radius:3px">
+        <input type="color" id="runColor" value="#b05ad6" aria-label="Runout colour" style="flex:0 0 36px;height:24px;padding:0;border:1px solid var(--line);border-radius:3px;background:none">
       </div>
       <input type="range" id="runOpacity" min="0" max="100" value="45">
       <p class="note">Snow is released from everything steeper than the release angle and allowed to run downhill while the line back to its start zone stays steeper than the alpha angle. 18° is the conservative field rule; 20–22° is closer to what most paths actually do. Computed in your browser from the same coarse elevation tiles, so it is an indication of where runout is plausible, not a hazard map.</p>
+    </section>
+
+    <section>
+      <h2 data-layer="snow">Snow condition</h2>
+      <input type="checkbox" id="snowOn" hidden>
+      <div class="row">
+        <select id="snowSrc" class="sel wide" aria-label="Snow source">
+          <option value="auto" selected>Follow the map</option>
+          <option value="sd">Snow depth, seNorge (Norway)</option>
+          <option value="sdfsw3d">New snow last 3 days, seNorge (Norway)</option>
+          <option value="ndsi">Snow cover, MODIS daily (500 m)</option>
+          <option value="modis">Satellite photo, MODIS Terra daily (250 m)</option>
+          <option value="viirs">Satellite photo, VIIRS NOAA-20 daily (375 m)</option>
+          <option value="s2c">Sentinel-2 cloudless 2023 (10 m)</option>
+          <option value="custom">Your own Sentinel-2 tile URL</option>
+        </select>
+      </div>
+      <div class="row" id="snowDateRow">
+        <button type="button" class="mbtn" id="snowPrev" aria-label="One day earlier">◀</button>
+        <input type="date" id="snowDate" class="datein" aria-label="Date">
+        <button type="button" class="mbtn" id="snowNext" aria-label="One day later">▶</button>
+        <button type="button" class="mbtn" id="snowToday">Today</button>
+      </div>
+      <input type="text" id="snowUrl" spellcheck="false" value="" hidden
+             placeholder="https://…{date}…/{z}/{x}/{y}.png" aria-label="Your tile URL">
+      <input type="range" id="snowOpacity" min="0" max="100" value="70" aria-label="Snow layer opacity">
+      <img id="snowLegend" class="legend-img" alt="Legend" hidden>
+      <div class="live" id="snowStatus" aria-live="polite"></div>
+      <div class="live"><a id="s2Link" href="https://browser.dataspace.copernicus.eu/" target="_blank" rel="noopener">Open 10 m Sentinel-2 for this date and place</a> in the Copernicus Browser (free account).</div>
+      <p class="note">"Follow the map" shows seNorge snow depth in Norway and the daily MODIS photo everywhere else. seNorge is NVE's snow model on a 1 km grid, run from measured precipitation and temperature; it knows nothing about wind, so ridges are barer and lee slopes deeper than it says. The daily satellite photos are coarse but new every day: snow and cloud are both white, so step back a day or two with the arrows until you find a clear pass. The MODIS snow cover layer tells snow from cloud for you and leaves cloud blank. Sentinel-2 cloudless is sharp but built from mostly summer scenes of a whole year, so it shows glaciers and rock, not this week's snowline; for a sharp picture of a given date use the Copernicus link or paste a Sentinel Hub tile URL with {date} in it.</p>
+    </section>
+
+    <section>
+      <h2 data-layer="danger">Avalanche forecast</h2>
+      <input type="checkbox" id="dangerOn" hidden>
+      <input type="range" id="dangerOpacity" min="0" max="100" value="40" aria-label="Forecast colour strength">
+      <div class="dz-row">
+        <div class="dz-legend" aria-hidden="true">
+          <span style="background:#ccff66">1</span><span style="background:#ffff00">2</span><span style="background:#ff9900">3</span><span style="background:#ff0000">4</span><span style="background:#6b0000;color:#fff">5</span><span class="none">none</span>
+        </div>
+        <select id="dangerDay" class="sel" aria-label="Forecast day">
+          <option value="0" selected>Today</option>
+          <option value="1">Tomorrow</option>
+        </select>
+      </div>
+      <div class="live" id="dangerStatus" aria-live="polite"></div>
+      <p class="note">Norway comes straight from the Varsom API; the Alps and the rest of Europe from the shared EAWS data behind avalanches.org, drawn on the official forecast regions. Each region is coloured by the highest level the service gives it that day, at any elevation. Tap the map to see which region you are in, the split between high and low elevations where there is one, and a link to the full forecast. A regional level says nothing about the slope you are looking at, and the avalanche problems, aspects and elevations in the text matter more than the number.</p>
     </section>
 
     <section>
@@ -270,12 +457,9 @@
       </div>
     </section>
 
-    <section>
-      <h2>Heatmap</h2>
-      <div class="row">
-        <input type="checkbox" id="heatOn">
-        <label for="heatOn">Winter activity</label>
-      </div>
+    <section id="heatSection">
+      <h2 data-layer="heat">Heatmap</h2>
+      <input type="checkbox" id="heatOn" hidden>
       <input type="range" id="heatOpacity" min="0" max="100" value="70">
       <div class="row">
         <label for="heatSport">Activity</label>
@@ -287,70 +471,264 @@
           <option value="water">Water</option>
         </select>
       </div>
-      <input type="text" id="heatUrl" spellcheck="false" value=""
-             placeholder="https://…/{z}/{x}/{y}.png">
-      <p class="note">Bring your own heatmap tile URL.</p>
+      <p class="note status" id="heatStatus" aria-live="polite"></p>
     </section>
 
     <section>
       <h2>Base map</h2>
-      <div class="row"><input type="radio" name="base" id="b-auto" checked><label for="b-auto">Follow the map</label></div>
-      <div class="row"><input type="radio" name="base" id="b-kv"><label for="b-kv">Kartverket topo</label></div>
-      <div class="row"><input type="radio" name="base" id="b-otm"><label for="b-otm">OpenTopoMap</label></div>
+      <div class="row">
+        <select id="baseSel" class="sel wide" aria-label="Base map">
+          <option value="auto" selected>Follow the map</option>
+          <option value="kv">Kartverket topo</option>
+          <option value="otm">OpenTopoMap</option>
+        </select>
+      </div>
+      <div class="row shade-row off" id="shadeRow" style="margin-top:12px">
+        <input type="checkbox" id="shadeOn">
+        <label for="shadeOn">Hillshading on OpenTopoMap</label>
+        <span class="sun-deg" id="sunDeg" aria-hidden="true">NW</span>
+        <svg class="sun-dial" id="sunDial" viewBox="-20 -20 40 40" tabindex="0" role="slider"
+             aria-label="Direction the light comes from" aria-valuemin="0" aria-valuemax="359" aria-valuenow="315">
+          <circle class="dial" r="18"/>
+          <path class="tick" d="M0 -18 L0 -13"/>
+          <path class="ray" id="sunRay"/>
+          <circle class="sun" id="sunDot" r="3.5"/>
+        </svg>
+      </div>
+      <input type="range" id="shadeOpacity" min="0" max="100" value="55" aria-label="Hillshading strength">
+      <p class="note">Shades slopes that face away from the light, drawn from the same elevation data as the slope colours. Tap or drag the small dial to set where the light comes from; northwest gives the clearest relief, while the real sun direction (south around midday in winter) shows roughly which slopes stay in shade. Each slope is shaded on its own, so shadows cast by neighbouring mountains are not shown. The slider sets how dark the shading gets.</p>
       <p class="note">Kartverket only covers Norway, so "follow the map" swaps to OpenTopoMap once you leave it.</p>
       <p class="note">The corner shows a scale bar and, when the base map draws named contours, its published interval for the zoom you are at: 20 m on Kartverket topo, 10 m on OpenTopoMap from zoom 15 and coarser below. Raster tiles carry no metadata, so this is the map series' equidistance, not something read out of the tile, and it can differ locally. The ruler button measures straight legs between the points you tap, and reads ascent and descent off the same coarse elevation tiles the slope colours use — expect it to smooth away small rolls and to run short on a line drawn with few points.</p>
+      <p class="note">While measuring, the curve at the bottom shows the elevation along the line, coloured by how steep the ground under it is; drag along it to find the spot on the map. The menu above the curve switches between the fixed avalanche colours and your own slope classes; with your classes, direction and altitude filters count just as on the map (marked * in the key), and edits show up when you press Redraw map. "Steepest ground" is the slope of the terrain the line crosses, which is what matters for avalanches, and stretches over 30° are drawn red on the map. "Steepest track" is how steeply the line itself climbs or drops, averaged over about 60 m, in the direction you drew it — a comfortable skin track is usually 10–15°. Both come from the same coarse elevation tiles, so short steep steps can hide between the samples.</p>
+      <p class="note">The time is Werner Munter's rule: one unit per kilometre and one per 100 m of ascent or descent, divided by 4 units an hour going up, 6 on the flat, and 10 skiing down (6 walking down). It leaves out breaks, transitions and trail breaking, so calibrate it against your own tours. Save GPX writes the line with elevations as a track that watches and phone apps import as a course.</p>
       <p class="note">Slope is computed in your browser from open 10–30 m elevation tiles, so it is coarser than Kartverket's 1 m laser data. Treat the low classes as indicative and verify steep terrain against the official layer for the country you are in.</p>
     </section>
 
-    <section style="border-top:1px solid var(--line);padding-top:12px">
+    <section class="infobox">
+      <div class="row">
+        <input type="checkbox" id="infoOn">
+        <label for="infoOn">Show explanations</label>
+      </div>
+    </section>
+
+    <section class="always" style="border-top:1px solid var(--line);padding-top:12px">
       <h2>Before you use this</h2>
-      <p class="note">Slope colors are calculated from coarse open elevation data and can be several degrees off. The avalanche terrain layer is a model. The heatmap only shows where people happened to record activities. None of it knows anything about today's snowpack, weather, or what has already slid.</p>
+      <p class="note">Slope colors are calculated from coarse open elevation data and can be several degrees off. The avalanche terrain layer is a model. The heatmap only shows where people happened to record activities. The snow layers are a 1 km model or coarse satellite pixels, and the forecast colours summarise a whole region. None of it knows what has already slid or what the snow is like on the slope in front of you.</p>
       <p class="note">The locate button shows your GPS position, a circle for its uncertainty, and a dashed line along whichever way the phone is pointed. The compass is magnetic, drifts near metal and electronics, and points a couple of degrees off true north in Norway. It is a rough pointer, not a bearing you should navigate on.</p>
-      <p class="note">Use it to find ideas worth investigating, then read the forecast at <a href="https://varsom.no" target="_blank" rel="noopener">varsom.no</a>, bring the gear and the training to use it, and make your own decisions in the terrain. This is not an avalanche safety tool, comes with no guarantee of any kind, and is used entirely at your own risk.</p>
+      <p class="note">Use it to find ideas worth investigating, then read the full forecast from <span id="fcLink"><a href="https://www.varsom.no/en/avalanches/avalanche-warnings/" target="_blank" rel="noopener">varsom.no</a></span>, bring the gear and the training to use it, and make your own decisions in the terrain. This is not an avalanche safety tool, comes with no guarantee of any kind, and is used entirely at your own risk.</p>
     </section>
 
   </div>
 </div>
 
 <script>
-/* Private copy: paste your own heatmap tile URL between the quotes and the
-   field below fills itself on every load. Leave it empty when publishing. */
+/* The heatmap always uses this tile URL; the Activity menu swaps the sport in
+   it. Leave it empty and the Heatmap section and its layer row disappear. */
 const HEATMAP_URL = 'https://heatmap-external-a.strava.com/tiles/winter/hot/{z}/{x}/{y}.png';
 
 /* ---------- slope classes ---------- */
+/* Each class is an angle range plus optional filters:
+   aspFrom / aspTo: the slope must face somewhere clockwise from aspFrom to
+                    aspTo, in compass degrees (both null = any direction),
+   elMin / elMax:   altitude limits in metres (null = no limit). */
+const COMPASS = ['N','NE','E','SE','S','SW','W','NW'];
+const COMPASS16 = ['N','NNE','NE','ENE','E','ESE','SE','SSE','S','SSW','SW','WSW','W','WNW','NW','NNW'];
+const FLAT_BELOW = 3;          // degrees; below this, aspect is just noise
+const ASPECT_SNAP = 5;         // taps on the dial snap to this many degrees
+function newBand(min, max, color){
+  return {min:min, max:max, color:color, aspFrom:null, aspTo:null, elMin:null, elMax:null,
+          open:false, pick:null};   // pick: start of a range being chosen on the dial
+}
 const DEFAULT_BANDS = [
-  {min:15, max:20, color:'#86c06c'},
-  {min:20, max:29, color:'#3f8f4a'}
+  newBand(15, 20, '#86c06c'),
+  newBand(20, 29, '#3f8f4a')
 ];
 let bands = JSON.parse(JSON.stringify(DEFAULT_BANDS));
 
 const bandsEl = document.getElementById('bands');
 function hexToRgb(h){return [parseInt(h.slice(1,3),16),parseInt(h.slice(3,5),16),parseInt(h.slice(5,7),16)];}
 
+function norm360(d){ return ((Math.round(d) % 360) + 360) % 360; }
+function dirName(deg){ return COMPASS16[Math.round(deg/22.5) % 16]; }
+/* Two equal ends would be an empty range, so that means "every direction". */
+function setAspect(b, from, to){
+  if(from == null || to == null || norm360(from) === norm360(to)){ b.aspFrom = b.aspTo = null; }
+  else { b.aspFrom = norm360(from); b.aspTo = norm360(to); }
+  b.pick = null;
+}
+function aspectText(b){
+  if(b.pick != null) return 'Faces ' + dirName(b.pick) + ' to …';
+  if(b.aspFrom == null) return 'Any direction';
+  return 'Faces ' + dirName(b.aspFrom) + '–' + dirName(b.aspTo) + ' (' + b.aspFrom + '°–' + b.aspTo + '°)';
+}
+function altText(b){
+  if(b.elMin == null && b.elMax == null) return 'any altitude';
+  if(b.elMax == null) return 'above ' + b.elMin + ' m';
+  if(b.elMin == null) return 'below ' + b.elMax + ' m';
+  return b.elMin + '–' + b.elMax + ' m';
+}
+function isFiltered(b){ return b.aspFrom != null || b.elMin != null || b.elMax != null; }
+function summary(b){ return (b.open ? '▾ ' : '▸ ') + aspectText(b) + ' · ' + altText(b); }
+
+/* ----- the dial ----- */
+const DIAL_R = 50, ALL_R = 15;
+function dialPt(deg, r){
+  const t = deg*Math.PI/180;
+  return (r*Math.sin(t)).toFixed(2) + ' ' + (-r*Math.cos(t)).toFixed(2);
+}
+function wedgePath(from, to){
+  const w = (to - from + 360) % 360;
+  if(w === 0) return '';
+  return 'M0 0 L' + dialPt(from, DIAL_R) + ' A' + DIAL_R + ' ' + DIAL_R + ' 0 ' +
+         (w > 180 ? 1 : 0) + ' 1 ' + dialPt(to, DIAL_R) + ' Z';
+}
+const FULL_DISC = 'M0 -' + DIAL_R + ' A' + DIAL_R + ' ' + DIAL_R + ' 0 1 1 0 ' + DIAL_R +
+                  ' A' + DIAL_R + ' ' + DIAL_R + ' 0 1 1 0 -' + DIAL_R + ' Z';
+function dialSvg(i){
+  let ticks = '';
+  for(let d = 0; d < 360; d += 22.5){
+    const len = d % 90 === 0 ? 7 : d % 45 === 0 ? 5 : 3;
+    ticks += '<path class="tick" d="M' + dialPt(d, DIAL_R) + ' L' + dialPt(d, DIAL_R - len) + '"/>';
+  }
+  let labels = '';
+  [['N',0],['E',90],['S',180],['W',270]].forEach(([n,d])=>{
+    const [x,y] = dialPt(d, 37).split(' ');
+    labels += '<text class="lbl" x="' + x + '" y="' + y + '">' + n + '</text>';
+  });
+  return '<svg class="compass" data-i="' + i + '" viewBox="-60 -60 120 120" role="img" ' +
+           'aria-label="Direction dial. Tap where the range starts, then where it ends.">' +
+         '<circle class="dial" r="' + DIAL_R + '"/>' +
+         '<path class="wedge"/><path class="preview"/>' + ticks + labels +
+         '<path class="mark m-from"/><path class="mark m-to"/>' +
+         '<g class="allbtn"><circle r="' + ALL_R + '"/><text class="lbl">All</text></g>' +
+         '</svg>';
+}
+/* Update one band's dial, summary and direction boxes without rebuilding the
+   panel, so a finger or a text cursor is never interrupted. */
+function paintBand(i, hover, syncInputs){
+  const wrap = bandsEl.children[i]; if(!wrap) return;
+  const b = bands[i];
+  const tg = wrap.querySelector('.bf-toggle');
+  tg.textContent = summary(b);
+  tg.classList.toggle('active', isFiltered(b));
+  const svg = wrap.querySelector('.compass'); if(!svg) return;
+  const wedge = svg.querySelector('.wedge'), prev = svg.querySelector('.preview');
+  const mf = svg.querySelector('.m-from'), mt = svg.querySelector('.m-to');
+  const mark = (el, deg)=> el.setAttribute('d', deg == null ? '' : 'M0 0 L' + dialPt(deg, DIAL_R));
+  const hint = wrap.querySelector('.dial-hint');
+
+  svg.classList.toggle('is-all', b.pick == null && b.aspFrom == null);
+  if(b.pick != null){
+    wedge.setAttribute('d', '');
+    prev.setAttribute('d', hover != null ? wedgePath(b.pick, hover) : '');
+    mark(mf, b.pick); mark(mt, hover);
+    hint.textContent = 'Now tap where it ends, going clockwise.';
+  } else if(b.aspFrom != null){
+    wedge.setAttribute('d', wedgePath(b.aspFrom, b.aspTo));
+    prev.setAttribute('d', '');
+    mark(mf, b.aspFrom); mark(mt, b.aspTo);
+    hint.textContent = 'Tap the dial again to start a new range.';
+  } else {
+    wedge.setAttribute('d', FULL_DISC);
+    prev.setAttribute('d', '');
+    mark(mf, null); mark(mt, null);
+    hint.textContent = 'Tap where the range starts.';
+  }
+  if(syncInputs){
+    wrap.querySelector('[data-k="aspFrom"]').value = b.aspFrom ?? '';
+    wrap.querySelector('[data-k="aspTo"]').value = b.aspTo ?? '';
+  }
+}
+function dialPoint(svg, e){
+  const r = svg.getBoundingClientRect();
+  const dx = e.clientX - (r.left + r.width/2), dy = e.clientY - (r.top + r.height/2);
+  const dist = Math.hypot(dx, dy) * 120 / r.width;          // in viewBox units
+  const brg = norm360(Math.round(((Math.atan2(dx, -dy)*180/Math.PI + 360) % 360) / ASPECT_SNAP) * ASPECT_SNAP);
+  return {dist:dist, brg:brg};
+}
+
 function renderBands(){
   bandsEl.innerHTML = '';
   bands.forEach((b,i)=>{
-    const row = document.createElement('div');
-    row.className = 'band';
-    row.innerHTML =
-      '<input type="number" min="0" max="90" step="1" value="'+b.min+'" data-k="min" data-i="'+i+'">' +
+    const wrap = document.createElement('div');
+    wrap.className = 'bandWrap';
+    let html =
+      '<div class="band">' +
+      '<input type="number" min="0" max="90" step="1" value="'+b.min+'" data-k="min" data-i="'+i+'" aria-label="Lowest angle">' +
       '<div class="dash">–</div>' +
-      '<input type="number" min="0" max="90" step="1" value="'+b.max+'" data-k="max" data-i="'+i+'">' +
-      '<input type="color" value="'+b.color+'" data-k="color" data-i="'+i+'">' +
-      '<button title="Remove" data-del="'+i+'">×</button>';
-    bandsEl.appendChild(row);
+      '<input type="number" min="0" max="90" step="1" value="'+b.max+'" data-k="max" data-i="'+i+'" aria-label="Highest angle">' +
+      '<input type="color" value="'+b.color+'" data-k="color" data-i="'+i+'" aria-label="Colour">' +
+      '<button title="Remove" data-del="'+i+'">×</button>' +
+      '</div>' +
+      '<button type="button" class="bf-toggle" data-toggle="'+i+'" aria-expanded="'+b.open+'"></button>';
+    if(b.open){
+      html += '<div class="bf-edit"><div>' + dialSvg(i) + '<p class="dial-hint"></p></div>' +
+        '<div class="bf-fields">' +
+          '<div class="grp"><label>Direction, °</label><div class="pair">' +
+            '<input type="number" min="0" max="359" step="5" placeholder="from" data-k="aspFrom" data-i="'+i+'" aria-label="Direction range starts at, degrees">' +
+            '<div class="dash">–</div>' +
+            '<input type="number" min="0" max="359" step="5" placeholder="to" data-k="aspTo" data-i="'+i+'" aria-label="Direction range ends at, degrees">' +
+          '</div></div>' +
+          '<div class="grp"><label>Altitude, m</label><div class="pair">' +
+            '<input type="number" step="50" placeholder="min" value="'+(b.elMin??'')+'" data-k="elMin" data-i="'+i+'" aria-label="Lowest altitude">' +
+            '<div class="dash">–</div>' +
+            '<input type="number" step="50" placeholder="max" value="'+(b.elMax??'')+'" data-k="elMax" data-i="'+i+'" aria-label="Highest altitude">' +
+          '</div></div>' +
+          '<p>Directions run clockwise from the first to the second. Leave boxes empty for no limit.</p>' +
+        '</div></div>';
+    }
+    wrap.innerHTML = html;
+    bandsEl.appendChild(wrap);
+    paintBand(i, null, true);
   });
 }
 bandsEl.addEventListener('input', e=>{
   const t = e.target, i = +t.dataset.i, k = t.dataset.k;
   if(k===undefined) return;
-  bands[i][k] = (k==='color') ? t.value : (parseFloat(t.value)||0);
+  const b = bands[i];
+  if(k==='color') b[k] = t.value;
+  else if(k==='elMin' || k==='elMax'){
+    const v = parseFloat(t.value);
+    b[k] = isNaN(v) ? null : v;
+    paintBand(i, null, false);
+  }
+  else if(k==='aspFrom' || k==='aspTo'){
+    const wrap = bandsEl.children[i];
+    const f = parseFloat(wrap.querySelector('[data-k="aspFrom"]').value);
+    const to = parseFloat(wrap.querySelector('[data-k="aspTo"]').value);
+    setAspect(b, isNaN(f) ? null : f, isNaN(to) ? null : to);
+    paintBand(i, null, false);
+  }
+  else b[k] = parseFloat(t.value)||0;
+});
+bandsEl.addEventListener('pointermove', e=>{
+  const svg = e.target.closest && e.target.closest('.compass'); if(!svg) return;
+  const i = +svg.dataset.i;
+  if(bands[i].pick == null) return;
+  const p = dialPoint(svg, e);
+  paintBand(i, p.dist > ALL_R ? p.brg : null, false);
 });
 bandsEl.addEventListener('click', e=>{
-  const d = e.target.dataset.del;
-  if(d!==undefined){ bands.splice(+d,1); renderBands(); }
+  const svg = e.target.closest('.compass');
+  if(svg){
+    const i = +svg.dataset.i, b = bands[i], p = dialPoint(svg, e);
+    if(p.dist <= ALL_R)       setAspect(b, null, null);    // the middle: everything
+    else if(b.pick == null)   b.pick = p.brg;              // first end
+    else                      setAspect(b, b.pick, p.brg); // second end
+    paintBand(i, null, true);
+    return;
+  }
+  const t = e.target.closest('button'); if(!t) return;
+  const d = t.dataset;
+  if(d.del !== undefined){ bands.splice(+d.del,1); renderBands(); return; }
+  if(d.toggle !== undefined){
+    const b = bands[+d.toggle];
+    b.open = !b.open;
+    if(!b.open) b.pick = null;      // closing abandons a half-chosen range
+    renderBands();
+  }
 });
-document.getElementById('addBand').onclick = ()=>{ bands.push({min:0,max:19,color:'#4fa35a'}); renderBands(); };
+document.getElementById('addBand').onclick = ()=>{ bands.push(newBand(0, 19, '#4fa35a')); renderBands(); };
 renderBands();
 
 /* ---------- map ---------- */
@@ -367,13 +745,68 @@ const map = L.map('map', {center:[61.63, 8.31], zoom:12, layers:[bases.kv], zoom
    Each overlay group lives in its own pane. Panes sit above the base map
    (tilePane, z 200) and below lines and markers (overlayPane, z 400), and
    their z-index decides which group is drawn on top. */
+/* The name here is also written into the matching section heading in the
+   panel (h2 with data-layer), so a layer is called the same thing in both. */
 const LAYER_GROUPS = {
-  heat:  {name:'Heatmap',             pane:'heatPane'},
-  aval:  {name:'Avalanche terrain',   pane:'avalPane'},
-  slope: {name:'Angle classes',       pane:'slopePane'}
+  heat:   {name:'Heatmap',                      pane:'heatPane'},
+  danger: {name:'Avalanche forecast',           pane:'dangerPane'},
+  runout: {name:'Alpha angle runout',  pane:'runoutPane'},
+  aval:   {name:'Official steepness',  pane:'avalPane'},
+  slope:  {name:'Angle classes',                pane:'slopePane'},
+  snow:   {name:'Snow condition',      pane:'snowPane'}
 };
-let layerOrder = ['heat', 'aval', 'slope'];   // first = on top
+/* Snow sits lowest because the satellite photos are opaque; the forecast
+   regions are a light wash, so they can go near the top. */
+let layerOrder = ['heat', 'danger', 'runout', 'aval', 'slope', 'snow'];   // first = on top
+if(!HEATMAP_URL){
+  delete LAYER_GROUPS.heat;
+  layerOrder = layerOrder.filter(k=>k !== 'heat');
+  document.getElementById('heatSection').style.display = 'none';
+}
+document.querySelectorAll('h2[data-layer]').forEach(h=>{
+  const g = LAYER_GROUPS[h.dataset.layer];
+  if(g) h.textContent = g.name;
+});
+
+/* Show/hide for each row in the order list. Each one drives the control the
+   layer already has in its own section, so the two always agree. The official
+   steepness layer has no tick box of its own, only a source menu with "Off",
+   so unticking it here sets that menu to Off and ticking restores the source. */
+let steepLast = 'auto';
+const LAYER_TOGGLES = {
+  heat:   {get:()=>document.getElementById('heatOn').checked,
+           set:v=>{ document.getElementById('heatOn').checked = v; buildHeatmap(); }},
+  danger: {get:()=>document.getElementById('dangerOn').checked,
+           set:v=>{ document.getElementById('dangerOn').checked = v; refreshDanger(); }},
+  runout: {get:()=>document.getElementById('runOn').checked,
+           set:v=>{ document.getElementById('runOn').checked = v; applyRunout(); }},
+  aval:   {get:()=>document.getElementById('steepSrc').value !== 'off',
+           set:v=>{
+             const sel = document.getElementById('steepSrc');
+             if(v){ if(sel.value === 'off') sel.value = steepLast; }
+             else if(sel.value !== 'off'){ steepLast = sel.value; sel.value = 'off'; }
+             applySteep();
+           }},
+  slope:  {get:()=>document.getElementById('slopeOn').checked,
+           set:v=>{ document.getElementById('slopeOn').checked = v; applySlopeVisible(); }},
+  snow:   {get:()=>document.getElementById('snowOn').checked,
+           set:v=>{ document.getElementById('snowOn').checked = v; applySnow(); }}
+};
+function syncOrderChecks(){
+  document.querySelectorAll('#order li[data-key]').forEach(li=>{
+    const on = LAYER_TOGGLES[li.dataset.key].get();
+    li.querySelector('input').checked = on;
+    li.classList.toggle('hidden-layer', !on);
+  });
+}
 Object.values(LAYER_GROUPS).forEach(g=>{ map.createPane(g.pane).style.pointerEvents = 'none'; });
+/* Hillshading belongs to the base map, not the overlay stack: it sits just
+   above the base tiles and multiplies onto them, so white leaves the map
+   untouched and only the shadows darken it. */
+const shadePane = map.createPane('shadePane');
+shadePane.style.zIndex = 250;
+shadePane.style.pointerEvents = 'none';
+shadePane.style.mixBlendMode = 'multiply';
 
 function applyOrder(){
   layerOrder.forEach((key, i)=>{
@@ -392,7 +825,9 @@ function renderOrder(){
   ul.innerHTML = '';
   layerOrder.forEach((key, i)=>{
     const li = document.createElement('li');
-    li.innerHTML = '<span>' + LAYER_GROUPS[key].name + '</span>' +
+    li.dataset.key = key;
+    li.innerHTML = '<input type="checkbox" id="ord-' + key + '">' +
+      '<label for="ord-' + key + '">' + LAYER_GROUPS[key].name + '</label>' +
       '<button type="button" title="Move up" aria-label="Move ' + LAYER_GROUPS[key].name + ' up">▲</button>' +
       '<button type="button" title="Move down" aria-label="Move ' + LAYER_GROUPS[key].name + ' down">▼</button>';
     const [up, down] = li.querySelectorAll('button');
@@ -400,6 +835,10 @@ function renderOrder(){
     down.disabled = i === layerOrder.length - 1;
     up.onclick = ()=> moveLayer(i, -1);
     down.onclick = ()=> moveLayer(i, 1);
+    const box = li.querySelector('input');
+    box.checked = LAYER_TOGGLES[key].get();
+    li.classList.toggle('hidden-layer', !box.checked);
+    box.onchange = ()=>{ LAYER_TOGGLES[key].set(box.checked); syncOrderChecks(); };
     ul.appendChild(li);
   });
   const base = document.createElement('li');
@@ -467,6 +906,7 @@ function applySteep(){
 
 let heatLayer = null;
 let detectedZ = null;
+let heatTmpl = HEATMAP_URL;          // sport swapped in by the Activity menu
 
 function fmtTile(tmpl,z,x,y){
   return tmpl.replace('{s}','a').replace('{z}',z).replace('{x}',x).replace('{y}',y);
@@ -500,23 +940,29 @@ async function detectDepth(tmpl){
     const hits = await Promise.all(spots.map(([x,y])=>probe(fmtTile(tmpl,z,x,y))));
     if(hits.some(Boolean)) return z;
   }
-  return 9;
+  return null;                       // nothing answered at any zoom
 }
 
 const status = document.getElementById('heatStatus') || {textContent:''};
 
+let heatToken = 0;
 async function buildHeatmap(){
+  const token = ++heatToken;          // a newer call wins if the checks overlap
   if(heatLayer){ map.removeLayer(heatLayer); heatLayer = null; }
   if(!document.getElementById('heatOn').checked){ status.textContent = 'Heatmap off.'; return; }
 
-  const tmpl = document.getElementById('heatUrl').value.trim();
-  if(!tmpl){
-    document.getElementById('heatUrl').focus();
-    return;
-  }
+  const tmpl = heatTmpl;
+  if(!tmpl){ status.textContent = 'No heatmap source is set up.'; return; }
   if(detectedZ === null){
     status.textContent = 'Checking how sharp the heatmap gets here…';
-    detectedZ = await detectDepth(tmpl);
+    const z = await detectDepth(tmpl);
+    if(token !== heatToken) return;
+    if(z === null){
+      status.textContent = 'The heatmap source sent no tiles for this area. It may need you '
+        + 'to be logged in to it in this browser.';
+      return;
+    }
+    detectedZ = z;
   }
   const native = detectedZ;
 
@@ -528,8 +974,8 @@ async function buildHeatmap(){
     pane: 'heatPane'
   });
   heatLayer.addTo(map);
-  status.textContent = 'Drawing from zoom ' + native + ', the deepest this source serves. '
-    + 'It stays on screen past that, just softer.';
+  status.textContent = 'Showing detail down to zoom ' + native + ', the most this source serves here. '
+    + 'Zooming in further enlarges those tiles, so the tracks get softer.';
 }
 
 /* ---------- slope layer, computed from terrarium elevation tiles ---------- */
@@ -566,6 +1012,7 @@ function loadDem(z,x,y){
       }
       const cell = 156543.03392 * Math.cos(tileLat(z,y)) / Math.pow(2,z);
       const sl = new Float32Array(256*256);
+      const as = new Float32Array(256*256);   // aspect, compass bearing the slope faces
       const at = (px,py)=>el[Math.min(255,Math.max(0,py))*256 + Math.min(255,Math.max(0,px))];
       for(let py=0;py<256;py++){
         for(let px=0;px<256;px++){
@@ -575,9 +1022,12 @@ function loadDem(z,x,y){
           const dzdx = ((c2 + 2*f + i2) - (a + 2*dd + g)) / (8*cell);
           const dzdy = ((g + 2*h + i2) - (a + 2*b + c2)) / (8*cell);
           sl[py*256+px] = Math.atan(Math.hypot(dzdx,dzdy)) * 180/Math.PI;
+          /* Rows run north to south, so dzdy is the rise going south. The slope
+             faces downhill: east component -dzdx, north component +dzdy. */
+          as[py*256+px] = (Math.atan2(-dzdx, dzdy) * 180/Math.PI + 360) % 360;
         }
       }
-      const rec = {el:el, slope:sl, cell:cell};
+      const rec = {el:el, slope:sl, aspect:as, cell:cell};
       demCache.set(key, rec);
       resolve(rec);
     };
@@ -596,15 +1046,29 @@ const SlopeLayer = L.GridLayer.extend({
     const dz = Math.max(0, coords.z - DEM_MAX_Z);
     const pz = coords.z - dz, px = coords.x >> dz, py = coords.y >> dz;
 
-    loadSlope(pz, px, py).then(sl=>{
+    loadDem(pz, px, py).then(d=>{
+      const sl = d.slope, as = d.aspect, el = d.el;
       const work = document.createElement('canvas'); work.width = work.height = 256;
       const wc = work.getContext('2d');
       const img = wc.createImageData(256,256);
       const rgb = bands.map(b=>hexToRgb(b.color));
+      /* null means "no filter", so the common case skips the extra tests */
+      const spec = bands.map(b=>({
+        min:b.min, max:b.max,
+        asp: b.aspFrom == null ? null : {from:b.aspFrom, width:(b.aspTo - b.aspFrom + 360) % 360},
+        lo: b.elMin, hi: b.elMax
+      }));
       for(let i=0;i<256*256;i++){
         const s = sl[i];
         let k = -1;
-        for(let j=0;j<bands.length;j++){ if(s>=bands[j].min && s<bands[j].max){ k=j; break; } }
+        for(let j=0;j<spec.length;j++){
+          const b = spec[j];
+          if(s < b.min || s >= b.max) continue;
+          if(b.lo != null && el[i] < b.lo) continue;
+          if(b.hi != null && el[i] > b.hi) continue;
+          if(b.asp && s >= FLAT_BELOW && (as[i] - b.asp.from + 360) % 360 > b.asp.width) continue;
+          k = j; break;
+        }
         if(k<0) continue;
         img.data[i*4]   = rgb[k][0];
         img.data[i*4+1] = rgb[k][1];
@@ -623,6 +1087,111 @@ const SlopeLayer = L.GridLayer.extend({
   }
 });
 const slope = new SlopeLayer({maxZoom:18, opacity:0.65, tileSize:256, pane:'slopePane'});
+
+/* ---------- hillshading, from the same elevation tiles ----------
+   Standard hillshade: light from azimuth 315°, 45° above the horizon, using
+   the slope and aspect already computed for each cell. The value is divided
+   by what flat ground gets, so flat and sunlit ground stay white (no change
+   under multiply) and only slopes turned away from the light are shaded. */
+let shadeAz = 315;             // compass direction the light comes from
+const SHADE_ALT = 45;          // degrees above the horizon
+
+function paintShadeTile(tile, coords){
+  const dz = Math.max(0, coords.z - DEM_MAX_Z);
+  const pz = coords.z - dz, px = coords.x >> dz, py = coords.y >> dz;
+  return loadDem(pz, px, py).then(d=>{
+    const rad = Math.PI/180;
+    const zen = (90 - SHADE_ALT)*rad, cz = Math.cos(zen), sz = Math.sin(zen);
+    const work = document.createElement('canvas'); work.width = work.height = 256;
+    const wc = work.getContext('2d');
+    const img = wc.createImageData(256,256);
+    for(let i=0;i<256*256;i++){
+      const sl = d.slope[i]*rad;
+      const hs = cz*Math.cos(sl) + sz*Math.sin(sl)*Math.cos((shadeAz - d.aspect[i])*rad);
+      const g = 255 * Math.min(1, Math.max(0, hs/cz));
+      img.data[i*4] = img.data[i*4+1] = img.data[i*4+2] = g;
+      img.data[i*4+3] = 255;
+    }
+    wc.putImageData(img,0,0);
+    const sw = 256/Math.pow(2,dz);
+    const sx = (coords.x - (px<<dz))*sw, sy = (coords.y - (py<<dz))*sw;
+    const ctx = tile.getContext('2d');
+    ctx.imageSmoothingEnabled = true;       // soft when zoomed past the data
+    ctx.imageSmoothingQuality = 'high';
+    ctx.drawImage(work, sx, sy, sw, sw, 0, 0, 256, 256);
+  });
+}
+const ShadeLayer = L.GridLayer.extend({
+  createTile: function(coords, done){
+    const tile = document.createElement('canvas');
+    tile.width = tile.height = 256;
+    paintShadeTile(tile, coords).then(()=>done(null, tile)).catch(()=>done(null, tile));
+    return tile;
+  }
+});
+const shade = new ShadeLayer({maxZoom:18, opacity:0.55, tileSize:256, pane:'shadePane'});
+/* Turning the light repaints the tiles already on screen rather than
+   rebuilding the layer, so dragging the dial does not flash. */
+function repaintShade(){
+  if(!map.hasLayer(shade)) return;
+  Object.values(shade._tiles).forEach(t=>{ paintShadeTile(t.el, t.coords).catch(()=>{}); });
+}
+function applyShade(){
+  const ticked = document.getElementById('shadeOn').checked;
+  document.getElementById('shadeRow').classList.toggle('off', !ticked);
+  const on = ticked && currentBase === 'otm';
+  if(on && !map.hasLayer(shade)) shade.addTo(map);
+  if(!on && map.hasLayer(shade)) map.removeLayer(shade);
+}
+document.getElementById('shadeOn').onchange = ()=> applyShade();
+document.getElementById('shadeOpacity').oninput = e=> shade.setOpacity(e.target.value/100);
+
+/* ----- the light dial ----- */
+const sunDial = document.getElementById('sunDial');
+function paintSun(){
+  const t = shadeAz*Math.PI/180;
+  const x = (13*Math.sin(t)).toFixed(2), y = (-13*Math.cos(t)).toFixed(2);
+  document.getElementById('sunDot').setAttribute('cx', x);
+  document.getElementById('sunDot').setAttribute('cy', y);
+  document.getElementById('sunRay').setAttribute('d', 'M0 0 L' + x + ' ' + y);
+  document.getElementById('sunDeg').textContent = dirName(shadeAz);
+  sunDial.setAttribute('aria-valuenow', shadeAz);
+  sunDial.setAttribute('aria-valuetext', 'Light from ' + dirName(shadeAz) + ', ' + shadeAz + '°');
+  sunDial.setAttribute('title', 'Light from ' + dirName(shadeAz) + ' (' + shadeAz + '°)');
+}
+let sunQueued = false;
+function setSun(deg){
+  const v = norm360(Math.round(deg/5)*5);
+  if(v === shadeAz) return;
+  shadeAz = v;
+  paintSun();
+  /* Choosing a light direction means you want to see it. */
+  const box = document.getElementById('shadeOn');
+  if(!box.checked){ box.checked = true; applyShade(); }
+  if(!sunQueued){
+    sunQueued = true;
+    requestAnimationFrame(()=>{ sunQueued = false; repaintShade(); });
+  }
+}
+function sunFromEvent(e){
+  const r = sunDial.getBoundingClientRect();
+  const dx = e.clientX - (r.left + r.width/2), dy = e.clientY - (r.top + r.height/2);
+  if(Math.hypot(dx, dy) < r.width*0.08) return;          // dead centre: no direction
+  setSun(Math.atan2(dx, -dy)*180/Math.PI);
+}
+sunDial.addEventListener('pointerdown', e=>{ sunDial.setPointerCapture(e.pointerId); sunFromEvent(e); });
+sunDial.addEventListener('pointermove', e=>{ if(sunDial.hasPointerCapture(e.pointerId)) sunFromEvent(e); });
+sunDial.addEventListener('keydown', e=>{
+  const step = e.shiftKey ? 45 : 5;
+  if(e.key === 'ArrowRight' || e.key === 'ArrowUp'){ setSun(shadeAz + step); e.preventDefault(); }
+  if(e.key === 'ArrowLeft' || e.key === 'ArrowDown'){ setSun(shadeAz - step); e.preventDefault(); }
+});
+paintSun();
+
+/* ----- explanations switch ----- */
+document.getElementById('infoOn').onchange = e=>{
+  document.getElementById('panel').classList.toggle('show-info', e.target.checked);
+};
 /* ---------- modelled runout, alpha angle rule ----------
    Anything steeper than the release threshold is treated as a possible start
    zone. Snow is then let run downhill from it, and it is allowed to keep going
@@ -753,7 +1322,7 @@ const RunoutLayer = L.GridLayer.extend({
     return tile;
   }
 });
-const runout = new RunoutLayer({maxZoom:18, opacity:0.45, tileSize:256, pane:'avalPane', zIndex:2});
+const runout = new RunoutLayer({maxZoom:18, opacity:0.45, tileSize:256, pane:'runoutPane'});
 
 function applyRunout(){
   const on = document.getElementById('runOn').checked;
@@ -779,22 +1348,26 @@ map.on('moveend', ()=>{
 });
 
 /* ---------- readout ---------- */
+/* Always read at the finest elevation level, whatever the zoom, so a tap on a
+   zoomed-out map gives the same numbers as one zoomed in. */
 const readout = document.getElementById('readout');
+function compassName(deg){ return COMPASS[Math.round(deg/45) % 8]; }
+
 map.on('click', e=>{
   if(measuring){ addMeasurePoint(e.latlng); return; }
-  const z = Math.min(map.getZoom(), DEM_MAX_Z);
-  const n = Math.pow(2,z);
-  const x = Math.floor((e.latlng.lng+180)/360*n);
-  const latRad = e.latlng.lat*Math.PI/180;
-  const y = Math.floor((1 - Math.log(Math.tan(latRad)+1/Math.cos(latRad))/Math.PI)/2*n);
-  const fx = Math.floor(((e.latlng.lng+180)/360*n - x)*256);
-  const fy = Math.floor(((1 - Math.log(Math.tan(latRad)+1/Math.cos(latRad))/Math.PI)/2*n - y)*256);
+  const t = tileCoords(e.latlng, DEM_MAX_Z);
+  const fc = forecastLine(e.latlng);
   readout.textContent = 'Reading…';
-  loadSlope(z,x,y).then(sl=>{
-    const s = sl[fy*256+fx];
-    readout.innerHTML = 'Slope <b>' + s.toFixed(0) + '°</b> · ' +
-      e.latlng.lat.toFixed(4) + ', ' + e.latlng.lng.toFixed(4);
-  }).catch(()=>{ readout.textContent = 'No elevation data here'; });
+  loadDem(DEM_MAX_Z, t.x, t.y).then(d=>{
+    const i = t.py*256 + t.px;
+    const s = d.slope[i], a = d.aspect[i], h = d.el[i];
+    const faces = s < FLAT_BELOW
+      ? 'Flat'
+      : 'Faces <b>' + compassName(a) + '</b> (' + Math.round(a) + '°)';
+    readout.innerHTML =
+      'Slope <b>' + s.toFixed(0) + '°</b> · ' + faces + ' · <b>' + Math.round(h) + ' m</b>' +
+      '<div class="sub">' + e.latlng.lat.toFixed(4) + ', ' + e.latlng.lng.toFixed(4) + '</div>' + fc;
+  }).catch(()=>{ readout.innerHTML = 'No elevation data here' + fc; });
 });
 
 /* ---------- scale bar ---------- */
@@ -862,6 +1435,16 @@ const measureBox = document.getElementById('measureBox');
 const measureTotal = document.getElementById('measureTotal');
 const measureSub = document.getElementById('measureSub');
 const measureGain = document.getElementById('measureGain');
+const measureSteep = document.getElementById('measureSteep');
+const measureTime = document.getElementById('measureTime');
+const munterOut = document.getElementById('munterOut');
+const munterSplit = document.getElementById('munterSplit');
+const munterModeEl = document.getElementById('munterMode');
+const gpxBtn = document.getElementById('measGpx');
+const profileBox = document.getElementById('profileBox');
+const profileSvg = document.getElementById('profileSvg');
+const profileRead = document.getElementById('profileRead');
+const profileLayer = L.layerGroup().addTo(map);   // steep stretches, steepest spot, scrub dot
 
 /* ---------- ascent and descent along the line ----------
    The same terrarium tiles that make the slope colours are sampled along each
@@ -872,6 +1455,9 @@ const measureGain = document.getElementById('measureGain');
 const GAIN_THRESHOLD = 6;      // metres of movement before it counts
 const GAIN_SMOOTH = 2;         // ± samples in the moving average
 const MAX_SAMPLES = 1500;
+const STEEP_WARN = 30;         // degrees of ground slope that get flagged
+const GRADE_HALF = 30;         // metres either side for the steepness of the line itself
+const FLAT_GRADE = 3;          // degrees; gentler than this counts as flat for the time
 
 function tileCoords(ll, z){
   const n = Math.pow(2,z);
@@ -893,16 +1479,20 @@ function sampleLine(pts){
   if(total <= 0) return [];
   const step = Math.max(cell, total/MAX_SAMPLES);
   const out = [];
+  const vtx = [];                // sample index of every tapped point
   for(let i=1;i<pts.length;i++){
     const a = pts[i-1], b = pts[i];
     const d = map.distance(a,b);
     const n = Math.max(1, Math.round(d/step));
+    vtx.push(out.length);
     for(let k=0;k<n;k++){
       const t = k/n;
       out.push(L.latLng(a.lat + (b.lat-a.lat)*t, a.lng + (b.lng-a.lng)*t));
     }
   }
+  vtx.push(out.length);
   out.push(pts[pts.length-1]);
+  out.vtx = vtx;
   return out;
 }
 
@@ -917,9 +1507,12 @@ async function elevationProfile(pts){
   coords.forEach(c=>{ need.set(c.x+'/'+c.y, c); });
   await Promise.all([...need.values()].map(c=>loadDem(z, c.x, c.y)));
 
-  const raw = coords.map(c=>{
+  const raw = [], groundRaw = [], aspect = [];
+  coords.forEach(c=>{
     const rec = demCache.get(z+'/'+c.x+'/'+c.y);
-    return rec ? rec.el[c.py*256 + c.px] : NaN;
+    raw.push(rec ? rec.el[c.py*256 + c.px] : NaN);
+    groundRaw.push(rec ? rec.slope[c.py*256 + c.px] : NaN);
+    aspect.push(rec ? rec.aspect[c.py*256 + c.px] : 0);
   });
   if(raw.some(isNaN)) return null;
 
@@ -937,32 +1530,459 @@ async function elevationProfile(pts){
     if(d >  GAIN_THRESHOLD){ up   += d; ref = sm[i]; }
     else if(d < -GAIN_THRESHOLD){ down += -d; ref = sm[i]; }
   }
+
+  /* distance along the line at every sample */
+  const n = sm.length;
+  const dist = new Array(n); dist[0] = 0;
+  for(let i=1;i<n;i++) dist[i] = dist[i-1] + map.distance(samples[i-1], samples[i]);
+
+  /* Steepness of the ground under the line. Single cells of the slope grid
+     jump around, so a light ±1 average before taking the maximum. */
+  const ground = groundRaw.map((_,i)=>{
+    let s = 0, k = 0;
+    for(let j=i-1;j<=i+1;j++) if(j>=0 && j<n){ s += groundRaw[j]; k++; }
+    return s/k;
+  });
+
+  /* Steepness of the line itself, in the direction it was drawn, measured
+     across about GRADE_HALF metres either side so DEM noise doesn't show up
+     as 40° steps. Positive is climbing. */
+  const grade = new Array(n);
+  let j0 = 0, j1 = 0;
+  for(let i=0;i<n;i++){
+    while(j0+1 <= i && dist[i] - dist[j0+1] >= GRADE_HALF) j0++;
+    if(j1 < i) j1 = i;
+    while(j1 < n-1 && dist[j1] - dist[i] < GRADE_HALF) j1++;
+    const base = dist[j1] - dist[j0];
+    grade[i] = base > 0 ? Math.atan((sm[j1]-sm[j0])/base) * 180/Math.PI : 0;
+  }
+
+  let maxGround = -1, maxGroundIdx = 0, over = 0, maxUp = 0, maxDown = 0;
+  let distUp = 0, distDown = 0, distFlat = 0;
+  for(let i=0;i<n;i++){
+    if(ground[i] > maxGround){ maxGround = ground[i]; maxGroundIdx = i; }
+    if(grade[i] > maxUp) maxUp = grade[i];
+    if(-grade[i] > maxDown) maxDown = -grade[i];
+    if(i){
+      const d = dist[i] - dist[i-1];
+      if((ground[i] + ground[i-1])/2 >= STEEP_WARN) over += d;
+      const g = (grade[i] + grade[i-1])/2;
+      if(g > FLAT_GRADE) distUp += d; else if(g < -FLAT_GRADE) distDown += d; else distFlat += d;
+    }
+  }
+
   return {up:up, down:down, start:sm[0], end:sm[sm.length-1],
-          min:Math.min.apply(null,sm), max:Math.max.apply(null,sm)};
+          min:Math.min.apply(null,sm), max:Math.max.apply(null,sm),
+          samples:samples, vtx:samples.vtx, dist:dist, ele:sm, ground:ground, grade:grade, aspect:aspect,
+          total:dist[n-1], maxGround:maxGround, maxGroundIdx:maxGroundIdx, over:over,
+          maxUp:maxUp, maxDown:maxDown, distUp:distUp, distDown:distDown, distFlat:distFlat};
 }
 
+/* ---------- Munter time ----------
+   Werner Munter's rule of thumb: 1 km of distance and 100 m of height are one
+   unit each; divide by how many units you cover in an hour. */
+const MUNTER = {
+  ski:  {up:4, flat:6, down:10},
+  foot: {up:4, flat:6, down:6}
+};
+let munterMode = 'ski';
+try { const m = localStorage.getItem('bratthet.munter'); if(MUNTER[m]) munterMode = m; } catch(e){}
+munterModeEl.value = munterMode;
+
+function munterTime(p, mode){
+  const r = MUNTER[mode];
+  const up   = (p.distUp/1000   + p.up/100)   / r.up;
+  const down = (p.distDown/1000 + p.down/100) / r.down;
+  const flat = (p.distFlat/1000) / r.flat;
+  return {up:up, down:down, flat:flat, total:up+down+flat};
+}
+function fmtHours(h){
+  const min = Math.max(5, Math.round(h*60/5)*5);
+  if(min < 60) return min + ' min';
+  const hh = Math.floor(min/60), mm = min % 60;
+  return hh + ' h' + (mm ? ' ' + mm + ' min' : '');
+}
+
+/* Ground steepness classes for the profile and the map, the familiar
+   avalanche-map ramp rather than the editable bands above, so 30° always
+   looks the same here. */
+const GROUND_RAMP = [
+  {min:25, color:'#f2e14c'},
+  {min:30, color:'#f59a2c'},
+  {min:35, color:'#e5412d'},
+  {min:40, color:'#b0247a'},
+  {min:45, color:'#7a3a9a'}
+];
+function groundColor(s){
+  let c = null;
+  for(const r of GROUND_RAMP) if(s >= r.min) c = r.color;
+  return c;
+}
+/* Or the user's own slope classes, matched exactly as the slope layer does:
+   first class in the list whose angle, direction and altitude all fit. */
+function bandColorAt(p, i){
+  const s = p.ground[i], el = p.ele[i], as = p.aspect[i];
+  for(const b of bands){
+    if(s < b.min || s >= b.max) continue;
+    if(b.elMin != null && el < b.elMin) continue;
+    if(b.elMax != null && el > b.elMax) continue;
+    if(b.aspFrom != null && s >= FLAT_BELOW){
+      const width = (b.aspTo - b.aspFrom + 360) % 360;
+      if((as - b.aspFrom + 360) % 360 > width) continue;
+    }
+    return b.color;
+  }
+  return null;
+}
+function inkFor(hex){
+  const [r,g,b] = hexToRgb(hex);
+  return (0.299*r + 0.587*g + 0.114*b) > 150 ? '#111' : '#fff';
+}
+
+let profileColorMode = 'ramp';
+try { const m = localStorage.getItem('bratthet.profileColor'); if(m === 'ramp' || m === 'bands') profileColorMode = m; } catch(e){}
+const profileColorEl = document.getElementById('profileColor');
+const profileKeyEl = document.getElementById('profileKey');
+profileColorEl.value = profileColorMode;
+
+function renderProfileKey(){
+  if(profileColorMode === 'bands'){
+    profileKeyEl.title = 'Colour under the curve: your slope classes, with their direction and altitude filters';
+    profileKeyEl.innerHTML = bands.map(b=>
+      '<span style="background:' + b.color + ';color:' + inkFor(b.color) + '" title="' +
+      esc(aspectText(b) + ' · ' + altText(b)) + '">' + b.min + '–' + b.max + '°' +
+      (isFiltered(b) ? '*' : '') + '</span>').join('');
+  } else {
+    profileKeyEl.title = 'Colour under the curve: steepness of the ground the line crosses';
+    profileKeyEl.innerHTML =
+      GROUND_RAMP.map(r=>'<span style="background:' + r.color + '">' + r.min + '°</span>').join('');
+  }
+}
+renderProfileKey();
+profileColorEl.onchange = ()=>{
+  profileColorMode = profileColorEl.value;
+  try { localStorage.setItem('bratthet.profileColor', profileColorMode); } catch(e){}
+  renderProfileKey();
+  renderProfile();
+};
+
 let gainToken = 0;
+let curProfile = null;
+
+function clearProfile(){
+  curProfile = null;
+  profileLayer.clearLayers();
+  scrubMarker = null;
+  measureSteep.classList.remove('on');
+  measureTime.classList.remove('on');
+  document.body.classList.remove('has-profile');
+}
+
 function updateGain(){
   const token = ++gainToken;
-  if(mpts.length < 2){ measureGain.classList.remove('on'); measureGain.textContent=''; return; }
+  if(mpts.length < 2){
+    measureGain.classList.remove('on'); measureGain.textContent='';
+    clearProfile();
+    return;
+  }
   measureGain.classList.add('on');
   measureGain.innerHTML = '<span class="wait">Reading the profile…</span>';
+  const noData = ()=>{
+    measureGain.innerHTML = '<span class="wait">No elevation data here</span>';
+    clearProfile();
+  };
   elevationProfile(mpts.slice()).then(p=>{
     if(token !== gainToken) return;                 // a newer point won the race
-    if(!p){ measureGain.innerHTML = '<span class="wait">No elevation data here</span>'; return; }
+    if(!p){ noData(); return; }
     measureGain.innerHTML =
       '<span class="up">↑ ' + Math.round(p.up) + ' m</span> · ' +
       '<span class="dn">↓ ' + Math.round(p.down) + ' m</span> · ' +
       '<span class="wait">' + Math.round(p.start) + '→' + Math.round(p.end) + ' m</span>';
+    curProfile = p;
+    showSteep(p);
+    showTime(p);
+    drawProfileOnMap(p);
+    document.body.classList.toggle('has-profile', measuring);
+    renderProfile();
   }).catch(()=>{
-    if(token === gainToken) measureGain.innerHTML = '<span class="wait">No elevation data here</span>';
+    if(token === gainToken) noData();
   });
 }
+
+function showSteep(p){
+  const g = Math.round(p.maxGround);
+  const cls = p.maxGround >= STEEP_WARN ? 'warn' : 'ok';
+  const overTxt = p.over > 0
+    ? ' · ' + fmtLen(p.over) + ' over ' + STEEP_WARN + '°'
+    : ' · all below ' + STEEP_WARN + '°';
+  const track = [];
+  if(p.maxUp >= 1)   track.push('↑ ' + Math.round(p.maxUp) + '°');
+  if(p.maxDown >= 1) track.push('↓ ' + Math.round(p.maxDown) + '°');
+  measureSteep.innerHTML =
+    'Steepest ground <b class="' + cls + '">' + g + '°</b>' + overTxt +
+    '<div class="sub">Steepest track ' + (track.length ? track.join(' · ') : 'flat') + '</div>';
+  measureSteep.classList.add('on');
+}
+
+function showTime(p){
+  const t = munterTime(p, munterMode);
+  munterOut.textContent = fmtHours(t.total);
+  const parts = [];
+  if(t.up   >= 1/24) parts.push('up ' + fmtHours(t.up));
+  if(t.flat >= 1/24) parts.push('flat ' + fmtHours(t.flat));
+  if(t.down >= 1/24) parts.push('down ' + fmtHours(t.down));
+  munterSplit.textContent = (parts.length > 1 ? parts.join(' · ') + ' · ' : '') + 'no breaks included';
+  measureTime.classList.add('on');
+}
+
+munterModeEl.onchange = ()=>{
+  munterMode = munterModeEl.value;
+  try { localStorage.setItem('bratthet.munter', munterMode); } catch(e){}
+  if(curProfile) showTime(curProfile);
+};
+
+/* Red over the stretches that cross ground of 30° or more, and a dot on the
+   single steepest spot, so the answer to "does it stay below 30?" is on the map. */
+let scrubMarker = null;
+function drawProfileOnMap(p){
+  profileLayer.clearLayers();
+  scrubMarker = null;
+  let run = null;
+  for(let i=0;i<p.samples.length;i++){
+    if(p.ground[i] >= STEEP_WARN){
+      if(!run) run = i ? [p.samples[i-1]] : [];
+      run.push(p.samples[i]);
+    } else if(run){
+      run.push(p.samples[i]);
+      L.polyline(run, {color:'#ff4d4d', weight:5, opacity:.95, interactive:false}).addTo(profileLayer);
+      run = null;
+    }
+  }
+  if(run && run.length > 1)
+    L.polyline(run, {color:'#ff4d4d', weight:5, opacity:.95, interactive:false}).addTo(profileLayer);
+
+  const s = p.samples[p.maxGroundIdx];
+  L.circleMarker(s, {radius:5, color:'#fff', weight:2, fillColor: groundColor(p.maxGround) || '#9fd88a',
+    fillOpacity:1, interactive:false})
+    .bindTooltip('steepest ' + Math.round(p.maxGround) + '°', {permanent:true, direction:'left',
+      className:'meas', offset:[-7,0]})
+    .addTo(profileLayer);
+}
+
+/* ---------- elevation profile at the bottom of the screen ---------- */
+let pf = null;   // geometry of the last drawing, for the scrubber
+
+function niceStep(range, maxTicks, steps){
+  for(const s of steps) if(range/s <= maxTicks) return s;
+  return steps[steps.length-1];
+}
+
+function renderProfile(){
+  const p = curProfile;
+  const W = profileSvg.clientWidth, H = profileSvg.clientHeight;
+  if(!p || !W || !H) return;
+  const L0 = 34, R0 = 6, T0 = 12, B0 = 14;
+  const cw = W - L0 - R0, ch = H - T0 - B0;
+
+  let lo = p.min, hi = p.max;
+  const minSpan = 40;
+  if(hi - lo < minSpan){ const mid = (hi+lo)/2; lo = mid - minSpan/2; hi = mid + minSpan/2; }
+  const pad = (hi - lo) * .06; lo -= pad; hi += pad;
+  const X = d => L0 + d / p.total * cw;
+  const Y = e => T0 + (hi - e) / (hi - lo) * ch;
+  const base = T0 + ch;
+  pf = {L0:L0, cw:cw, X:X, Y:Y, T0:T0, base:base};
+
+  const out = [];
+  /* horizontal grid and height labels */
+  const ys = niceStep(hi - lo, 3, [10,20,25,50,100,200,250,500,1000]);
+  for(let v = Math.ceil(lo/ys)*ys; v <= hi; v += ys){
+    const y = Y(v).toFixed(1);
+    out.push('<line class="grid" x1="' + L0 + '" x2="' + (W-R0) + '" y1="' + y + '" y2="' + y + '"/>');
+    out.push('<text class="lbl" x="' + (L0-4) + '" y="' + y + '" dy="3" text-anchor="end">' + v + '</text>');
+  }
+  /* distance labels along the bottom */
+  const maxX = Math.max(2, Math.floor(cw / 60));
+  const xs = niceStep(p.total, maxX, [50,100,200,250,500,1000,2000,2500,5000,10000,20000,50000]);
+  for(let d = 0; d <= p.total + 1e-6; d += xs){
+    const x = X(d);
+    const t = d === 0 ? '0' : d >= 1000 ? (d/1000) + ' km' : d + ' m';
+    const anchor = d === 0 ? 'start' : (x > W - 24 ? 'end' : 'middle');
+    out.push('<text class="lbl" x="' + x.toFixed(1) + '" y="' + (H-2) + '" text-anchor="' + anchor + '">' + t + '</text>');
+  }
+
+  /* fill under the curve, coloured by the ground the line crosses */
+  const n = p.ele.length;
+  const col = profileColorMode === 'bands'
+    ? i => bandColorAt(p, i)
+    : i => groundColor((p.ground[i] + p.ground[Math.min(n-1, i+1)]) / 2);
+  let a = 0;
+  while(a < n-1){
+    const c = col(a);
+    let b = a + 1;
+    while(b < n-1 && col(b) === c) b++;
+    let d = 'M' + X(p.dist[a]).toFixed(1) + ',' + base;
+    for(let i=a;i<=b;i++) d += 'L' + X(p.dist[i]).toFixed(1) + ',' + Y(p.ele[i]).toFixed(1);
+    d += 'L' + X(p.dist[b]).toFixed(1) + ',' + base + 'Z';
+    out.push(c ? '<path d="' + d + '" fill="' + c + '" fill-opacity=".7"/>'
+               : '<path class="flat" d="' + d + '"/>');
+    a = b;
+  }
+
+  /* the tapped points */
+  (p.vtx || []).slice(1, -1).forEach(k=>{
+    const x = X(p.dist[k]).toFixed(1);
+    out.push('<line class="vtx" x1="' + x + '" x2="' + x + '" y1="' + T0 + '" y2="' + base + '"/>');
+  });
+
+  /* the profile line */
+  let d = '';
+  for(let i=0;i<n;i++) d += (i ? 'L' : 'M') + X(p.dist[i]).toFixed(1) + ',' + Y(p.ele[i]).toFixed(1);
+  out.push('<path class="curve" d="' + d + '"/>');
+
+  /* steepest ground, labelled */
+  const k = p.maxGroundIdx, kx = X(p.dist[k]), ky = Y(p.ele[k]);
+  out.push('<circle cx="' + kx.toFixed(1) + '" cy="' + ky.toFixed(1) + '" r="3" fill="#fff"/>');
+  out.push('<text class="peak" x="' + Math.min(W-R0-12, Math.max(L0+12, kx)).toFixed(1) +
+           '" y="' + Math.max(10, ky - 6).toFixed(1) + '">' + Math.round(p.maxGround) + '°</text>');
+
+  /* scrubber, hidden until used */
+  out.push('<line class="scrub" id="pfScrub" y1="' + T0 + '" y2="' + base + '" visibility="hidden"/>');
+  out.push('<circle class="scrubDot" id="pfDot" r="4" visibility="hidden"/>');
+
+  profileSvg.setAttribute('viewBox', '0 0 ' + W + ' ' + H);
+  profileSvg.innerHTML = out.join('');
+  profileRead.textContent = 'Drag along the curve to find the spot on the map';
+}
+
+function scrubTo(clientX){
+  const p = curProfile;
+  if(!p || !pf) return;
+  const r = profileSvg.getBoundingClientRect();
+  const f = Math.min(1, Math.max(0, (clientX - r.left - pf.L0) / pf.cw));
+  const want = f * p.total;
+  let lo = 0, hi = p.dist.length - 1;
+  while(hi - lo > 1){ const m = (lo+hi) >> 1; if(p.dist[m] <= want) lo = m; else hi = m; }
+  const i = (want - p.dist[lo] <= p.dist[hi] - want) ? lo : hi;
+
+  const x = pf.X(p.dist[i]), y = pf.Y(p.ele[i]);
+  const line = document.getElementById('pfScrub'), dot = document.getElementById('pfDot');
+  line.setAttribute('x1', x); line.setAttribute('x2', x); line.setAttribute('visibility', 'visible');
+  dot.setAttribute('cx', x); dot.setAttribute('cy', y); dot.setAttribute('visibility', 'visible');
+
+  const g = p.grade[i];
+  profileRead.innerHTML =
+    fmtLen(p.dist[i]) + ' · <b>' + Math.round(p.ele[i]) + ' m</b> · ground <b>' +
+    Math.round(p.ground[i]) + '°</b> · track ' + (Math.abs(g) < 1 ? 'flat' : (g > 0 ? '↑ ' : '↓ ') + Math.round(Math.abs(g)) + '°');
+
+  if(!scrubMarker){
+    scrubMarker = L.circleMarker(p.samples[i], {radius:6, color:'#12232c', weight:2,
+      fillColor:'#ffb020', fillOpacity:1, interactive:false}).addTo(profileLayer);
+  } else scrubMarker.setLatLng(p.samples[i]);
+}
+function hideScrub(){
+  const line = document.getElementById('pfScrub'), dot = document.getElementById('pfDot');
+  if(line) line.setAttribute('visibility', 'hidden');
+  if(dot) dot.setAttribute('visibility', 'hidden');
+  if(scrubMarker){ profileLayer.removeLayer(scrubMarker); scrubMarker = null; }
+  profileRead.textContent = 'Drag along the curve to find the spot on the map';
+}
+let scrubbing = false;
+profileSvg.addEventListener('pointerdown', e=>{
+  scrubbing = true;
+  try { profileSvg.setPointerCapture(e.pointerId); } catch(err){}
+  scrubTo(e.clientX);
+});
+profileSvg.addEventListener('pointermove', e=>{
+  if(scrubbing || e.pointerType === 'mouse') scrubTo(e.clientX);
+});
+profileSvg.addEventListener('pointerup', ()=>{ scrubbing = false; });
+profileSvg.addEventListener('pointercancel', ()=>{ scrubbing = false; });
+profileSvg.addEventListener('pointerleave', e=>{ if(e.pointerType === 'mouse' && !scrubbing) hideScrub(); });
+/* keep clicks on the profile from reaching the map underneath */
+L.DomEvent.disableClickPropagation(profileBox);
+L.DomEvent.disableScrollPropagation(profileBox);
+window.addEventListener('resize', debounce(renderProfile, 120));
+
+/* ---------- GPX export ----------
+   A track rather than a route: that is what Garmin, Suunto, Coros and the
+   phone apps import as a course, and the elevations let a watch show the
+   climb ahead. Points are thinned to about one every 20 m. */
+function xmlEsc(t){ return String(t).replace(/[<>&"']/g, c=>({'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;',"'":'&apos;'}[c])); }
+
+function buildGpx(pts, p){
+  const now = new Date();
+  const stamp = now.toISOString().slice(0,10);
+  const name = 'Bratthet route ' + stamp;
+  const rows = [];
+  if(p){
+    const keep = new Set(p.vtx || []);
+    let last = -Infinity;
+    for(let i=0;i<p.samples.length;i++){
+      const isV = keep.has(i) || i === p.samples.length-1;
+      if(!isV && p.dist[i] - last < 20) continue;
+      last = p.dist[i];
+      const s = p.samples[i];
+      rows.push('      <trkpt lat="' + s.lat.toFixed(6) + '" lon="' + s.lng.toFixed(6) + '"><ele>' +
+                p.ele[i].toFixed(1) + '</ele></trkpt>');
+    }
+  } else {
+    pts.forEach(s=>rows.push('      <trkpt lat="' + s.lat.toFixed(6) + '" lon="' + s.lng.toFixed(6) + '"></trkpt>'));
+  }
+  let total = 0;
+  for(let i=1;i<pts.length;i++) total += map.distance(pts[i-1], pts[i]);
+  let desc = fmtLen(total);
+  if(p){
+    desc += ', up ' + Math.round(p.up) + ' m, down ' + Math.round(p.down) + ' m, steepest ground ' +
+            Math.round(p.maxGround) + '°, Munter ' + fmtHours(munterTime(p, munterMode).total) +
+            ' ' + (munterMode === 'ski' ? 'on skis' : 'on foot');
+  }
+  return {
+    name: name,
+    file: 'bratthet-route-' + stamp + '-' + String(now.getHours()).padStart(2,'0') + String(now.getMinutes()).padStart(2,'0') + '.gpx',
+    xml:
+'<?xml version="1.0" encoding="UTF-8"?>\n' +
+'<gpx version="1.1" creator="Bratthet" xmlns="http://www.topografix.com/GPX/1/1">\n' +
+'  <metadata>\n    <name>' + xmlEsc(name) + '</name>\n    <time>' + now.toISOString() + '</time>\n  </metadata>\n' +
+'  <trk>\n    <name>' + xmlEsc(name) + '</name>\n    <desc>' + xmlEsc(desc) + '</desc>\n    <trkseg>\n' +
+rows.join('\n') + '\n    </trkseg>\n  </trk>\n</gpx>\n'
+  };
+}
+
+function downloadBlob(blob, filename){
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = filename;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(()=>URL.revokeObjectURL(url), 4000);
+}
+
+async function exportGpx(){
+  if(mpts.length < 2) return;
+  const pts = mpts.slice();
+  let p = null;
+  try { p = await elevationProfile(pts); } catch(e){ p = null; }
+  const g = buildGpx(pts, p);
+  const blob = new Blob([g.xml], {type:'application/gpx+xml'});
+  /* On a phone, the share sheet is the way into Garmin Connect, Suunto,
+     FATMAP-style apps and the like; elsewhere a plain download. */
+  const touch = window.matchMedia && matchMedia('(pointer:coarse)').matches;
+  if(touch && navigator.canShare){
+    const file = new File([blob], g.file, {type:'application/gpx+xml'});
+    if(navigator.canShare({files:[file]})){
+      try { await navigator.share({files:[file], title:g.name}); return; }
+      catch(err){ if(err && err.name === 'AbortError') return; }
+    }
+  }
+  downloadBlob(blob, g.file);
+}
+gpxBtn.onclick = ()=>{ exportGpx(); };
 
 function legLength(a,b){ return map.distance(a,b); }
 
 function drawMeasure(){
   measureLayer.clearLayers();
+  gpxBtn.disabled = mpts.length < 2;
   if(mpts.length > 1){
     L.polyline(mpts, {color:'#ffb020', weight:3, opacity:.95, interactive:false})
       .addTo(measureLayer);
@@ -976,6 +1996,7 @@ function drawMeasure(){
                 className:'meas', offset:[7,0]}).openTooltip();
   });
 
+  profileLayer.eachLayer(l=>{ if(l.bringToFront) l.bringToFront(); });
   if(!mpts.length){
     measureTotal.textContent = 'Tap the map to start the line';
     measureSub.textContent = 'Points are joined by straight lines.';
@@ -1002,6 +2023,9 @@ function setMeasuring(on){
   document.getElementById('map').classList.toggle('measuring', on);
   if(on){
     drawMeasure();
+  } else {
+    document.body.classList.remove('has-profile');
+    hideScrub();
   }
 }
 
@@ -1123,9 +2147,561 @@ async function startLocate(){
 
 locBtn.onclick = ()=>{ watchId === null ? startLocate() : stopLocate(); };
 
+/* ---------- small shared helpers ---------- */
+function isoDay(d){
+  const z = n => String(n).padStart(2,'0');
+  return d.getFullYear() + '-' + z(d.getMonth()+1) + '-' + z(d.getDate());
+}
+function addDays(iso, n){
+  const d = new Date(iso + 'T12:00:00');
+  d.setDate(d.getDate() + n);
+  return isoDay(d);
+}
+const TODAY = isoDay(new Date());
+function niceDate(iso){
+  if(iso === TODAY) return 'today';
+  if(iso === addDays(TODAY, 1)) return 'tomorrow';
+  if(iso === addDays(TODAY, -1)) return 'yesterday';
+  return new Date(iso + 'T12:00:00').toLocaleDateString(undefined, {day:'numeric', month:'short', year:'numeric'});
+}
+function esc(t){ return String(t).replace(/[&<>"]/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+function debounce(fn, ms){ let h; return ()=>{ clearTimeout(h); h = setTimeout(fn, ms); }; }
+function fetchJson(url, ms){
+  const ctl = new AbortController();
+  const timer = setTimeout(()=>ctl.abort(), ms || 15000);
+  return fetch(url, {signal:ctl.signal, headers:{Accept:'application/json'}})
+    .then(r=>{ if(!r.ok) throw new Error(r.status + ' ' + url); return r.json(); })
+    .finally(()=>clearTimeout(timer));
+}
+
+/* ETRS89 / UTM zone 33N (EPSG:25833), the grid NVE serves seNorge in.
+   Krüger series to third order: millimetre agreement with PROJ across Norway. */
+function toUTM33(lat, lon){
+  const a = 6378137, f = 1/298.257222101, k0 = 0.9996;
+  const n = f/(2-f), A = a/(1+n)*(1 + n*n/4 + n*n*n*n/64);
+  const al = [n/2 - 2*n*n/3 + 5*n*n*n/16, 13*n*n/48 - 3*n*n*n/5, 61*n*n*n/240];
+  const e = Math.sqrt(f*(2-f));
+  const phi = lat*Math.PI/180, lam = (lon - 15)*Math.PI/180;
+  const t = Math.sinh(Math.atanh(Math.sin(phi)) - e*Math.atanh(e*Math.sin(phi)));
+  const xi = Math.atan2(t, Math.cos(lam)), eta = Math.atanh(Math.sin(lam)/Math.sqrt(1+t*t));
+  let E = eta, N = xi;
+  for(let j=1; j<=3; j++){
+    E += al[j-1]*Math.cos(2*j*xi)*Math.sinh(2*j*eta);
+    N += al[j-1]*Math.sin(2*j*xi)*Math.cosh(2*j*eta);
+  }
+  return [500000 + k0*A*E, k0*A*N];
+}
+
+/* ---------- snow right now ----------
+   seNorge (NVE) is only published in UTM, never in web mercator. Each map tile
+   therefore asks NVE for the UTM rectangle around it and draws that image back
+   with an affine transform, which absorbs the few degrees of grid rotation
+   between the two projections. Over one tile the rest of the difference is far
+   below the model's 1 km cells. */
+const NVE_WMS = 'https://kart.nve.no/enterprise/services/seNorgeGrid_png/ImageServer/WMSServer';
+const NVE_LEGEND = 'https://nve-skytjenester-prod-imagemanager.s3.eu-north-1.amazonaws.com/static/seNorgeGridLegend/';
+let snowErrors = 0, snowLoads = 0;
+
+const SeNorgeLayer = L.GridLayer.extend({
+  createTile: function(coords, done){
+    const tile = document.createElement('canvas');
+    tile.width = tile.height = 256;
+    const m = this._map, sz = 256;
+    const at = (dx, dy)=> m.unproject(L.point((coords.x+dx)*sz, (coords.y+dy)*sz), coords.z);
+    const nw = at(0,0), ne = at(1,0), sw = at(0,1), se = at(1,1);
+    const nb = REGIONS[0].bounds;                       // [south, west, north, east]
+    if(se.lat > nb[2] || nw.lat < nb[0] || se.lng < nb[1] || nw.lng > nb[3]){
+      setTimeout(()=>done(null, tile), 0);
+      return tile;
+    }
+    const P = [nw, ne, sw, se].map(p=>toUTM33(p.lat, p.lng));
+    const Es = P.map(p=>p[0]), Ns = P.map(p=>p[1]);
+    const minE = Math.min(...Es), maxE = Math.max(...Es), minN = Math.min(...Ns), maxN = Math.max(...Ns);
+    const W = 256, H = 256, sx = (maxE-minE)/W, sy = (maxN-minN)/H;
+
+    /* UTM -> tile pixels, from three corners of the tile */
+    const [E0, N0] = P[0];
+    const e1 = [P[1][0]-E0, P[1][1]-N0], e2 = [P[2][0]-E0, P[2][1]-N0];
+    const det = e1[0]*e2[1] - e2[0]*e1[1];
+    const a11 = sz*e2[1]/det, a12 = -sz*e2[0]/det, a21 = -sz*e1[1]/det, a22 = sz*e1[0]/det;
+    const dE0 = minE-E0, dN0 = maxN-N0;
+
+    const url = NVE_WMS + '?SERVICE=WMS&VERSION=1.1.1&REQUEST=GetMap&STYLES=' +
+      '&LAYERS=' + this.options.variable + '&SRS=EPSG:25833' +
+      '&BBOX=' + [minE, minN, maxE, maxN].map(v=>v.toFixed(1)).join(',') +
+      '&WIDTH=' + W + '&HEIGHT=' + H + '&FORMAT=image/png&TRANSPARENT=TRUE&TIME=' + this.options.date;
+    const img = new Image();
+    img.onload = ()=>{
+      const ctx = tile.getContext('2d');
+      ctx.imageSmoothingEnabled = false;                 // keep the 1 km cells honest
+      ctx.setTransform(a11*sx, a21*sx, -a12*sy, -a22*sy, a11*dE0 + a12*dN0, a21*dE0 + a22*dN0);
+      ctx.drawImage(img, 0, 0);
+      snowLoads++; snowTileNews();
+      done(null, tile);
+    };
+    img.onerror = ()=>{ snowErrors++; snowTileNews(); done(null, tile); };
+    img.src = url;
+    return tile;
+  }
+});
+
+function gibsLayer(id, level, ext, date){
+  return L.tileLayer('https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/' + id + '/default/' + date +
+    '/GoogleMapsCompatible_Level' + level + '/{z}/{y}/{x}.' + ext,
+    {maxZoom:22, maxNativeZoom:level, pane:'snowPane', attribution:'Imagery NASA EOSDIS GIBS'});
+}
+const SNOW_SOURCES = {
+  sd:      {nve:true, variable:'sd',
+            text: d=>'seNorge snow depth for ' + niceDate(d) + ', modelled on a 1 km grid. Norway only.'},
+  sdfsw3d: {nve:true, variable:'sdfsw3d',
+            text: d=>'seNorge new snow in the three days up to ' + niceDate(d) + ', 1 km grid. Norway only.'},
+  ndsi:    {make: d=>gibsLayer('MODIS_Terra_NDSI_Snow_Cover', 8, 'png', d),
+            text: d=>'MODIS snow cover for ' + niceDate(d) + ', 500 m. Cloud and night are left blank.'},
+  modis:   {make: d=>gibsLayer('MODIS_Terra_CorrectedReflectance_TrueColor', 9, 'jpg', d),
+            text: d=>'MODIS Terra photo for ' + niceDate(d) + ', 250 m. If it is white everywhere it is probably cloud: step back a day.'},
+  viirs:   {make: d=>gibsLayer('VIIRS_NOAA20_CorrectedReflectance_TrueColor', 9, 'jpg', d),
+            text: d=>'VIIRS NOAA-20 photo for ' + niceDate(d) + ', 375 m, a different overpass time from MODIS.'},
+  s2c:     {undated:true,
+            make: ()=>L.tileLayer('https://tiles.maps.eox.at/wmts/1.0.0/s2cloudless-2023_3857/default/g/{z}/{y}/{x}.jpg',
+              {maxZoom:22, maxNativeZoom:14, pane:'snowPane',
+               attribution:'Sentinel-2 cloudless 2023 by EOX IT Services GmbH (contains modified Copernicus Sentinel data 2023)'}),
+            text: ()=>'Cloud-free mosaic of 2023, 10 m. Built mostly from summer scenes, so it shows glaciers, not this week\u2019s snowline.'},
+  custom:  {make: d=>{
+              const tmpl = document.getElementById('snowUrl').value.trim();
+              if(!tmpl) return null;
+              return L.tileLayer(tmpl.split('{date}').join(d), {maxZoom:22, pane:'snowPane', attribution:'Your imagery'});
+            },
+            text: d=>document.getElementById('snowUrl').value.trim()
+              ? 'Your tiles for ' + niceDate(d) + '.'
+              : 'Paste a tile URL with {z}, {x}, {y} and {date} in it, for example a Sentinel Hub WMTS layer.'}
+};
+
+const snowOn = document.getElementById('snowOn');
+const snowSrcEl = document.getElementById('snowSrc');
+const snowDateEl = document.getElementById('snowDate');
+const snowStatus = document.getElementById('snowStatus');
+snowDateEl.value = TODAY;
+snowDateEl.max = addDays(TODAY, 9);                   // seNorge runs nine days ahead
+let snowLayer = null, snowKey = '', snowSrcNow = '';
+
+function snowSource(){
+  const c = snowSrcEl.value;
+  if(c !== 'auto') return c;
+  return regionFor(map.getCenter()).key === 'no' ? 'sd' : 'modis';
+}
+function snowTileNews(){
+  const src = SNOW_SOURCES[snowSrcNow];
+  if(!src || !src.nve || !snowOn.checked) return;   // late tiles after switching off
+  if(snowErrors && !snowLoads){
+    snowStatus.classList.add('warn');
+    snowStatus.textContent = 'NVE sent no image for ' + niceDate(snowDateEl.value) +
+      '. The day may not be computed yet, or the service is down; try the day before.';
+  } else {
+    snowStatus.classList.remove('warn');
+    snowStatus.textContent = src.text(snowDateEl.value);
+  }
+}
+function updateS2Link(){
+  const c = map.getCenter(), d = snowDateEl.value || TODAY;
+  document.getElementById('s2Link').href = 'https://browser.dataspace.copernicus.eu/?zoom=' + map.getZoom() +
+    '&lat=' + c.lat.toFixed(4) + '&lng=' + c.lng.toFixed(4) +
+    '&datasetId=S2_L2A_CDAS&layerId=1_TRUE_COLOR' +
+    '&fromTime=' + d + 'T00:00:00.000Z&toTime=' + d + 'T23:59:59.999Z';
+}
+function applySnow(){
+  const on = snowOn.checked, key = snowSource(), src = SNOW_SOURCES[key];
+  const date = snowDateEl.value || TODAY;
+  document.getElementById('snowUrl').hidden = key !== 'custom';
+  document.getElementById('snowDateRow').style.display = src.undated ? 'none' : '';
+  const leg = document.getElementById('snowLegend');
+  leg.hidden = !(on && src.nve);
+  if(on && src.nve){
+    leg.onerror = ()=>{ leg.hidden = true; };          // no legend beats a broken image
+    leg.src = NVE_LEGEND + src.variable + '.png';
+  }
+  updateS2Link();
+
+  const want = on ? key + '|' + date + '|' + (key === 'custom' ? document.getElementById('snowUrl').value : '') : '';
+  if(want === snowKey) return;
+  snowKey = want;
+  if(snowLayer){ map.removeLayer(snowLayer); snowLayer = null; }
+  snowStatus.classList.remove('warn');
+  if(!on){ snowStatus.textContent = ''; return; }
+
+  snowSrcNow = key; snowErrors = 0; snowLoads = 0;
+  snowLayer = src.nve
+    ? new SeNorgeLayer({variable:src.variable, date:date, pane:'snowPane', maxZoom:22,
+                        attribution:'Snow © NVE / seNorge, NLOD'})
+    : src.make(date);
+  snowStatus.textContent = src.text(date);
+  if(!snowLayer) return;
+  snowLayer.setOpacity(+document.getElementById('snowOpacity').value/100);
+  snowLayer.addTo(map);
+  if(src.nve && regionFor(map.getCenter()).key !== 'no'){
+    snowStatus.textContent += ' Pan to Norway to see it.';
+  }
+}
+function stepSnowDate(n){
+  snowDateEl.value = addDays(snowDateEl.value || TODAY, n);
+  if(!snowOn.checked){ snowOn.checked = true; }
+  applySnow();
+}
+snowOn.onchange = applySnow;
+snowSrcEl.onchange = ()=>{ if(!snowOn.checked) snowOn.checked = true; applySnow(); };
+snowDateEl.onchange = applySnow;
+document.getElementById('snowPrev').onclick = ()=>stepSnowDate(-1);
+document.getElementById('snowNext').onclick = ()=>stepSnowDate(1);
+document.getElementById('snowToday').onclick = ()=>{ snowDateEl.value = TODAY; applySnow(); };
+document.getElementById('snowUrl').onchange = applySnow;
+document.getElementById('snowOpacity').oninput = e=>{ if(snowLayer) snowLayer.setOpacity(e.target.value/100); };
+updateS2Link();
+
+/* ---------- avalanche forecast regions ----------
+   Geometry: the official micro-regions every EAWS member publishes through
+   regions.avalanches.org. Ratings: Varsom's own API for Norway, and the EAWS
+   daily files (the ones avalanche.report and avalanches.org draw from) for
+   everyone else. Services are listed with the rough box they cover, so only
+   the ones in view are ever downloaded. */
+const EAWS_REGIONS = 'https://regions.avalanches.org/';
+const EAWS_STATIC  = 'https://static.avalanche.report/eaws_bulletins/';
+const VARSOM_API   = 'https://api01.nve.no/hydrology/forecast/avalanche/v6.3.2/api/';
+
+const DANGER = [null,
+  {c:'#ccff66', n:'Low'}, {c:'#ffff00', n:'Moderate'}, {c:'#ff9900', n:'Considerable'},
+  {c:'#ff0000', n:'High'}, {c:'#6b0000', n:'Very high', ink:'#fff'}];
+const DANGER_WORDS = {low:1, moderate:2, considerable:3, high:4, very_high:5, veryhigh:5};
+
+/* id, link text, forecast page, [west, south, east, north], and whether EAWS
+   publishes micro-region geometry for it. From regions.avalanches.org. */
+const SERVICES = [
+  ['NO',  'varsom.no', 'https://www.varsom.no/en/avalanches/avalanche-warnings/', [4.5,57.9,31.5,71.3]],
+  ['SE',  'lavinprognoser.se', 'https://lavinprognoser.se/en/', [11.97,62.53,19.78,68.58]],
+  ['FI',  'FMI', 'https://en.ilmatieteenlaitos.fi/avalanche-forecast', [20.55,66.13,29.48,69.15]],
+  ['CH',  'SLF (whiterisk.ch)', 'https://whiterisk.ch/en/conditions', [5.956,45.818,10.492,47.807]],
+  ['LI',  'SLF (whiterisk.ch)', 'https://whiterisk.ch/en/conditions', [9.472,47.049,9.635,47.271], false],
+  ['FR',  'Météo-France', 'https://meteofrance.com/meteo-montagne', [-1.31,41.70,9.28,46.40]],
+  ['AT-07','avalanche.report', 'https://avalanche.report', [10.10,46.65,12.96,47.74]],
+  ['IT-32-BZ','avalanche.report', 'https://avalanche.report', [10.38,46.22,12.48,47.09]],
+  ['IT-32-TN','avalanche.report', 'https://avalanche.report', [10.45,45.67,11.96,46.53]],
+  ['AT-02','LWD Kärnten', 'https://lawinenwarndienst.ktn.gv.at/?lang=en', [12.66,46.37,15.07,47.13]],
+  ['AT-03','LWD Niederösterreich', 'https://www.lawinenwarndienst-niederoesterreich.at', [14.47,47.42,16.37,48.17]],
+  ['AT-04','LWD Oberösterreich', 'https://oberoesterreich.avalanche-warnings.eu', [13.44,47.46,14.77,48.03]],
+  ['AT-05','LWD Salzburg', 'https://lawine.salzburg.at/en', [12.08,46.94,14.00,47.83]],
+  ['AT-06','LWD Steiermark', 'https://www.lawine-steiermark.at', [13.56,46.64,16.17,47.83]],
+  ['AT-08','LWD Vorarlberg', 'https://warnung.vorarlberg.at/vtgdb/dist/index.html#//lwd_lagebericht_en.html', [9.53,46.84,10.24,47.60]],
+  ['DE-BY','LWD Bayern', 'https://lawinenwarndienst.bayern.de/', [9.97,47.27,13.10,47.83]],
+  ['IT-25-SO-LI','Livigno (ALPSOLUT)', 'https://www.livigno.eu/en/avalanche-bulletin', [10.04,46.42,10.22,46.63]],
+  ['IT-21','AINEVA', 'https://bollettini-en.aineva.it', [6.63,44.06,8.70,46.46]],
+  ['IT-23','AINEVA', 'https://bollettini-en.aineva.it', [6.80,45.47,7.94,45.99]],
+  ['IT-25','AINEVA', 'https://bollettini-en.aineva.it', [8.59,44.68,10.83,46.63]],
+  ['IT-34','AINEVA', 'https://bollettini-en.aineva.it', [10.64,45.53,12.73,46.68]],
+  ['IT-36','AINEVA', 'https://bollettini-en.aineva.it', [12.32,45.98,13.72,46.65]],
+  ['IT-57','AINEVA', 'https://bollettini-en.aineva.it', [12.19,42.69,13.59,43.87]],
+  ['SI',  'ARSO', 'https://meteo.arso.gov.si/met/en/weather/bulletin/mountain/avalanche/bulletin/', [13.38,45.42,16.08,46.66]],
+  ['AD',  'SMA Andorra', 'https://www.meteo.ad/en/snowstate', [1.42,42.44,1.78,42.66]],
+  ['ES-CT-L','Lauegi d\u2019Aran', 'https://lauegi.report/en', [0.64,42.59,1.04,42.86]],
+  ['ES-CT','ICGC', 'https://bpa.icgc.cat', [0.71,42.12,2.41,42.79]],
+  ['ES-AR','Aludes Aragón', 'https://aludes.aragon.es/', [-0.86,42.46,0.77,42.93]],
+  ['ES',  'AEMET', 'https://www.aemet.es/es/eltiempo/prediccion/montana/boletin_peligro_aludes', [-5.12,40.72,-3.72,43.32]],
+  ['GB',  'SAIS', 'https://www.sais.gov.uk', [-6.23,56.39,-2.80,57.71]],
+  ['IS',  'Veðurstofa Íslands', 'https://en.vedur.is/avalanches/forecast/', [-23.83,63.94,-13.50,66.20]],
+  ['CZ',  'HS ČR', 'https://www.horskasluzba.cz/cz/pocasi-na-horach/lavinova-predpoved', [15.36,49.88,17.64,50.81]],
+  ['SK',  'avalanches.sk', 'https://avalanches.sk/', [18.59,48.79,20.38,49.30]],
+  ['PL-12','TOPR', 'https://lawiny.topr.pl/', [19.76,49.18,20.13,49.30]],
+  ['PL',  'GOPR', 'https://www.gopr.pl/en/avalanches', [15.46,49.00,22.89,50.82]],
+  ['RO',  'ANM', 'https://www.meteoromania.ro/Upload-Produse/nivologie/nivologie.pdf', [22.32,45.11,26.10,47.64]],
+  ['UA',  'UHMC', 'https://www.meteo.gov.ua/en/Sniholavinni-poperedzhennya', [22.43,47.72,25.52,49.33]]
+].map(([id, name, url, bbox, geo])=>({id, name, url, bbox, geo: geo !== false,
+  area: (bbox[2]-bbox[0])*(bbox[3]-bbox[1])}));
+const SERVICE_BY_ID = new Map(SERVICES.map(s=>[s.id, s]));
+/* The finest (smallest) service wins where boxes overlap, e.g. Livigno inside Lombardy. */
+const SERVICES_FINE_FIRST = SERVICES.slice().sort((a,b)=>a.area - b.area);
+
+/* ----- geometry helpers ----- */
+function boxHas(b, ll){ return ll.lng >= b[0] && ll.lng <= b[2] && ll.lat >= b[1] && ll.lat <= b[3]; }
+function boxMeets(b, lb){ return b[0] <= lb.getEast() && b[2] >= lb.getWest() && b[1] <= lb.getNorth() && b[3] >= lb.getSouth(); }
+function inRing(x, y, r){
+  let inside = false;
+  for(let i=0, j=r.length-1; i<r.length; j=i++){
+    const xi = r[i][0], yi = r[i][1], xj = r[j][0], yj = r[j][1];
+    if((yi > y) !== (yj > y) && x < (xj-xi)*(y-yi)/(yj-yi) + xi) inside = !inside;
+  }
+  return inside;
+}
+function inPoly(x, y, poly){
+  if(!inRing(x, y, poly[0])) return false;
+  for(let k=1; k<poly.length; k++) if(inRing(x, y, poly[k])) return false;
+  return true;
+}
+function geomHas(g, ll){
+  if(!g) return false;
+  if(g.type === 'Polygon') return inPoly(ll.lng, ll.lat, g.coordinates);
+  if(g.type === 'MultiPolygon') return g.coordinates.some(p=>inPoly(ll.lng, ll.lat, p));
+  if(g.type === 'GeometryCollection') return g.geometries.some(x=>geomHas(x, ll));
+  return false;
+}
+function geomBox(g){
+  const b = [Infinity, Infinity, -Infinity, -Infinity];
+  (function walk(c){
+    if(typeof c[0] === 'number'){ b[0]=Math.min(b[0],c[0]); b[1]=Math.min(b[1],c[1]); b[2]=Math.max(b[2],c[0]); b[3]=Math.max(b[3],c[1]); }
+    else c.forEach(walk);
+  })(g.type === 'GeometryCollection' ? g.geometries.map(x=>x.coordinates) : g.coordinates);
+  return b;
+}
+/* Region files can hold retired regions alongside current ones. */
+function currentFeatures(fc){
+  return (fc.features || []).filter(f=>{
+    const p = f.properties || {};
+    if(!f.geometry || !p.id) return false;
+    if(p.start_date && String(p.start_date).slice(0,10) > TODAY) return false;
+    if(p.end_date && String(p.end_date).slice(0,10) <= TODAY) return false;
+    return true;
+  }).map(f=>{ f.box = geomBox(f.geometry); return f; });
+}
+
+/* ----- downloads, each cached as a promise ----- */
+const regionCache = new Map(), outlineCache = new Map(), ratingCache = new Map();
+let regionNames = null;
+function loadRegions(id){
+  if(!regionCache.has(id)){
+    regionCache.set(id, fetchJson(EAWS_REGIONS + 'micro-regions/' + id + '_micro-regions.geojson.json', 30000)
+      .then(currentFeatures)
+      .catch(err=>{ regionCache.delete(id); throw err; }));
+  }
+  return regionCache.get(id);
+}
+function loadOutline(id){
+  if(!outlineCache.has(id)){
+    outlineCache.set(id, fetchJson(EAWS_REGIONS + 'outline/' + id + '_outline.geojson.json')
+      .then(fc=>(fc.features || []).filter(f=>f.geometry))
+      .catch(()=>null));
+  }
+  return outlineCache.get(id);
+}
+function loadNames(){
+  if(!regionNames){
+    regionNames = fetchJson(EAWS_REGIONS + 'micro-regions_names/en.json').catch(()=>({}));
+  }
+  return regionNames;
+}
+function levelOf(v){
+  if(typeof v === 'number') return v;
+  const n = parseInt(v, 10);
+  if(!isNaN(n)) return n;
+  return DANGER_WORDS[String(v).toLowerCase().replace(/[\s-]/g, '_')] || 0;
+}
+/* EAWS keys look like "FR-07", "FR-07:high", "FR-07:low:pm". */
+function parseEaws(j){
+  const out = new Map(), r = (j && j.maxDangerRatings) || {};
+  Object.keys(r).forEach(k=>{
+    const [rid, ...q] = k.split(':'), v = levelOf(r[k]);
+    const o = out.get(rid) || {max:0};
+    if(!q.length) o.max = Math.max(o.max, v);
+    else if(q.length === 1 && q[0] === 'high') o.hi = v;
+    else if(q.length === 1 && q[0] === 'low') o.lo = v;
+    if(q.length && !r[rid]) o.max = Math.max(o.max, v);
+    out.set(rid, o);
+  });
+  return out;
+}
+async function eawsRatings(id, date){
+  /* The archive moved one folder down in 2025; try the new place first. */
+  for(const base of [EAWS_STATIC + 'eaws_bulletins/' + date + '/', EAWS_STATIC + date + '/']){
+    try { return parseEaws(await fetchJson(base + date + '-' + id + '.ratings.json')); }
+    catch(e){ /* not there, or not published */ }
+  }
+  return new Map();
+}
+async function varsomRatings(date){
+  const j = await fetchJson(VARSOM_API + 'RegionSummary/Simple/2/' + date + '/' + date);
+  const out = new Map();
+  (Array.isArray(j) ? j : []).forEach(r=>{
+    const list = r.AvalancheWarningList || [];
+    const w = list.find(x=>String(x.ValidFrom || '').slice(0,10) === date) || list[0];
+    if(!w) return;
+    const lvl = levelOf(w.DangerLevel);
+    out.set('NO-' + (r.Id != null ? r.Id : w.RegionId),
+      {max: lvl > 0 ? lvl : 0, name: r.Name || w.RegionName || '', text: w.MainText || '', src:'Varsom'});
+  });
+  return out;
+}
+function loadRatings(id, date){
+  const key = id + '|' + date;
+  if(!ratingCache.has(key)){
+    const p = id === 'NO'
+      ? varsomRatings(date)
+          .then(m=>([...m.values()].some(r=>r.max) ? m : eawsRatings('NO', date)))
+          .catch(()=>eawsRatings('NO', date))       // blocked or down: EAWS mirrors it
+      : eawsRatings(id, date);
+    ratingCache.set(key, p);
+  }
+  return ratingCache.get(key);
+}
+
+/* ----- drawing ----- */
+const dangerOn = document.getElementById('dangerOn');
+const dangerStatus = document.getElementById('dangerStatus');
+const dangerState = {date:TODAY, layers:new Map(), ratings:new Map(), token:0};
+function ratingFor(sid, rid){
+  const m = dangerState.ratings.get(sid + '|' + dangerState.date);
+  return m ? m.get(rid) : null;
+}
+function dangerStyle(sid){
+  const op = +document.getElementById('dangerOpacity').value/100;
+  return f=>{
+    const r = ratingFor(sid, f.properties.id);
+    if(!r || !r.max) return {color:'#6d828c', weight:1, opacity:.8, dashArray:'3 4', fill:false};
+    /* setStyle merges, so every key the unrated style sets is reset here */
+    return {color:'#2a2a2a', weight:1, opacity:.7, dashArray:null, fill:true,
+            fillColor:DANGER[Math.min(5, r.max)].c, fillOpacity:op};
+  };
+}
+function ensureDangerLayer(sid, feats){
+  if(dangerState.layers.has(sid)) return dangerState.layers.get(sid);
+  const lyr = L.geoJSON({type:'FeatureCollection', features:feats},
+    {pane:'dangerPane', interactive:false, style:dangerStyle(sid)});
+  dangerState.layers.set(sid, lyr);
+  return lyr;
+}
+function restyleDanger(){
+  dangerState.layers.forEach((lyr, sid)=>lyr.setStyle(dangerStyle(sid)));
+}
+async function refreshDanger(){
+  const token = ++dangerState.token;
+  if(!dangerOn.checked){
+    dangerState.layers.forEach(l=>{ if(map.hasLayer(l)) map.removeLayer(l); });
+    dangerStatus.textContent = '';
+    return;
+  }
+  dangerState.layers.forEach(l=>{ if(!map.hasLayer(l)) l.addTo(map); });
+  ensureNames();
+  const date = dangerState.date = addDays(TODAY, +document.getElementById('dangerDay').value);
+  restyleDanger();
+  dangerStatus.classList.remove('warn');
+  if(map.getZoom() < 5){ dangerStatus.textContent = 'Zoom in to load the forecast regions.'; return; }
+  const view = map.getBounds();
+  const services = SERVICES.filter(s=>s.geo && boxMeets(s.bbox, view)).slice(0, 10);
+  if(!services.length){
+    dangerStatus.textContent = 'No European forecast service covers this view.';
+    return;
+  }
+  dangerStatus.textContent = 'Loading forecast regions…';
+  const res = await Promise.all(services.map(async s=>{
+    try{
+      const feats = await loadRegions(s.id);
+      if(token !== dangerState.token) return null;
+      const lyr = ensureDangerLayer(s.id, feats);
+      if(dangerOn.checked && !map.hasLayer(lyr)) lyr.addTo(map);
+      const m = await loadRatings(s.id, date);
+      dangerState.ratings.set(s.id + '|' + date, m);
+      if(token === dangerState.token) lyr.setStyle(dangerStyle(s.id));
+      const rated = feats.filter(f=>{ const r = m.get(f.properties.id); return r && r.max; }).length;
+      return {s, rated, src: s.id === 'NO' && [...m.values()].some(r=>r.src === 'Varsom') ? 'Varsom' : s.name};
+    } catch(e){ return {s, failed:true}; }
+  }));
+  if(token !== dangerState.token) return;
+  const ok = res.filter(r=>r && !r.failed), failed = res.filter(r=>r && r.failed);
+  const rated = ok.filter(r=>r.rated);
+  const when = document.getElementById('dangerDay').value === '1' ? 'tomorrow' : 'today';
+  let msg;
+  if(rated.length){
+    const n = rated.reduce((a, r)=>a + r.rated, 0);
+    const names = [...new Set(rated.map(r=>r.src))].join(', ');
+    msg = n + ' region' + (n === 1 ? '' : 's') + ' rated for ' + when + ' (' + date + ') by ' + names + '.';
+    const quiet = ok.filter(r=>!r.rated).map(r=>r.s.name);
+    if(quiet.length) msg += ' Nothing yet from ' + [...new Set(quiet)].join(', ') + '.';
+  } else if(ok.length){
+    msg = 'No forecast published for ' + when + ' in this view. Outside the season most services are silent' +
+      (when === 'tomorrow' ? ', and tomorrow\u2019s usually appears in the afternoon (Varsom by 16:00).' : '.');
+    dangerStatus.classList.add('warn');
+  } else msg = '';
+  if(failed.length){
+    msg += ' Could not reach the region data for ' + [...new Set(failed.map(r=>r.s.name))].join(', ') + '.';
+    dangerStatus.classList.add('warn');
+  }
+  dangerStatus.textContent = msg.trim();
+}
+const refreshDangerSoon = debounce(refreshDanger, 400);
+dangerOn.onchange = refreshDanger;
+document.getElementById('dangerDay').onchange = ()=>{ if(!dangerOn.checked) dangerOn.checked = true; refreshDanger(); };
+document.getElementById('dangerOpacity').oninput = restyleDanger;
+
+/* Region under a point, from whatever geometry is already loaded. */
+function loadedRegionAt(ll){
+  for(const s of SERVICES_FINE_FIRST){
+    if(!boxHas(s.bbox, ll) || !dangerState.layers.has(s.id)) continue;
+    const lyr = dangerState.layers.get(s.id);
+    for(const l of lyr.getLayers()){
+      const f = l.feature;
+      if(f && f.box && boxHas(f.box, ll) && geomHas(f.geometry, ll)) return {s, f};
+    }
+  }
+  return null;
+}
+function serviceLink(s){
+  return '<a href="' + esc(s.url) + '" target="_blank" rel="noopener">' + esc(s.name) + '</a>';
+}
+/* One line under the slope readout. Names come from Varsom, or from the
+   EAWS name list, which is fetched the first time it is needed. */
+let namesNow = {};
+function ensureNames(){ loadNames().then(n=>{ namesNow = (n && typeof n === 'object') ? n : {}; }); }
+function forecastLine(ll){
+  if(!dangerOn.checked) return '';
+  const hit = loadedRegionAt(ll);
+  if(!hit) return '';
+  const rid = hit.f.properties.id, r = ratingFor(hit.s.id, rid);
+  const name = (r && r.name) || namesNow[rid] || rid;
+  let head;
+  if(r && r.max){
+    const d = DANGER[Math.min(5, r.max)];
+    head = '<span class="dz" style="background:' + d.c + (d.ink ? ';color:' + d.ink : '') + '">' + r.max + '</span>' +
+           d.n + ' · ' + esc(name);
+    if(r.hi && r.lo && r.hi !== r.lo) head += ' · ' + r.hi + ' high, ' + r.lo + ' low';
+  } else head = 'No rating ' + (dangerState.date === TODAY ? 'today' : 'for ' + dangerState.date) + ' · ' + esc(name);
+  const text = r && r.text ? '<div class="sub">' + esc(r.text) + '</div>' : '';
+  return '<div class="fc">' + head + ' · ' + serviceLink(hit.s) + '</div>' + text;
+}
+
+/* ----- which service to send people to, for the note at the bottom ----- */
+async function serviceAt(ll){
+  const loaded = loadedRegionAt(ll);
+  if(loaded) return {one: loaded.s};
+  const cands = SERVICES_FINE_FIRST.filter(s=>boxHas(s.bbox, ll));
+  if(!cands.length) return null;
+  if(cands.length === 1) return {one: cands[0]};
+  const outlines = await Promise.all(cands.map(s=>loadOutline(s.id)));
+  const inside = cands.filter((s, i)=>outlines[i] && outlines[i].some(f=>geomHas(f.geometry, ll)));
+  if(inside.length) return {one: inside[0]};
+  if(outlines.every(o=>o)) return null;               // all known, none covers this spot
+  return {many: cands};                              // could not tell: offer them all
+}
+let linkToken = 0;
+async function updateForecastLink(){
+  const token = ++linkToken;
+  const res = await serviceAt(map.getCenter()).catch(()=>null);
+  if(token !== linkToken) return;
+  const el = document.getElementById('fcLink');
+  if(res && res.one) el.innerHTML = serviceLink(res.one);
+  else if(res && res.many){
+    const uniq = [...new Map(res.many.map(s=>[s.url, s])).values()];
+    el.innerHTML = uniq.map(serviceLink).join(', ') + ', whichever covers where you are going';
+  } else el.innerHTML = 'the local avalanche service (<a href="https://www.avalanches.org" target="_blank" rel="noopener">avalanches.org</a> lists them for Europe)';
+}
+const updateForecastLinkSoon = debounce(updateForecastLink, 600);
+
+map.on('moveend', ()=>{
+  if(snowSrcEl.value === 'auto') applySnow();
+  updateS2Link();
+  refreshDangerSoon();
+  updateForecastLinkSoon();
+});
+updateForecastLink();
+
 /* ---------- controls ---------- */
 document.getElementById('apply').onclick = ()=>{
   slope.redraw();
+  renderProfileKey();
+  renderProfile();
   runoutCache.clear();
   if(map.hasLayer(runout)) runout.redraw();
   detectedZ = null;
@@ -1138,12 +2714,14 @@ document.getElementById('nveOpacity').oninput = e=>{
 };
 document.getElementById('heatOpacity').oninput = e=>{ if(heatLayer) heatLayer.setOpacity(e.target.value/100); };
 document.getElementById('heatSport').onchange = e=>{
-  const u = document.getElementById('heatUrl');
-  u.value = u.value.replace(/\/(tiles|tiles-auth)\/[^/]+\//, '/$1/' + e.target.value + '/');
+  heatTmpl = heatTmpl.replace(/\/(tiles|tiles-auth)\/[^/]+\//, '/$1/' + e.target.value + '/');
   detectedZ = null;
   buildHeatmap();
 };
-document.getElementById('steepSrc').onchange = applySteep;
+document.getElementById('steepSrc').onchange = e=>{
+  if(e.target.value !== 'off') steepLast = e.target.value;
+  applySteep();
+};
 document.getElementById('runOn').onchange = applyRunout;
 document.getElementById('runColor').oninput = ()=>{ if(map.hasLayer(runout)) runout.redraw(); };
 document.getElementById('runAlpha').onchange = ()=>{ if(map.hasLayer(runout)) applyRunout(); };
@@ -1161,6 +2739,7 @@ function setBase(key){
   bases[key].addTo(map);
   bases[key].bringToBack();
   currentBase = key;
+  applyShade();
   updateContour();
 }
 /* Kartverket stops at the border, so outside Norway the auto setting hands
@@ -1169,16 +2748,20 @@ function autoBase(){
   if(baseChoice !== 'auto') return;
   setBase(regionFor(map.getCenter()).base);
 }
-document.getElementById('b-auto').onchange = ()=>{ baseChoice='auto'; autoBase(); };
-document.getElementById('b-kv').onchange = ()=>{ baseChoice='kv'; setBase('kv'); };
-document.getElementById('b-otm').onchange = ()=>{ baseChoice='otm'; setBase('otm'); };
+document.getElementById('baseSel').onchange = e=>{
+  baseChoice = e.target.value;
+  if(baseChoice === 'auto') autoBase(); else setBase(baseChoice);
+};
 autoBase();
 
 if(HEATMAP_URL){
-  document.getElementById('heatUrl').value = HEATMAP_URL;
   document.getElementById('heatOn').checked = true;
   buildHeatmap();
 }
+/* Any change in the panel (tick boxes, source menus set to Off, a date arrow
+   that switches snow on) is reflected in the layer order boxes. */
+document.getElementById('body').addEventListener('change', syncOrderChecks);
+syncOrderChecks();
 
 const panel = document.getElementById('panel');
 document.getElementById('panelHead').onclick = ()=>{
