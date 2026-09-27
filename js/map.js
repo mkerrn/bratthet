@@ -39,6 +39,7 @@ const map = L.map('map', {center:[61.63, 8.31], zoom:12, layers:[bases.kv], zoom
 /* The name here is also written into the matching section heading in the
    panel (h2 with data-layer), so a layer is called the same thing in both. */
 const LAYER_GROUPS = {
+  gpx:    {name:'GPX track',                    pane:'gpxPane'},
   piste:  {name:'Ski pistes',                   pane:'pistePane'},
   heat:   {name:'Heatmap',                      pane:'heatPane'},
   danger: {name:'Avalanche forecast',           pane:'dangerPane'},
@@ -49,7 +50,7 @@ const LAYER_GROUPS = {
 };
 /* Snow sits lowest because the satellite photos are opaque; the forecast
    regions are a light wash, so they can go near the top. */
-let layerOrder = ['piste', 'heat', 'danger', 'runout', 'aval', 'slope', 'snow'];   // first = on top
+let layerOrder = ['gpx', 'piste', 'heat', 'danger', 'runout', 'aval', 'slope', 'snow'];   // first = on top
 if(!HEATMAP_URL){
   delete LAYER_GROUPS.heat;
   layerOrder = layerOrder.filter(k=>k !== 'heat');
@@ -66,6 +67,8 @@ document.querySelectorAll('h2[data-layer]').forEach(h=>{
    so unticking it here sets that menu to Off and ticking restores the source. */
 let steepLast = 'auto';
 const LAYER_TOGGLES = {
+  gpx:    {get:()=>document.getElementById('gpxOn').checked,
+           set:v=>{ document.getElementById('gpxOn').checked = v; applyGpxTrack(); }},
   piste:  {get:()=>document.getElementById('pisteOn').checked,
            set:v=>{ document.getElementById('pisteOn').checked = v; applyPiste(); }},
   heat:   {get:()=>document.getElementById('heatOn').checked,

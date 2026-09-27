@@ -34,6 +34,7 @@ Bratthet is a static GitHub Pages site (a Leaflet map for planning ski tours). I
 | `js/steepness.js` | Official steepness layers (NVE/swisstopo/IGN), `REGIONS` (which base map and steepness layer each area gets) |
 | `js/heatmap.js` | Strava heatmap, detecting how far it zooms |
 | `js/pistes.js` | OpenSnowMap ski piste overlay |
+| `js/gpxtrack.js` | Uploaded GPX files (tracks, routes, waypoints) shown as an overlay |
 | `js/slope.js` | Terrarium DEM tile loading/cache (`loadDem`, `demCache`) and the computed slope layer |
 | `js/hillshade.js` | Hillshade layer and the sun-direction dial |
 | `js/runout.js` | Alpha-angle runout model layer; `applySlopeVisible`; first `applySteep()` |

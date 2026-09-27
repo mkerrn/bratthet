@@ -199,6 +199,19 @@
     </section>
 
     <section>
+      <h2 data-layer="gpx">GPX track</h2>
+      <input type="checkbox" id="gpxOn" hidden>
+      <input type="file" id="gpxFile" accept=".gpx,application/gpx+xml" multiple hidden>
+      <input type="range" id="gpxOpacity" min="0" max="100" value="90" aria-label="GPX line strength">
+      <div class="actions">
+        <button type="button" class="btn" id="gpxPick">Open GPX file…</button>
+        <button type="button" class="btn" id="gpxClear" disabled>Clear</button>
+      </div>
+      <div class="live" id="gpxStatus" aria-live="polite"></div>
+      <p class="note">Show a track, route or waypoints from a GPX file, for example last season's trip or a route someone shared. The file is read on your device and not uploaded anywhere. Someone else's line was right for their day, their snow and their group, not necessarily for yours.</p>
+    </section>
+
+    <section>
       <h2>Base map</h2>
       <div class="row">
         <select id="baseSel" class="sel wide" aria-label="Base map">
@@ -288,6 +301,7 @@
 <script src="js/steepness.js"></script>
 <script src="js/heatmap.js"></script>
 <script src="js/pistes.js"></script>
+<script src="js/gpxtrack.js"></script>
 <script src="js/slope.js"></script>
 <script src="js/hillshade.js"></script>
 <script src="js/runout.js"></script>
