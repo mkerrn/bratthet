@@ -95,6 +95,7 @@ function clearProfile(){
   scrubMarker = null;
   measureSteep.classList.remove('on');
   measureTime.classList.remove('on');
+  clearRouteExposure();
   document.body.classList.remove('has-profile');
 }
 
@@ -124,6 +125,7 @@ function updateGain(){
     drawProfileOnMap(p);
     document.body.classList.toggle('has-profile', measuring);
     renderProfile();
+    updateRouteExposure();
   }).catch(()=>{
     if(token === gainToken) noData();
   });
@@ -170,7 +172,7 @@ function showTime(p){
 munterModeEl.onchange = ()=>{
   munterMode = munterModeEl.value;
   try { localStorage.setItem('bratthet.munter', munterMode); } catch(e){}
-  if(curProfile) showTime(curProfile);
+  if(curProfile){ showTime(curProfile); updateRouteExposure(); }
 };
 
 /* Red over the stretches that cross ground of 30° or more, and a dot on the

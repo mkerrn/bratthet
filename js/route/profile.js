@@ -10,7 +10,9 @@ function renderProfile(){
   const p = curProfile;
   const W = profileSvg.clientWidth, H = profileSvg.clientHeight;
   if(!p || !W || !H) return;
-  const L0 = 34, R0 = 6, T0 = 12, B0 = 14;
+  /* Room under the axis for the sun and wind strips when there are any. */
+  const strips = (p.sunAt ? 1 : 0) + (p.windAt ? 1 : 0);
+  const L0 = 34, R0 = 6, T0 = 12, B0 = 14 + strips*6;
   const cw = W - L0 - R0, ch = H - T0 - B0;
 
   let lo = p.min, hi = p.max;
@@ -58,6 +60,27 @@ function renderProfile(){
     a = b;
   }
 
+  /* Sun at the time you pass (yellow, stronger the more square-on; blue in
+     shade), then lee (pink) and exposed (teal) ground. */
+  let sy = base + 2;
+  const strip = (colour)=>{
+    let a2 = 0;
+    while(a2 < n-1){
+      const c = colour(a2);
+      let b2 = a2 + 1;
+      while(b2 < n-1 && colour(b2) === c) b2++;
+      if(c) out.push('<rect x="' + X(p.dist[a2]).toFixed(1) + '" y="' + sy + '" width="' +
+        Math.max(0.5, X(p.dist[b2]) - X(p.dist[a2])).toFixed(1) + '" height="4" fill="' + c + '"/>');
+      a2 = b2;
+    }
+    sy += 6;
+  };
+  if(p.sunAt) strip(i=>{
+    const v = p.sunAt[i].now;
+    return v > 0 ? 'rgba(255,200,60,' + (0.35 + 0.65*v).toFixed(1) + ')' : '#3a6fd8';
+  });
+  if(p.windAt) strip(i=> p.windAt[i] > 0 ? '#e8467c' : p.windAt[i] < 0 ? '#2bb3a3' : null);
+
   /* the tapped points */
   (p.vtx || []).slice(1, -1).forEach(k=>{
     const x = X(p.dist[k]).toFixed(1);
@@ -102,7 +125,7 @@ function scrubTo(clientX){
   const g = p.grade[i];
   profileRead.innerHTML =
     fmtLen(p.dist[i]) + ' · <b>' + Math.round(p.ele[i]) + ' m</b> · ground <b>' +
-    Math.round(p.ground[i]) + '°</b> · track ' + (Math.abs(g) < 1 ? 'flat' : (g > 0 ? '↑ ' : '↓ ') + Math.round(Math.abs(g)) + '°');
+    Math.round(p.ground[i]) + '°</b> · track ' + (Math.abs(g) < 1 ? 'flat' : (g > 0 ? '↑ ' : '↓ ') + Math.round(Math.abs(g)) + '°') + routeExpText(p, i);
 
   if(!scrubMarker){
     scrubMarker = L.circleMarker(p.samples[i], {radius:6, color:'#12232c', weight:2,

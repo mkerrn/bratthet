@@ -45,6 +45,7 @@ Bratthet is a static GitHub Pages site (a Leaflet map for planning ski tours). I
 | `js/route/elevation.js` | Measuring state (`measuring`, `mpts`), DOM refs for the measure card/profile, `sampleLine`, `elevationProfile` |
 | `js/route/stats.js` | Munter time, steepness colours, ascent/descent/steep/time text, steep stretches drawn on the map |
 | `js/route/profile.js` | Elevation profile SVG chart and the scrubber |
+| `js/route/sunwind.js` | Sun and wind along the measured line: arrival times from Munter, sun/shade as you pass (shadow rays), sun before arrival, lee/exposed and steep-and-loaded stretches, the strips under the profile |
 | `js/route/gpx.js` | GPX export |
 | `js/route/measure.js` | Drawing the line, the tool on/off, Undo/Clear/Done |
 | `js/locate.js` | GPS position, accuracy circle, compass heading ray |

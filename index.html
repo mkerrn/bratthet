@@ -39,6 +39,10 @@
       </select>
       <div class="sub" id="munterSplit"></div>
     </div>
+    <div id="measureSun">Starting at <input type="time" id="routeStart" value="09:00" aria-label="Start time"> <span id="routeDate"></span>
+      <div class="sub" id="routeSun"></div>
+    </div>
+    <div id="measureWind"><div id="routeWind"></div></div>
     <div class="mrow">
       <button class="mbtn" id="measUndo">Undo point</button>
       <button class="mbtn" id="measClear">Clear</button>
@@ -152,7 +156,7 @@
       </div>
       <input type="range" id="sunOpacity" min="0" max="100" value="70" aria-label="Sun layer strength">
       <div class="live" id="sunStatus" aria-live="polite"></div>
-      <p class="note">Hours of direct sun each spot gets on the chosen day, including shadows cast by the terrain around it; blue gets little or none, orange nearly all the sun there is that day. Sun lower than 5° over the slope is not counted. Shaded slopes tend to keep cold, soft snow; sunny ones warm up during the day, which in spring means wet snow and loose slides by midday and a crust once they freeze again. Times are in your device's time zone. It is computed from the same coarse elevation tiles as the slope colours, sees only about one tile's width of terrain towards the sun, so the shadow of a mountain further away is missed, and knows nothing about cloud.</p>
+      <p class="note">How much direct sun each spot gets on the chosen day, including shadows cast by the terrain around it, counted in hours of full sun: an hour of sun hitting the ground square on counts as an hour, sun at a glancing angle for less, because that is what warms the snow. Blue gets little or none; orange about as much as the best-placed slope can get that day. Sun lower than 5° over the slope is not counted. Tap the map for the plain hours in sun as well. Shaded slopes tend to keep cold, soft snow; sunny ones warm up during the day, which in spring means wet snow and loose slides by midday and a crust once they freeze again. Times are in your device's time zone. It is computed from the same coarse elevation tiles as the slope colours, sees only about one tile's width of terrain towards the sun, so the shadow of a mountain further away is missed, and knows nothing about cloud.</p>
     </section>
 
     <section>
@@ -322,6 +326,7 @@
       <p class="note">The corner shows a scale bar and, when the base map draws named contours, its published interval for the zoom you are at: 20 m on Kartverket topo, 10 m on OpenTopoMap from zoom 15 and coarser below. Raster tiles carry no metadata, so this is the map series' equidistance, not something read out of the tile, and it can differ locally. The ruler button measures straight legs between the points you tap, and reads ascent and descent off the same coarse elevation tiles the slope colours use — expect it to smooth away small rolls and to run short on a line drawn with few points.</p>
       <p class="note">While measuring, the curve at the bottom shows the elevation along the line, coloured by how steep the ground under it is; drag along it to find the spot on the map. The menu above the curve switches between the fixed avalanche colours and your own slope classes; with your classes, direction and altitude filters count just as on the map (marked * in the key), and edits show up when you press Redraw map. "Steepest ground" is the slope of the terrain the line crosses, which is what matters for avalanches, and stretches over 30° are drawn red on the map. "Steepest track" is how steeply the line itself climbs or drops, averaged over about 60 m, in the direction you drew it — a comfortable skin track is usually 10–15°. Both come from the same coarse elevation tiles, so short steep steps can hide between the samples.</p>
       <p class="note">The time is Werner Munter's rule: one unit per kilometre and one per 100 m of ascent or descent, divided by 4 units an hour going up, 6 on the flat, and 10 skiing down (6 walking down). It leaves out breaks, transitions and trail breaking, so calibrate it against your own tours. Save GPX writes the line with elevations as a track that watches and phone apps import as a course.</p>
+      <p class="note">From the start time you give, the same Munter time says when you reach each point of the line. The measure box then says how much of the way is in sun as you pass, on the date set under Sun exposure, and which spot has had the most sun before you get there, the one most likely to be soft or wet. The first strip under the curve is sun (yellow) or shade (blue) at the time you pass. With Wind exposure on, the second strip shows lee (pink) and exposed (teal) ground, and stretches over 30° in the lee are edged pink on the map: that is classic wind slab terrain. It is only as good as the Munter estimate of your pace and the coarse terrain models behind it.</p>
       <p class="note">Slope is computed in your browser from open 10–30 m elevation tiles, so it is coarser than Kartverket's 1 m laser data. Treat the low classes as indicative and verify steep terrain against the official layer for the country you are in.</p>
     </section>
 
@@ -381,6 +386,7 @@
 <script src="js/route/elevation.js"></script>
 <script src="js/route/stats.js"></script>
 <script src="js/route/profile.js"></script>
+<script src="js/route/sunwind.js"></script>
 <script src="js/route/gpx.js"></script>
 <script src="js/route/measure.js"></script>
 <script src="js/locate.js"></script>

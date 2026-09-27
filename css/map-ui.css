@@ -53,12 +53,15 @@
 }
 .mbtn:hover{background:#264556}
 .mbtn:disabled{opacity:.4;cursor:default;background:var(--panel-2)}
-#measureSteep,#measureTime{font-size:11.5px;margin-top:3px;display:none;font-variant-numeric:tabular-nums}
-#measureSteep.on,#measureTime.on{display:block}
-#measureSteep b,#measureTime b{font-weight:600}
-#measureSteep .warn{color:#ff8a7a}
+#measureSteep,#measureTime,#measureSun,#measureWind{font-size:11.5px;margin-top:3px;display:none;font-variant-numeric:tabular-nums}
+#measureSteep.on,#measureTime.on,#measureSun.on,#measureWind.on{display:block}
+#measureSteep b,#measureTime b,#measureSun b,#measureWind b{font-weight:600}
+#measureSteep .warn,#measureWind .warn{color:#ff8a7a}
 #measureSteep .ok{color:#9fd88a}
-#measureSteep .sub,#measureTime .sub{font-size:11px;color:var(--muted);margin-top:1px}
+#measureSteep .sub,#measureTime .sub,#measureSun .sub,#measureWind .sub{font-size:11px;color:var(--muted);margin-top:1px}
+#measureSun .wait,#measureWind .wait{color:var(--muted)}
+#routeStart{padding:0 3px;font-size:11px;background:var(--panel-2);color:var(--text);
+  border:1px solid var(--line);border-radius:3px;color-scheme:dark}
 #munterMode{margin-left:4px;padding:1px 3px;font-size:11px;background:var(--panel-2);color:var(--text);
   border:1px solid var(--line);border-radius:3px}
 

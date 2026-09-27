@@ -132,7 +132,27 @@ function castShadows(b, az, alt){
   return dark;
 }
 
-/* Day mode: hours of sun per cell, plus first and last minute in sun.
+/* The most sun any slope can get that day: one facing the midday sun, tilted
+   to meet it square on at noon. Effective hours are scaled against it, and
+   it depends only on latitude and date, so neighbouring tiles agree. */
+function sunRef(steps, lat){
+  if(!steps.length) return 0;
+  let noon = steps[0];
+  for(const s of steps) if(s.alt > noon.alt) noon = s;
+  const tilt = (90 - noon.alt)*EXP_RAD, face = lat >= 0 ? 180 : 0;
+  let sum = 0;
+  for(const s of steps){
+    const zen = (90 - s.alt)*EXP_RAD;
+    const ci = Math.cos(zen)*Math.cos(tilt) + Math.sin(zen)*Math.sin(tilt)*Math.cos((s.az - face)*EXP_RAD);
+    if(ci > 0) sum += ci*SUN_STEP/60;
+  }
+  return sum;
+}
+
+/* Day mode: effective hours of sun per cell. An hour of sun hitting the
+   ground square on counts as an hour, glancing sun for less, because that is
+   what warms the snow. Also the plain hours in sun, and the first and last
+   minute in sun.
    Time mode: how square-on the sun hits each cell (0 = shade). Cached as
    promises so the readout and the tile share one computation. */
 const sunCache = new Map();
@@ -147,7 +167,7 @@ function sunGrid(z,x,y,iso,mode,minute){
       const s = solarPos(dayStart(iso) + minute*60000, lat, lon);
       steps = s.alt > 0 ? [{m:minute, alt:s.alt, az:s.az}] : [];
     } else steps = sunSteps(iso, lat, lon);
-    const val = new Float32Array(N*N);
+    const val = new Float32Array(N*N), hrs = new Float32Array(N*N);
     const first = new Int16Array(N*N).fill(-1), last = new Int16Array(N*N).fill(-1);
     const minCos = Math.sin(SUN_MIN_ANGLE*EXP_RAD);
     for(const s of steps){
@@ -160,12 +180,13 @@ function sunGrid(z,x,y,iso,mode,minute){
         const ci = cz*Math.cos(sl) + sz*Math.sin(sl)*Math.cos((s.az - b.as[bi])*EXP_RAD);
         if(!(ci >= minCos)) continue;                    // also skips missing cells
         if(mode === 'time'){ val[o] = ci; continue; }
-        val[o] += SUN_STEP/60;
+        val[o] += ci*SUN_STEP/60;
+        hrs[o] += SUN_STEP/60;
         if(first[o] < 0) first[o] = s.m;
         last[o] = s.m + SUN_STEP;
       }
     }
-    return {val:val, first:first, last:last, up:steps.length > 0, dayLen:steps.length*SUN_STEP/60};
+    return {val:val, hrs:hrs, first:first, last:last, up:steps.length > 0, ref:sunRef(steps, lat)};
   });
   p.catch(()=>sunCache.delete(key));
   if(sunCache.size > 120) sunCache.clear();
@@ -196,7 +217,7 @@ function paintSunTile(tile, coords){
       for(let i=0;i<g.val.length;i++){
         let rgba;
         if(s.mode === 'time') rgba = g.val[i] > 0 ? [255,210,60,Math.round(130*g.val[i])] : [40,90,215,160];
-        else rgba = SUN_DAY_RAMP[Math.min(100, Math.round(100*g.val[i]/g.dayLen))];
+        else rgba = SUN_DAY_RAMP[Math.min(100, Math.round(100*g.val[i]/g.ref))];
         data[i*4] = rgba[0]; data[i*4+1] = rgba[1]; data[i*4+2] = rgba[2]; data[i*4+3] = rgba[3];
       }
     });
@@ -223,8 +244,8 @@ function updateSunInfo(){
       : 'The sun is below the horizon at ' + clockAt(s.iso, s.minute) + ' ' + niceDate(s.iso) + '.';
     return;
   }
-  const half = Math.round(len)/2;
-  leg[0].textContent = '0 h'; leg[1].textContent = half + ' h'; leg[2].textContent = Math.round(len) + ' h';
+  const ref = sunRef(steps, c.lat);
+  leg[0].textContent = '0 h'; leg[1].textContent = (ref/2).toFixed(1) + ' h'; leg[2].textContent = ref.toFixed(1) + ' h of full sun';
   if(!steps.length) st.textContent = 'The sun does not rise at the map centre ' + niceDate(s.iso) + '.';
   else if(steps.length*SUN_STEP >= 1440) st.textContent = 'Midnight sun at the map centre ' + niceDate(s.iso) + '.';
   else st.textContent = 'Sun above the horizon ' + clockAt(s.iso, steps[0].m) + '–' +
@@ -243,6 +264,7 @@ function sunChanged(){
   if(!box.checked){ box.checked = true; applySun(); syncOrderChecks(); }
   sunToken++;
   updateSunInfo();
+  routeExpSoon();
   if(!sunQueuedExp){
     sunQueuedExp = true;
     requestAnimationFrame(()=>{ sunQueuedExp = false; repaintExposure(sunLayer); });
@@ -386,6 +408,7 @@ function fetchWind(){
     windAuto = {from:from, max:max, hours:n, steady:n ? Math.hypot(u, v)/w : 0, elev:j.elevation};
     updateWindInfo();
     repaintExposure(windLayer);
+    routeExpSoon();
   }).catch(()=>{
     if(tok !== windToken) return;
     windAuto = {from:null, max:0, hours:0, error:true};
@@ -400,6 +423,7 @@ function applyWind(){
   if(on && !map.hasLayer(windLayer)) windLayer.addTo(map);
   if(!on && map.hasLayer(windLayer)) map.removeLayer(windLayer);
   updateWindInfo();
+  routeExpSoon();
 }
 let windQueued = false;
 function windChanged(){
@@ -407,6 +431,7 @@ function windChanged(){
   if(!box.checked){ box.checked = true; applyWind(); syncOrderChecks(); }
   windToken++;
   updateWindInfo();
+  routeExpSoon();
   if(!windQueued){
     windQueued = true;
     requestAnimationFrame(()=>{ windQueued = false; repaintExposure(windLayer); });
@@ -465,9 +490,10 @@ function exposureLine(ll){
         if(!g.up) return 'The sun is down at ' + clockAt(s.iso, s.minute);
         return 'In <b>' + (g.val[o] > 0 ? 'sun' : 'shade') + '</b> at ' + clockAt(s.iso, s.minute) + ' ' + niceDate(s.iso);
       }
-      if(!(g.val[o] > 0)) return '<b>No direct sun</b> ' + niceDate(s.iso);
-      return 'Sun <b>' + g.val[o].toFixed(g.val[o] < 10 ? 1 : 0) + ' h</b> ' + niceDate(s.iso) + ', ' +
-        clockAt(s.iso, g.first[o]) + '–' + clockAt(s.iso, g.last[o]);
+      if(!(g.hrs[o] > 0)) return '<b>No direct sun</b> ' + niceDate(s.iso);
+      return 'In sun ' + g.hrs[o].toFixed(g.hrs[o] < 10 ? 1 : 0) + ' h ' + niceDate(s.iso) + ', ' +
+        clockAt(s.iso, g.first[o]) + '–' + clockAt(s.iso, g.last[o]) +
+        ', as strong as <b>' + g.val[o].toFixed(1) + ' h</b> of full sun';
     }));
   }
   const from = windFromNow();
