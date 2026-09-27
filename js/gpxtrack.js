@@ -6,7 +6,7 @@ const gpxTrackLayer = L.featureGroup();
 const gpxFileEl = document.getElementById('gpxFile');
 const gpxStatus = document.getElementById('gpxStatus');
 const gpxClearBtn = document.getElementById('gpxClear');
-let gpxFiles = [];     // {name, km, pts} per loaded file, for the status line
+let gpxFiles = [];     // {name, km, wpts, line} per loaded file, for the status line
 let gpxOpacity = 0.9;
 
 function applyGpxTrack(){
@@ -37,11 +37,54 @@ function parseGpx(text){
   return {lines: lines.filter(l=>l.length > 1), wpts};
 }
 
+/* ---------- into the measuring tool ----------
+   A watch logs a point every second or few metres, thousands per trip, and
+   the measure tool draws a dot at each one. Douglas–Peucker keeps only the
+   points needed to stay within a few metres of the recorded line, which is
+   finer than the elevation data anyway. If that still leaves too many, the
+   tolerance grows until it fits. */
+const GPX_MEASURE_MAX = 300;
+function simplifyLine(pts, tol){
+  const lat0 = pts[0].lat*Math.PI/180;
+  const xy = pts.map(p=>[p.lng*111320*Math.cos(lat0), p.lat*110540]);
+  const keep = new Uint8Array(pts.length);
+  keep[0] = keep[pts.length-1] = 1;
+  const stack = [[0, pts.length-1]];
+  while(stack.length){
+    const [a, b] = stack.pop();
+    const [ax, ay] = xy[a], [bx, by] = xy[b];
+    const dx = bx-ax, dy = by-ay, len2 = dx*dx + dy*dy;
+    let far = -1, farD = tol*tol;
+    for(let i=a+1;i<b;i++){
+      const t = len2 ? Math.max(0, Math.min(1, ((xy[i][0]-ax)*dx + (xy[i][1]-ay)*dy)/len2)) : 0;
+      const ex = xy[i][0] - (ax + t*dx), ey = xy[i][1] - (ay + t*dy);
+      const d = ex*ex + ey*ey;
+      if(d > farD){ farD = d; far = i; }
+    }
+    if(far > 0){ keep[far] = 1; stack.push([a, far], [far, b]); }
+  }
+  return pts.filter((p, i)=>keep[i]);
+}
+function measureGpx(i){
+  const f = gpxFiles[i];
+  if(!f || f.line.length < 2) return;
+  let tol = 5, pts = simplifyLine(f.line, tol);
+  while(pts.length > GPX_MEASURE_MAX){ tol *= 1.5; pts = simplifyLine(f.line, tol); }
+  mpts = pts.map(p=>L.latLng(p.lat, p.lng));
+  setMeasuring(true);
+}
+gpxStatus.onclick = e=>{
+  const b = e.target.closest('button[data-i]');
+  if(b) measureGpx(+b.dataset.i);
+};
+
 function renderGpxStatus(errors){
   gpxClearBtn.disabled = !gpxFiles.length;
-  gpxStatus.innerHTML = (errors || []).concat(gpxFiles.map(f=>
+  gpxStatus.innerHTML = (errors || []).concat(gpxFiles.map((f, i)=>
     '<b>' + esc(f.name) + '</b>: ' + (f.km ? f.km.toFixed(1) + ' km' : 'no track') +
-    (f.wpts ? ', ' + f.wpts + ' waypoint' + (f.wpts > 1 ? 's' : '') : ''))).join('<br>');
+    (f.wpts ? ', ' + f.wpts + ' waypoint' + (f.wpts > 1 ? 's' : '') : '') +
+    (f.line.length > 1 ? ' <button type="button" class="linkbtn" data-i="' + i + '" title="Load this track into the measuring tool for its profile, climb and time">Measure</button>' : '')
+  )).join('<br>');
 }
 
 async function loadGpxFiles(files){
@@ -69,7 +112,9 @@ async function loadGpxFiles(files){
       if(w.name) mk.bindTooltip(w.name, {permanent:true, direction:'right', className:'meas', offset:[6,0]});
       bounds.extend(w.ll);
     });
-    gpxFiles.push({name:file.name, km:m/1000, wpts:g.wpts.length});
+    /* Segments of one file are joined end to end for measuring: a paused and
+       resumed recording splits into segments that follow on from each other. */
+    gpxFiles.push({name:file.name, km:m/1000, wpts:g.wpts.length, line:[].concat(...g.lines)});
   }
   renderGpxStatus(errors);
   if(bounds.isValid()){

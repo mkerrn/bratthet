@@ -8,9 +8,17 @@ function drawMeasure(){
     L.polyline(mpts, {color:'#ffb020', weight:3, opacity:.95, interactive:false})
       .addTo(measureLayer);
   }
-  let total = 0;
+  /* A line brought in from a GPX file has hundreds of points; a dot and a
+     running total at each would bury the map, so long lines only mark the
+     ends and every kilometre. */
+  const busy = mpts.length > 30;
+  let total = 0, lastKm = 0;
   mpts.forEach((p,i)=>{
     if(i) total += legLength(mpts[i-1], p);
+    const km = Math.floor(total/1000);
+    const end = i === 0 || i === mpts.length-1;
+    if(busy && !end && km === lastKm) return;
+    lastKm = km;
     const mk = L.circleMarker(p, {radius:4, color:'#ffb020', weight:2,
                 fillColor:'#12232c', fillOpacity:1, interactive:false}).addTo(measureLayer);
     if(i) mk.bindTooltip(fmtLen(total), {permanent:true, direction:'right',

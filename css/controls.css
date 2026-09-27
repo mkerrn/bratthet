@@ -9,6 +9,7 @@
 /* Status lines that matter for safety stay visible even with explanations off. */
 .live{margin:6px 0 0;font-size:11px;line-height:1.5;color:var(--muted)}
 .live:empty{display:none}
+.linkbtn{background:none;border:none;padding:0 0 0 4px;font:inherit;color:var(--snow);text-decoration:underline;cursor:pointer}
 .live.warn{color:#ffcf70}
 .legend-img{display:block;max-width:100%;margin-top:6px;border-radius:3px;background:#fff}
 
