@@ -40,7 +40,10 @@ function altText(b){
   return b.elMin + '–' + b.elMax + ' m';
 }
 function isFiltered(b){ return b.aspFrom != null || b.elMin != null || b.elMax != null; }
-function summary(b){ return (b.open ? '▾ ' : '▸ ') + aspectText(b) + ' · ' + altText(b); }
+function summary(b){ return aspectText(b) + ' · ' + altText(b); }
+const COG_SVG = '<svg viewBox="-12 -12 24 24" width="15" height="15" aria-hidden="true">' +
+  '<circle r="8.5" fill="none" stroke="currentColor" stroke-width="4" stroke-dasharray="3.34 3.34"/>' +
+  '<circle r="6" fill="none" stroke="currentColor" stroke-width="3"/></svg>';
 
 /* ----- the dial ----- */
 const DIAL_R = 50, ALL_R = 15;
@@ -81,7 +84,7 @@ function paintBand(i, hover, syncInputs){
   const wrap = bandsEl.children[i]; if(!wrap) return;
   const b = bands[i];
   const tg = wrap.querySelector('.bf-toggle');
-  tg.textContent = summary(b);
+  tg.title = 'Direction and altitude: ' + summary(b);
   tg.classList.toggle('active', isFiltered(b));
   const svg = wrap.querySelector('.compass'); if(!svg) return;
   const wedge = svg.querySelector('.wedge'), prev = svg.querySelector('.preview');
@@ -130,9 +133,9 @@ function renderBands(){
       '<div class="dash">–</div>' +
       '<input type="number" min="0" max="90" step="1" value="'+b.max+'" data-k="max" data-i="'+i+'" aria-label="Highest angle">' +
       '<input type="color" value="'+b.color+'" data-k="color" data-i="'+i+'" aria-label="Colour">' +
+      '<button type="button" class="bf-toggle'+(b.open ? ' open' : '')+'" data-toggle="'+i+'" aria-expanded="'+b.open+'" aria-label="Direction and altitude">' + COG_SVG + '</button>' +
       '<button title="Remove" data-del="'+i+'">×</button>' +
-      '</div>' +
-      '<button type="button" class="bf-toggle" data-toggle="'+i+'" aria-expanded="'+b.open+'"></button>';
+      '</div>';
     if(b.open){
       html += '<div class="bf-edit"><div>' + dialSvg(i) + '<p class="dial-hint"></p></div>' +
         '<div class="bf-fields">' +

@@ -1,6 +1,6 @@
 # CLAUDE.md
 
-Bratthet is a static GitHub Pages site (a Leaflet map for planning ski tours). It has no build step, no package.json and no framework. Friends use it on their phones, so mobile layout and touch input matter.
+Bratthet is a static GitHub Pages site (a Leaflet map for planning ski tours). It has no build step, no package.json and no framework. Friends use it on their laptops and phones, so mobile layout and touch input matter.
 
 ## Working efficiently here
 
@@ -8,6 +8,7 @@ Bratthet is a static GitHub Pages site (a Leaflet map for planning ski tours). I
 - `index.html` holds only the markup: the panel sections, map buttons and cards. Element ids in the JS match ids there, so `grep -n 'id="snowDate"' index.html` finds the markup.
 - **Verify with `tools/smoke-test.sh`.** It takes about 10 seconds, loads the page in headless Chrome and prints any JS error with its file:line. Run it after every JS change. It only catches errors that happen while the page loads, so check click handlers by reading the code.
 - Commit messages are short and in the imperative ("Add X", "Fix Y"). Pushing to `main` deploys the site.
+- Commit and push code after finishing a task.
 
 ## How the scripts fit together (important)
 

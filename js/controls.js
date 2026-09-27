@@ -13,7 +13,6 @@ document.getElementById('apply').onclick = ()=>{
   detectedZ = null;
   buildHeatmap();
 };
-document.getElementById('slopeOpacity').oninput = e=> slope.setOpacity(e.target.value/100);
 document.getElementById('slopeOn').onchange = applySlopeVisible;
 document.getElementById('nveOpacity').oninput = e=>{
   if(steepCurrent) steepLayers[steepCurrent].setOpacity(e.target.value/100);
