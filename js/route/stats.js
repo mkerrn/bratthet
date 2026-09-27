@@ -186,6 +186,10 @@ munterPaceEl.onchange = ()=>{
   try { localStorage.setItem('bratthet.munterPace', munterPace); } catch(e){}
   if(curProfile){ showTime(curProfile); updateRouteExposure(); }
 };
+document.querySelectorAll('#paceStep button').forEach(b => b.onclick = ()=>{
+  +b.dataset.step > 0 ? munterPaceEl.stepUp() : munterPaceEl.stepDown();
+  munterPaceEl.onchange();
+});
 
 /* A dot on the single steepest spot, so the answer to "does it stay below
    30?" is on the map. */

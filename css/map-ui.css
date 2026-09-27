@@ -65,9 +65,19 @@ body.measuring #measBtns{display:flex}
 #measureSun .wait,#measureWind .wait{color:var(--muted)}
 #routeStart{padding:0 3px;font-size:11px;background:var(--panel-2);color:var(--text);
   border:1px solid var(--line);border-radius:3px;color-scheme:dark}
-#paceBox{margin-right:6px;color:var(--muted)}
-#munterPace{width:42px;padding:0 3px;font-size:11px;background:var(--panel-2);color:var(--text);
-  border:1px solid var(--line);border-radius:3px;font-variant-numeric:tabular-nums}
+#paceBox{color:var(--muted)}
+#munterPace{width:34px;padding:0 3px;font-size:11px;background:var(--panel-2);color:var(--text);
+  border:1px solid var(--line);border-radius:3px;font-variant-numeric:tabular-nums;
+  -moz-appearance:textfield;appearance:textfield}
+/* The browser's own spinner sat on top of the digits, so it is hidden and
+   replaced by a small up/down pair after the % sign. */
+#munterPace::-webkit-inner-spin-button,#munterPace::-webkit-outer-spin-button{-webkit-appearance:none;margin:0}
+#paceStep{display:inline-flex;flex-direction:column;vertical-align:middle;margin:0 6px 0 2px}
+#paceStep button{padding:0 3px;font-size:7px;line-height:8px;background:var(--panel-2);color:var(--muted);
+  border:1px solid var(--line);cursor:pointer}
+#paceStep button:first-child{border-radius:3px 3px 0 0;border-bottom:none}
+#paceStep button:last-child{border-radius:0 0 3px 3px}
+#paceStep button:hover{color:var(--text)}
 #munterMode{margin-left:4px;padding:1px 3px;font-size:11px;background:var(--panel-2);color:var(--text);
   border:1px solid var(--line);border-radius:3px}
 

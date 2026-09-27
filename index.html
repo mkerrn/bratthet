@@ -36,7 +36,7 @@
     <div id="measureGain"></div>
     <div id="measureSteep"></div>
     <div id="measureTime"><label id="paceBox" title="Your pace as a share of Munter's. 70% means you move at 70% of his speed, so every time and arrival is longer.">
-        <input type="number" id="munterPace" min="30" max="200" step="5" value="100" aria-label="Your pace in percent of Munter's">%</label>
+        <input type="number" id="munterPace" min="30" max="200" step="5" value="100" aria-label="Your pace in percent of Munter's">%</label><span id="paceStep"><button type="button" data-step="1" aria-label="Faster pace">▲</button><button type="button" data-step="-1" aria-label="Slower pace">▼</button></span>
       Munter time <b id="munterOut">—</b>
       <select id="munterMode" aria-label="How you travel">
         <option value="ski">on skis</option>
