@@ -13,6 +13,19 @@
 .live.warn{color:#ffcf70}
 .legend-img{display:block;max-width:100%;margin-top:6px;border-radius:3px;background:#fff}
 
+/* Colour key for the computed sun layer, drawn over white like the map. */
+.grad-legend{margin-top:4px;font-size:10.5px;color:var(--muted)}
+.grad-legend .bar{height:9px;border-radius:2px;border:1px solid var(--line)}
+.grad-legend .ends{display:flex;justify-content:space-between;margin-top:2px;font-variant-numeric:tabular-nums}
+.sun-bar{background:linear-gradient(90deg,rgba(40,90,215,.8),rgba(120,165,235,.45) 20%,rgba(120,165,235,0) 40%,
+  rgba(255,210,60,0) 60%,rgba(255,200,50,.45) 80%,rgba(255,120,0,.75)),#fff}
+.sun-bar.at-time{background:linear-gradient(90deg,rgba(40,90,215,.63) 0 30%,rgba(255,210,60,0) 30%,rgba(255,210,60,.5)),#fff}
+.swatches{display:flex;flex-wrap:wrap;gap:4px 12px;font-size:12px;color:var(--muted);margin:2px 0 6px}
+.swatches span{display:flex;align-items:center;gap:5px}
+.swatches i{display:inline-block;width:14px;height:14px;border-radius:2px}
+.wind-dial .ray{stroke:#8fd0ff}
+.wind-dial .sun{fill:#8fd0ff}
+
 /* Danger scale: the five European levels, plus regions without a rating. */
 [hidden]{display:none !important}
 .dz-row{display:flex;align-items:center;gap:10px;margin-top:8px}

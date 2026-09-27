@@ -36,9 +36,10 @@ Bratthet is a static GitHub Pages site (a Leaflet map for planning ski tours). I
 | `js/pistes.js` | OpenSnowMap ski piste overlay |
 | `js/gpxtrack.js` | Uploaded GPX files (tracks, routes, waypoints) shown as an overlay |
 | `js/huts.js` | DNT and other huts from the `data/huts.json` OpenStreetMap snapshot (refresh with `tools/update-huts.py`) |
-| `js/slope.js` | Terrarium DEM tile loading/cache (`loadDem`, `demCache`) and the computed slope layer |
+| `js/slope.js` | Terrarium DEM tile loading/cache (`loadDem`, `demCache`), `demBlock` (a tile plus its 8 neighbours at half resolution) and the computed slope layer |
 | `js/hillshade.js` | Hillshade layer and the sun-direction dial |
 | `js/runout.js` | Alpha-angle runout model layer; `applySlopeVisible`; first `applySteep()` |
+| `js/exposure.js` | Sun exposure (solar position, cast shadows, sun hours/time of day) and wind exposure (Winstral shelter index, Open-Meteo wind of the last 3 days, wind dial); `exposureLine` for the readout |
 | `js/readout.js` | Tap the map → slope/elevation/aspect readout |
 | `js/scale.js` | Scale bar and the base map's contour interval |
 | `js/route/elevation.js` | Measuring state (`measuring`, `mpts`), DOM refs for the measure card/profile, `sampleLine`, `elevationProfile` |

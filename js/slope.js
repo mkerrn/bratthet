@@ -58,6 +58,38 @@ function loadDem(z,x,y){
 }
 function loadSlope(z,x,y){ return loadDem(z,x,y).then(d=>d.slope); }
 
+/* ---------- a tile and its eight neighbours ----------
+   Layers that look past the cell itself (avalanche runout, cast shadows,
+   wind shelter) need the terrain beyond the tile edge, or every tile
+   boundary shows up as a seam. They work on a 3×3 block at half resolution
+   and keep only the middle. Missing neighbours stay NaN. Not cached: the
+   tiles are, and each layer caches its own result. */
+const BLOCK_N = 128;            // half the DEM resolution, plenty for these
+async function demBlock(z,x,y){
+  const N = BLOCK_N, M = N*3;
+  const el = new Float32Array(M*M).fill(NaN);
+  const sl = new Float32Array(M*M).fill(NaN);
+  const as = new Float32Array(M*M).fill(NaN);
+  let cell = null;
+  const jobs = [];
+  for(let dy=-1; dy<=1; dy++) for(let dx=-1; dx<=1; dx++){
+    jobs.push(loadDem(z, x+dx, y+dy).then(d=>({dx,dy,d})).catch(()=>null));
+  }
+  for(const part of await Promise.all(jobs)){
+    if(!part) continue;
+    if(cell === null) cell = part.d.cell*2;
+    const ox = (part.dx+1)*N, oy = (part.dy+1)*N;
+    for(let j=0;j<N;j++) for(let i=0;i<N;i++){
+      const s = (j*2)*256 + i*2, o = (oy+j)*M + ox+i;
+      el[o] = part.d.el[s];
+      sl[o] = part.d.slope[s];
+      as[o] = part.d.aspect[s];
+    }
+  }
+  if(cell === null) throw new Error('no elevation here');
+  return {el:el, sl:sl, as:as, cell:cell, N:N, M:M};
+}
+
 const SlopeLayer = L.GridLayer.extend({
   createTile: function(coords, done){
     const tile = document.createElement('canvas');

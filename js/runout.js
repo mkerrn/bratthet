@@ -7,7 +7,7 @@
    Distance is measured along the flow path rather than straight through the
    mountain, which is what a hand-drawn alpha angle uses, so this runs slightly
    short in strongly curved paths.                                            */
-const RUN_N = 128;              // half the DEM resolution, plenty for this
+const RUN_N = BLOCK_N;
 const runoutCache = new Map();
 let runAlpha = 18, runRelease = 30;
 
@@ -17,25 +17,8 @@ async function runoutMask(z,x,y,alpha,release){
 
   /* Avalanches do not respect tile edges, so model a 3×3 block and keep the
      middle. Without this every tile boundary grows a false stopping line. */
-  const M = RUN_N*3;
-  const el = new Float32Array(M*M).fill(NaN);
-  const sl = new Float32Array(M*M).fill(NaN);
-  let cell = null;
-
-  const jobs = [];
-  for(let dy=-1; dy<=1; dy++) for(let dx=-1; dx<=1; dx++){
-    jobs.push(loadDem(z, x+dx, y+dy).then(d=>({dx,dy,d})).catch(()=>null));
-  }
-  for(const part of await Promise.all(jobs)){
-    if(!part) continue;                       // missing neighbour stays NaN
-    if(cell === null) cell = part.d.cell*2;
-    const ox = (part.dx+1)*RUN_N, oy = (part.dy+1)*RUN_N;
-    for(let j=0;j<RUN_N;j++) for(let i=0;i<RUN_N;i++){
-      el[(oy+j)*M + ox+i] = part.d.el[(j*2)*256 + i*2];
-      sl[(oy+j)*M + ox+i] = part.d.slope[(j*2)*256 + i*2];
-    }
-  }
-  if(cell === null) throw new Error('no elevation here');
+  const b = await demBlock(z,x,y);
+  const M = b.M, el = b.el, sl = b.sl, cell = b.cell;
 
   const tanA = Math.tan(alpha*Math.PI/180);
   /* P is the height of the alpha cone above sea level at each cell. Snow can be

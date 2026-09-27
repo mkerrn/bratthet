@@ -128,6 +128,61 @@
     </section>
 
     <section>
+      <h2 data-layer="sun">Sun exposure</h2>
+      <input type="checkbox" id="sunOn" hidden>
+      <div class="row">
+        <select id="sunMode" class="sel wide" aria-label="What the sun layer shows">
+          <option value="day" selected>Hours of sun over the day</option>
+          <option value="time">Sun and shade at a given time</option>
+        </select>
+      </div>
+      <div class="row">
+        <button type="button" class="mbtn" id="sunPrev" aria-label="One day earlier">◀</button>
+        <input type="date" id="sunDate" class="datein" aria-label="Date for the sun">
+        <button type="button" class="mbtn" id="sunNext" aria-label="One day later">▶</button>
+        <button type="button" class="mbtn" id="sunToday">Today</button>
+      </div>
+      <div class="row" id="sunTimeRow" hidden>
+        <input type="range" id="sunTime" min="0" max="1425" step="15" value="660" aria-label="Time of day">
+        <span class="sun-deg" id="sunTimeOut">11:00</span>
+      </div>
+      <div class="grad-legend" id="sunLegend" aria-hidden="true">
+        <div class="bar sun-bar" id="sunBar"></div>
+        <div class="ends"><span>0 h</span><span></span><span></span></div>
+      </div>
+      <input type="range" id="sunOpacity" min="0" max="100" value="70" aria-label="Sun layer strength">
+      <div class="live" id="sunStatus" aria-live="polite"></div>
+      <p class="note">Hours of direct sun each spot gets on the chosen day, including shadows cast by the terrain around it; blue gets little or none, orange nearly all the sun there is that day. Sun lower than 5° over the slope is not counted. Shaded slopes tend to keep cold, soft snow; sunny ones warm up during the day, which in spring means wet snow and loose slides by midday and a crust once they freeze again. Times are in your device's time zone. It is computed from the same coarse elevation tiles as the slope colours, sees only about one tile's width of terrain towards the sun, so the shadow of a mountain further away is missed, and knows nothing about cloud.</p>
+    </section>
+
+    <section>
+      <h2 data-layer="wind">Wind exposure</h2>
+      <input type="checkbox" id="windOn" hidden>
+      <div class="row">
+        <select id="windSrc" class="sel wide" aria-label="Where the wind direction comes from">
+          <option value="auto" selected>Wind of the last three days</option>
+          <option value="hand">Direction set by hand</option>
+        </select>
+        <span class="sun-deg" id="windDeg" aria-hidden="true">—</span>
+        <svg class="sun-dial wind-dial" id="windDial" viewBox="-20 -20 40 40" tabindex="0" role="slider"
+             aria-label="Direction the wind comes from" aria-valuemin="0" aria-valuemax="359" aria-valuenow="270">
+          <circle class="dial" r="18"/>
+          <path class="tick" d="M0 -18 L0 -13"/>
+          <path class="ray" id="windRay"/>
+          <circle class="sun" id="windDot" r="3.5"/>
+        </svg>
+      </div>
+      <div class="swatches" aria-hidden="true">
+        <span><i style="background:rgb(232,70,124)"></i>Sheltered lee, likely loaded</span>
+        <span><i style="background:rgb(43,179,163)"></i>Exposed, likely scoured</span>
+      </div>
+      <input type="range" id="windOpacity" min="0" max="100" value="60" aria-label="Wind layer strength">
+      <div class="live" id="windStatus" aria-live="polite"></div>
+      <p class="note">Looks upwind from every spot for about 300 m. Where the terrain there rises above the spot, it is in the lee and drifting snow is likely to have been dropped; where the ground falls away towards the wind (ridges, crests, windward slopes), snow is likely blown off and hard or bare. The direction is the Open-Meteo weather model's wind over the last three days at the map centre, counting only hours strong enough to move snow, or one you set on the dial. Valleys steer the wind locally, and the model knows nothing about that.</p>
+      <p class="live warn">Pink is where wind slabs form. Soft, wind-deposited snow there can be the most dangerous snow on the mountain. This is a terrain model, not an observation; read the avalanche forecast for wind slab problems.</p>
+    </section>
+
+    <section>
       <h2 data-layer="snow">Snow condition</h2>
       <input type="checkbox" id="snowOn" hidden>
       <div class="row">
@@ -320,6 +375,7 @@
 <script src="js/slope.js"></script>
 <script src="js/hillshade.js"></script>
 <script src="js/runout.js"></script>
+<script src="js/exposure.js"></script>
 <script src="js/readout.js"></script>
 <script src="js/scale.js"></script>
 <script src="js/route/elevation.js"></script>

@@ -47,11 +47,13 @@ const LAYER_GROUPS = {
   runout: {name:'Alpha angle runout',  pane:'runoutPane'},
   aval:   {name:'Official steepness',  pane:'avalPane'},
   slope:  {name:'Angle classes',                pane:'slopePane'},
+  wind:   {name:'Wind exposure',                pane:'windPane'},
+  sun:    {name:'Sun exposure',                 pane:'sunPane'},
   snow:   {name:'Snow condition',      pane:'snowPane'}
 };
 /* Snow sits lowest because the satellite photos are opaque; the forecast
    regions are a light wash, so they can go near the top. */
-let layerOrder = ['hut', 'gpx', 'piste', 'heat', 'danger', 'runout', 'aval', 'slope', 'snow'];   // first = on top
+let layerOrder = ['hut', 'gpx', 'piste', 'heat', 'danger', 'runout', 'aval', 'slope', 'wind', 'sun', 'snow'];   // first = on top
 if(!HEATMAP_URL){
   delete LAYER_GROUPS.heat;
   layerOrder = layerOrder.filter(k=>k !== 'heat');
@@ -89,6 +91,10 @@ const LAYER_TOGGLES = {
            }},
   slope:  {get:()=>document.getElementById('slopeOn').checked,
            set:v=>{ document.getElementById('slopeOn').checked = v; applySlopeVisible(); }},
+  wind:   {get:()=>document.getElementById('windOn').checked,
+           set:v=>{ document.getElementById('windOn').checked = v; applyWind(); }},
+  sun:    {get:()=>document.getElementById('sunOn').checked,
+           set:v=>{ document.getElementById('sunOn').checked = v; applySun(); }},
   snow:   {get:()=>document.getElementById('snowOn').checked,
            set:v=>{ document.getElementById('snowOn').checked = v; applySnow(); }}
 };
