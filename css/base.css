@@ -8,6 +8,8 @@
   --text:#e8eef0;
   --muted:#93aab5;
   --snow:#cfe4ec;
+  --hut:#d7282f;      /* DNT red */
+  --hut-2:#1f3f8f;    /* other huts */
 }
 *{box-sizing:border-box}
 html,body{margin:0;height:100%;font-family:"Inter","Helvetica Neue",Arial,sans-serif;color:var(--text)}

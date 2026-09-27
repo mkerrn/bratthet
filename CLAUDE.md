@@ -35,6 +35,7 @@ Bratthet is a static GitHub Pages site (a Leaflet map for planning ski tours). I
 | `js/heatmap.js` | Strava heatmap, detecting how far it zooms |
 | `js/pistes.js` | OpenSnowMap ski piste overlay |
 | `js/gpxtrack.js` | Uploaded GPX files (tracks, routes, waypoints) shown as an overlay |
+| `js/huts.js` | DNT and other huts from the `data/huts.json` OpenStreetMap snapshot (refresh with `tools/update-huts.py`) |
 | `js/slope.js` | Terrarium DEM tile loading/cache (`loadDem`, `demCache`) and the computed slope layer |
 | `js/hillshade.js` | Hillshade layer and the sun-direction dial |
 | `js/runout.js` | Alpha-angle runout model layer; `applySlopeVisible`; first `applySteep()` |
@@ -51,6 +52,7 @@ Bratthet is a static GitHub Pages site (a Leaflet map for planning ski tours). I
 | `js/avalanche/layer.js` | Danger-level map layer, forecast line in the readout, "which service" link |
 | `js/controls.js` | Wires up the remaining panel controls, base-map auto switching (`setBase`, `autoBase`), panel collapse. Runs last. |
 | `tools/smoke-test.sh` | Headless Chrome load test |
+| `tools/update-huts.py` | Rebuilds `data/huts.json` from Overpass |
 
 ## Common changes
 
