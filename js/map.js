@@ -3,7 +3,31 @@ const bases = {
   kv: L.tileLayer('https://cache.kartverket.no/v1/wmts/1.0.0/topo/default/webmercator/{z}/{y}/{x}.png',
       {maxZoom:18, attribution:'© Kartverket'}),
   otm: L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png',
-      {maxZoom:17, attribution:'© OpenTopoMap, OpenStreetMap contributors'})
+      {maxZoom:17, attribution:'© OpenTopoMap, OpenStreetMap contributors'}),
+  /* National maps that are free to use with attribution: Kartverket and
+     basemap.at under CC BY 4.0, IGN under the Etalab open licence, swisstopo
+     under its FSDI terms (free, fair use up to about 20,000 users a day).
+     Each covers only its own country, so they are picked by hand, not by
+     "follow the map". IGN's SCAN 25 is left out: its free licence covers
+     professional and association use, not a private site like this one. */
+  kvgrey: L.tileLayer('https://cache.kartverket.no/v1/wmts/1.0.0/topograatone/default/webmercator/{z}/{y}/{x}.png',
+      {maxZoom:18, attribution:'© Kartverket'}),
+  ch: L.tileLayer('https://wmts.geo.admin.ch/1.0.0/ch.swisstopo.pixelkarte-farbe/default/current/3857/{z}/{x}/{y}.jpeg',
+      {maxZoom:18, attribution:'© swisstopo'}),
+  chimg: L.tileLayer('https://wmts.geo.admin.ch/1.0.0/ch.swisstopo.swissimage/default/current/3857/{z}/{x}/{y}.jpeg',
+      {maxZoom:18, attribution:'© swisstopo'}),
+  ign: L.tileLayer('https://data.geopf.fr/wmts?SERVICE=WMTS&VERSION=1.0.0&REQUEST=GetTile' +
+      '&LAYER=GEOGRAPHICALGRIDSYSTEMS.PLANIGNV2&STYLE=normal&TILEMATRIXSET=PM' +
+      '&TILEMATRIX={z}&TILEROW={y}&TILECOL={x}&FORMAT=image/png',
+      {maxZoom:18, attribution:'© IGN'}),
+  ignimg: L.tileLayer('https://data.geopf.fr/wmts?SERVICE=WMTS&VERSION=1.0.0&REQUEST=GetTile' +
+      '&LAYER=ORTHOIMAGERY.ORTHOPHOTOS&STYLE=normal&TILEMATRIXSET=PM' +
+      '&TILEMATRIX={z}&TILEROW={y}&TILECOL={x}&FORMAT=image/jpeg',
+      {maxZoom:18, attribution:'© IGN'}),
+  at: L.tileLayer('https://mapsneu.wien.gv.at/basemap/geolandbasemap/normal/google3857/{z}/{y}/{x}.png',
+      {maxZoom:18, attribution:'© basemap.at'}),
+  atimg: L.tileLayer('https://mapsneu.wien.gv.at/basemap/bmaporthofoto30cm/normal/google3857/{z}/{y}/{x}.jpeg',
+      {maxZoom:18, attribution:'© basemap.at'})
 };
 
 const map = L.map('map', {center:[61.63, 8.31], zoom:12, layers:[bases.kv], zoomControl:true});
@@ -15,6 +39,7 @@ const map = L.map('map', {center:[61.63, 8.31], zoom:12, layers:[bases.kv], zoom
 /* The name here is also written into the matching section heading in the
    panel (h2 with data-layer), so a layer is called the same thing in both. */
 const LAYER_GROUPS = {
+  piste:  {name:'Ski pistes',                   pane:'pistePane'},
   heat:   {name:'Heatmap',                      pane:'heatPane'},
   danger: {name:'Avalanche forecast',           pane:'dangerPane'},
   runout: {name:'Alpha angle runout',  pane:'runoutPane'},
@@ -24,7 +49,7 @@ const LAYER_GROUPS = {
 };
 /* Snow sits lowest because the satellite photos are opaque; the forecast
    regions are a light wash, so they can go near the top. */
-let layerOrder = ['heat', 'danger', 'runout', 'aval', 'slope', 'snow'];   // first = on top
+let layerOrder = ['piste', 'heat', 'danger', 'runout', 'aval', 'slope', 'snow'];   // first = on top
 if(!HEATMAP_URL){
   delete LAYER_GROUPS.heat;
   layerOrder = layerOrder.filter(k=>k !== 'heat');
@@ -41,6 +66,8 @@ document.querySelectorAll('h2[data-layer]').forEach(h=>{
    so unticking it here sets that menu to Off and ticking restores the source. */
 let steepLast = 'auto';
 const LAYER_TOGGLES = {
+  piste:  {get:()=>document.getElementById('pisteOn').checked,
+           set:v=>{ document.getElementById('pisteOn').checked = v; applyPiste(); }},
   heat:   {get:()=>document.getElementById('heatOn').checked,
            set:v=>{ document.getElementById('heatOn').checked = v; buildHeatmap(); }},
   danger: {get:()=>document.getElementById('dangerOn').checked,

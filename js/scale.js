@@ -34,9 +34,10 @@ function updateScale(){
    the tile. Null means the base map draws no contours worth naming there. */
 const CONTOURS = {
   kv:  z => z >= 12 ? 20 : null,          // Kartverket topo, N50-derived
+  kvgrey: z => z >= 12 ? 20 : null,       // same map in grey
   otm: z => z >= 15 ? 10 : z >= 13 ? 50 : z >= 12 ? 100 : null
 };
-const BASE_NAMES = {kv:'Kartverket', otm:'OpenTopoMap'};
+const BASE_NAMES = {kv:'Kartverket', kvgrey:'Kartverket', otm:'OpenTopoMap'};
 const contourEl = document.getElementById('contourInfo');
 let currentBase = 'kv';
 

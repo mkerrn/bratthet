@@ -192,12 +192,34 @@
     </section>
 
     <section>
+      <h2 data-layer="piste">Ski pistes</h2>
+      <input type="checkbox" id="pisteOn" hidden>
+      <input type="range" id="pisteOpacity" min="0" max="100" value="90" aria-label="Piste line strength">
+      <p class="note">Pistes, ski routes and lifts from OpenStreetMap, drawn by OpenSnowMap. Tick it in the layer order list to show it. Anyone can edit OpenStreetMap, so lines can be missing or out of date, and a marked ski route off piste says nothing about whether it is safe today.</p>
+    </section>
+
+    <section>
       <h2>Base map</h2>
       <div class="row">
         <select id="baseSel" class="sel wide" aria-label="Base map">
           <option value="auto" selected>Follow the map</option>
-          <option value="kv">Kartverket topo</option>
-          <option value="otm">OpenTopoMap</option>
+          <option value="otm">OpenTopoMap (world)</option>
+          <optgroup label="Norway">
+            <option value="kv">Kartverket topo</option>
+            <option value="kvgrey">Kartverket grey</option>
+          </optgroup>
+          <optgroup label="Switzerland">
+            <option value="ch">swisstopo map</option>
+            <option value="chimg">swisstopo aerial photo</option>
+          </optgroup>
+          <optgroup label="France">
+            <option value="ign">IGN Plan</option>
+            <option value="ignimg">IGN aerial photo</option>
+          </optgroup>
+          <optgroup label="Austria">
+            <option value="at">basemap.at</option>
+            <option value="atimg">basemap.at aerial photo</option>
+          </optgroup>
         </select>
       </div>
       <div class="row shade-row off" id="shadeRow" style="margin-top:12px">
@@ -214,7 +236,7 @@
       </div>
       <input type="range" id="shadeOpacity" min="0" max="100" value="55" aria-label="Hillshading strength">
       <p class="note">Shades slopes that face away from the light, drawn from the same elevation data as the slope colours. Tap or drag the small dial to set where the light comes from; northwest gives the clearest relief, while the real sun direction (south around midday in winter) shows roughly which slopes stay in shade. Each slope is shaded on its own, so shadows cast by neighbouring mountains are not shown. The slider sets how dark the shading gets.</p>
-      <p class="note">Kartverket only covers Norway, so "follow the map" swaps to OpenTopoMap once you leave it.</p>
+      <p class="note">Kartverket only covers Norway, so "follow the map" swaps to OpenTopoMap once you leave it. The national maps and aerial photos for Switzerland, France and Austria only cover their own country and are blank or coarse outside it, so you pick those by hand. Aerial photos are taken in summer, which makes them good for reading rock, forest and gullies, not snow. The grey Kartverket map lets the slope colours stand out.</p>
       <p class="note">The corner shows a scale bar and, when the base map draws named contours, its published interval for the zoom you are at: 20 m on Kartverket topo, 10 m on OpenTopoMap from zoom 15 and coarser below. Raster tiles carry no metadata, so this is the map series' equidistance, not something read out of the tile, and it can differ locally. The ruler button measures straight legs between the points you tap, and reads ascent and descent off the same coarse elevation tiles the slope colours use — expect it to smooth away small rolls and to run short on a line drawn with few points.</p>
       <p class="note">While measuring, the curve at the bottom shows the elevation along the line, coloured by how steep the ground under it is; drag along it to find the spot on the map. The menu above the curve switches between the fixed avalanche colours and your own slope classes; with your classes, direction and altitude filters count just as on the map (marked * in the key), and edits show up when you press Redraw map. "Steepest ground" is the slope of the terrain the line crosses, which is what matters for avalanches, and stretches over 30° are drawn red on the map. "Steepest track" is how steeply the line itself climbs or drops, averaged over about 60 m, in the direction you drew it — a comfortable skin track is usually 10–15°. Both come from the same coarse elevation tiles, so short steep steps can hide between the samples.</p>
       <p class="note">The time is Werner Munter's rule: one unit per kilometre and one per 100 m of ascent or descent, divided by 4 units an hour going up, 6 on the flat, and 10 skiing down (6 walking down). It leaves out breaks, transitions and trail breaking, so calibrate it against your own tours. Save GPX writes the line with elevations as a track that watches and phone apps import as a course.</p>
@@ -265,6 +287,7 @@
 <script src="js/map.js"></script>
 <script src="js/steepness.js"></script>
 <script src="js/heatmap.js"></script>
+<script src="js/pistes.js"></script>
 <script src="js/slope.js"></script>
 <script src="js/hillshade.js"></script>
 <script src="js/runout.js"></script>

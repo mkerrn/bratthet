@@ -30,9 +30,10 @@ Bratthet is a static GitHub Pages site (a Leaflet map for planning ski tours). I
 | `js/config.js` | `HEATMAP_URL` (empty string hides the heatmap entirely) |
 | `js/util.js` | `isoDay`, `addDays`, `TODAY`, `niceDate`, `esc`, `debounce`, `fetchJson` |
 | `js/bands.js` | Slope angle classes (`DEFAULT_BANDS`, `bands`) and their editor UI with the aspect dial |
-| `js/map.js` | Base maps (`bases`), the `map` object, layer panes, `LAYER_GROUPS`, `LAYER_TOGGLES`, layer-order list |
+| `js/map.js` | Base maps (`bases`: Kartverket, OpenTopoMap, swisstopo, IGN, basemap.at), the `map` object, layer panes, `LAYER_GROUPS`, `LAYER_TOGGLES`, layer-order list |
 | `js/steepness.js` | Official steepness layers (NVE/swisstopo/IGN), `REGIONS` (which base map and steepness layer each area gets) |
 | `js/heatmap.js` | Strava heatmap, detecting how far it zooms |
+| `js/pistes.js` | OpenSnowMap ski piste overlay |
 | `js/slope.js` | Terrarium DEM tile loading/cache (`loadDem`, `demCache`) and the computed slope layer |
 | `js/hillshade.js` | Hillshade layer and the sun-direction dial |
 | `js/runout.js` | Alpha-angle runout model layer; `applySlopeVisible`; first `applySteep()` |
