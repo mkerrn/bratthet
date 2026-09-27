@@ -140,8 +140,20 @@ function showSteep(p){
   if(p.maxDown >= 1) track.push('↓ ' + Math.round(p.maxDown) + '°');
   measureSteep.innerHTML =
     'Steepest ground <b class="' + cls + '">' + g + '°</b>' + overTxt +
-    '<div class="sub">Steepest track ' + (track.length ? track.join(' · ') : 'flat') + '</div>';
+    '<div class="sub">Steepest track ' + (track.length ? track.join(' · ') : 'flat') + '</div>' +
+    '<div class="sub">Average track ' + avgGrade(p) + '</div>';
   measureSteep.classList.add('on');
+}
+
+/* Average gradient of the climbing and descending stretches on their own,
+   height gained over the distance spent gaining it, so a flat approach
+   doesn't water down the angle of the skin track. */
+function avgGrade(p){
+  const deg = (h, d)=> Math.round(Math.atan(h/d) * 180/Math.PI) + '°';
+  const parts = [];
+  if(p.distUp > 0 && p.up >= 1)     parts.push('↑ ' + deg(p.up, p.distUp));
+  if(p.distDown > 0 && p.down >= 1) parts.push('↓ ' + deg(p.down, p.distDown));
+  return parts.length ? parts.join(' · ') : 'flat';
 }
 
 function showTime(p){
@@ -151,7 +163,7 @@ function showTime(p){
   if(t.up   >= 1/24) parts.push('up ' + fmtHours(t.up));
   if(t.flat >= 1/24) parts.push('flat ' + fmtHours(t.flat));
   if(t.down >= 1/24) parts.push('down ' + fmtHours(t.down));
-  munterSplit.textContent = (parts.length > 1 ? parts.join(' · ') + ' · ' : '') + 'no breaks included';
+  munterSplit.textContent = parts.length > 1 ? parts.join(' · ') : '';
   measureTime.classList.add('on');
 }
 
