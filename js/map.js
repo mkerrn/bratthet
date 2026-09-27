@@ -63,6 +63,26 @@ document.querySelectorAll('h2[data-layer]').forEach(h=>{
   const g = LAYER_GROUPS[h.dataset.layer];
   if(g) h.textContent = g.name;
 });
+/* Only one layer's settings are shown at a time, so the panel stays short:
+   tapping a name in the order list opens that layer's section (the sections
+   come right after the list, so it appears just below it) and tapping it
+   again closes it. The tick box only shows or hides the layer on the map. */
+let openLayer = null;
+const layerSections = {};
+document.querySelectorAll('h2[data-layer]').forEach(h=>{
+  const sec = h.closest('section');
+  layerSections[h.dataset.layer] = sec;
+  sec.hidden = true;
+});
+function showLayerSettings(key){
+  openLayer = openLayer === key ? null : key;
+  Object.entries(layerSections).forEach(([k, sec])=>{ sec.hidden = k !== openLayer; });
+  document.querySelectorAll('#order li[data-key]').forEach(li=>{
+    const on = li.dataset.key === openLayer;
+    li.classList.toggle('open', on);
+    li.querySelector('.name').setAttribute('aria-expanded', on);
+  });
+}
 
 /* Show/hide for each row in the order list. Each one drives the control the
    layer already has in its own section, so the two always agree. The official
@@ -132,11 +152,14 @@ function renderOrder(){
   layerOrder.forEach((key, i)=>{
     const li = document.createElement('li');
     li.dataset.key = key;
-    li.innerHTML = '<input type="checkbox" id="ord-' + key + '">' +
-      '<label for="ord-' + key + '">' + LAYER_GROUPS[key].name + '</label>' +
-      '<button type="button" title="Move up" aria-label="Move ' + LAYER_GROUPS[key].name + ' up">▲</button>' +
-      '<button type="button" title="Move down" aria-label="Move ' + LAYER_GROUPS[key].name + ' down">▼</button>';
-    const [up, down] = li.querySelectorAll('button');
+    const name = LAYER_GROUPS[key].name;
+    li.classList.toggle('open', key === openLayer);
+    li.innerHTML = '<input type="checkbox" aria-label="Show ' + name + ' on the map">' +
+      '<button type="button" class="name" aria-expanded="' + (key === openLayer) + '" title="Settings for ' + name + '">' + name + '</button>' +
+      '<button type="button" class="mv" title="Move up" aria-label="Move ' + name + ' up">▲</button>' +
+      '<button type="button" class="mv" title="Move down" aria-label="Move ' + name + ' down">▼</button>';
+    li.querySelector('.name').onclick = ()=> showLayerSettings(key);
+    const [up, down] = li.querySelectorAll('.mv');
     up.disabled = i === 0;
     down.disabled = i === layerOrder.length - 1;
     up.onclick = ()=> moveLayer(i, -1);

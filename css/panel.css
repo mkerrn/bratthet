@@ -62,8 +62,7 @@ input[type=text]{
 #order{list-style:none;margin:0;padding:0;border:1px solid var(--line);border-radius:4px;overflow:hidden}
 #order li{display:flex;align-items:center;gap:8px;padding:5px 6px 5px 8px;font-size:12.5px;background:var(--panel-2)}
 #order li input[type=checkbox]{margin:0;flex:0 0 auto;accent-color:var(--snow);cursor:pointer}
-#order li label{flex:1;cursor:pointer}
-#order li.hidden-layer label{color:var(--muted)}
+#order li.hidden-layer .name{color:var(--muted)}
 #order li + li{border-top:1px solid var(--line)}
 #order li span{flex:1}
 #order li.fixed{background:transparent;color:var(--muted);padding-left:30px}
@@ -73,3 +72,13 @@ input[type=text]{
 }
 #order button:hover:not(:disabled){background:#264556}
 #order button:disabled{opacity:.3;cursor:default}
+/* The layer name opens that layer's settings below the list. */
+#order button.name{
+  flex:1;width:auto;height:auto;padding:2px 0;text-align:left;font-size:12.5px;
+  background:none;border:0;color:var(--text);
+}
+#order button.name::after{content:' ▸';color:var(--muted);font-size:10px}
+#order li.open button.name::after{content:' ▾'}
+#order button.name:hover{background:none;color:var(--snow)}
+#order li.open{box-shadow:inset 3px 0 0 var(--snow)}
+#order li.open button.name{color:var(--snow);font-weight:600}
