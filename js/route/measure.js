@@ -56,3 +56,29 @@ measBtn.onclick = ()=> setMeasuring(!measuring);
 document.getElementById('measUndo').onclick = ()=>{ mpts.pop(); drawMeasure(); };
 document.getElementById('measClear').onclick = ()=>{ mpts = []; drawMeasure(); };
 document.getElementById('measDone').onclick = ()=>{ mpts = []; drawMeasure(); setMeasuring(false); };
+
+/* ---------- measure box: profile on/off and folding ---------- */
+/* Both choices are remembered, so a phone user who always wants the map
+   clear of the profile only has to say so once. */
+const measProfBtn = document.getElementById('measProfBtn');
+const measFold = document.getElementById('measFold');
+
+function setProfileShown(on){
+  document.body.classList.toggle('profile-off', !on);
+  measProfBtn.setAttribute('aria-pressed', on);
+  measProfBtn.title = on ? 'Hide the elevation profile' : 'Show the elevation profile';
+  try{ localStorage.setItem('bratthet.measProfile', on ? '1' : '0'); }catch(e){}
+  if(on && curProfile) renderProfile();   // it may have been drawn while hidden at zero size
+}
+function setMeasureCompact(on){
+  measureBox.classList.toggle('compact', on);
+  measFold.setAttribute('aria-expanded', !on);
+  measFold.title = on ? 'Show all the measurements' : 'Show only the distance';
+  try{ localStorage.setItem('bratthet.measCompact', on ? '1' : '0'); }catch(e){}
+}
+measProfBtn.onclick = ()=> setProfileShown(document.body.classList.contains('profile-off'));
+measFold.onclick = ()=> setMeasureCompact(!measureBox.classList.contains('compact'));
+try{
+  if(localStorage.getItem('bratthet.measProfile') === '0') setProfileShown(false);
+  if(localStorage.getItem('bratthet.measCompact') === '1') setMeasureCompact(true);
+}catch(e){}

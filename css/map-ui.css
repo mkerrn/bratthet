@@ -26,6 +26,19 @@
 
 #measureBox{display:none}
 #measureBox.on{display:block}
+#measureHead{display:flex;align-items:center;gap:4px}
+#measureTotal{flex:1;min-width:0;margin-right:6px}
+.micon{
+  flex:0 0 auto;width:22px;height:22px;padding:0;display:flex;align-items:center;justify-content:center;
+  background:var(--panel-2);color:var(--text);border:1px solid var(--line);border-radius:3px;cursor:pointer;
+}
+.micon:hover{background:#264556}
+.micon svg{width:14px;height:14px;display:block}
+#measProfBtn[aria-pressed="false"]{color:var(--muted);opacity:.7}
+#measFold svg{transition:transform .12s}
+/* folded: only the distance line and its two buttons stay */
+#measureBox.compact > :not(#measureHead){display:none}
+#measureBox.compact #measFold svg{transform:rotate(180deg)}
 #measureTotal b{font-weight:600;font-variant-numeric:tabular-nums;font-size:14px}
 #measureSub{font-size:11px;color:var(--muted);margin-top:2px}
 #measureGain{font-size:11.5px;margin-top:3px;display:none;font-variant-numeric:tabular-nums}
@@ -59,6 +72,9 @@ body.has-profile #profileBox{display:flex}
 body.has-profile #bottomLeft{bottom:168px}
 /* taps add points while measuring, so the tap readout has nothing to say */
 body.has-profile #readout{display:none}
+/* profile hidden with its button: the corner stack drops back down */
+body.has-profile.profile-off #profileBox{display:none}
+body.has-profile.profile-off #bottomLeft{bottom:24px}
 #profileHead{display:flex;align-items:center;gap:10px;min-height:16px;font-size:11px;color:var(--muted);
   font-variant-numeric:tabular-nums}
 #profileRead{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -78,6 +94,8 @@ body.has-profile #readout{display:none}
 #profileSvg .scrubDot{fill:#ffb020;stroke:var(--panel);stroke-width:1.5;pointer-events:none}
 @media (max-width:640px){
   #profileKey{display:none}
+  body.has-profile.profile-off #bottomLeft{bottom:20px}
+  .micon{width:28px;height:28px}
 }
 .leaflet-tooltip.meas{
   background:rgba(18,35,44,.92);border:1px solid var(--line);color:var(--text);
