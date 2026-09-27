@@ -53,7 +53,7 @@ const LAYER_GROUPS = {
 };
 /* Snow sits lowest because the satellite photos are opaque; the forecast
    regions are a light wash, so they can go near the top. */
-let layerOrder = ['hut', 'gpx', 'piste', 'heat', 'danger', 'runout', 'aval', 'slope', 'wind', 'sun', 'snow'];   // first = on top
+let layerOrder = ['hut', 'gpx', 'sun', 'wind', 'piste', 'heat', 'danger', 'runout', 'aval', 'slope', 'snow'];   // first = on top
 if(!HEATMAP_URL){
   delete LAYER_GROUPS.heat;
   layerOrder = layerOrder.filter(k=>k !== 'heat');
