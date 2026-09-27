@@ -82,7 +82,7 @@ function setProfileShown(on){
 function setMeasureCompact(on){
   measureBox.classList.toggle('compact', on);
   measFold.setAttribute('aria-expanded', !on);
-  measFold.title = on ? 'Show all the measurements' : 'Show only the distance';
+  measFold.title = on ? 'Show the measure box' : 'Hide the measure box';
   try{ localStorage.setItem('bratthet.measCompact', on ? '1' : '0'); }catch(e){}
 }
 measProfBtn.onclick = ()=> setProfileShown(document.body.classList.contains('profile-off'));
