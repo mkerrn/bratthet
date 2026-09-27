@@ -16,23 +16,28 @@
 
 <div id="bottomLeft">
   <div id="scaleBox" class="card">
-    <div id="scaleRow"><div id="scaleBar"></div><span id="scaleLabel">—</span></div>
+    <div id="scaleRow"><div id="scaleBar"></div><span id="scaleLabel">—</span>
+      <span id="measBtns">
+        <button class="micon" id="measProfBtn" aria-pressed="true" title="Hide the elevation profile" aria-label="Show or hide the elevation profile">
+          <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M1 13 L5 7 L8 10 L11 4 L15 13" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>
+        </button>
+        <button class="micon" id="measFold" aria-expanded="true" title="Show only the distance" aria-label="Collapse or expand the measure box">
+          <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4 10 L8 6 L12 10" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+      </span>
+    </div>
     <div id="contourInfo"></div>
   </div>
   <div id="measureBox" class="card">
     <div id="measureHead">
       <div id="measureTotal">Tap the map to start the line</div>
-      <button class="micon" id="measProfBtn" aria-pressed="true" title="Hide the elevation profile" aria-label="Show or hide the elevation profile">
-        <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M1 13 L5 7 L8 10 L11 4 L15 13" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>
-      </button>
-      <button class="micon" id="measFold" aria-expanded="true" title="Show only the distance" aria-label="Collapse or expand the measure box">
-        <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4 10 L8 6 L12 10" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
-      </button>
     </div>
     <div id="measureSub">Points are joined by straight lines.</div>
     <div id="measureGain"></div>
     <div id="measureSteep"></div>
-    <div id="measureTime">Munter time <b id="munterOut">—</b>
+    <div id="measureTime"><label id="paceBox" title="Your pace as a share of Munter's. 70% means you move at 70% of his speed, so every time and arrival is longer.">
+        <input type="number" id="munterPace" min="30" max="200" step="5" value="100" aria-label="Your pace in percent of Munter's">%</label>
+      Munter time <b id="munterOut">—</b>
       <select id="munterMode" aria-label="How you travel">
         <option value="ski">on skis</option>
         <option value="foot">on foot</option>
@@ -324,8 +329,8 @@
       <p class="note">Shades slopes that face away from the light, drawn from the same elevation data as the slope colours. Tap or drag the small dial to set where the light comes from; northwest gives the clearest relief, while the real sun direction (south around midday in winter) shows roughly which slopes stay in shade. Each slope is shaded on its own, so shadows cast by neighbouring mountains are not shown. The slider sets how dark the shading gets.</p>
       <p class="note">Kartverket only covers Norway, so "follow the map" swaps to OpenTopoMap once you leave it. The national maps and aerial photos for Switzerland, France and Austria only cover their own country and are blank or coarse outside it, so you pick those by hand. Aerial photos are taken in summer, which makes them good for reading rock, forest and gullies, not snow. The grey Kartverket map lets the slope colours stand out.</p>
       <p class="note">The corner shows a scale bar and, when the base map draws named contours, its published interval for the zoom you are at: 20 m on Kartverket topo, 10 m on OpenTopoMap from zoom 15 and coarser below. Raster tiles carry no metadata, so this is the map series' equidistance, not something read out of the tile, and it can differ locally. The ruler button measures straight legs between the points you tap, and reads ascent and descent off the same coarse elevation tiles the slope colours use — expect it to smooth away small rolls and to run short on a line drawn with few points.</p>
-      <p class="note">While measuring, the curve at the bottom shows the elevation along the line, coloured by how steep the ground under it is; drag along it to find the spot on the map. The menu above the curve switches between the fixed avalanche colours and your own slope classes; with your classes, direction and altitude filters count just as on the map (marked * in the key), and edits show up when you press Redraw map. "Steepest ground" is the slope of the terrain the line crosses, which is what matters for avalanches, and stretches over 30° are drawn red on the map. "Steepest track" is how steeply the line itself climbs or drops, averaged over about 60 m, in the direction you drew it — a comfortable skin track is usually 10–15°. Both come from the same coarse elevation tiles, so short steep steps can hide between the samples.</p>
-      <p class="note">The time is Werner Munter's rule: one unit per kilometre and one per 100 m of ascent or descent, divided by 4 units an hour going up, 6 on the flat, and 10 skiing down (6 walking down). It leaves out breaks, transitions and trail breaking, so calibrate it against your own tours. Save GPX writes the line with elevations as a track that watches and phone apps import as a course.</p>
+      <p class="note">While measuring, the curve at the bottom shows the elevation along the line, coloured by how steep the ground under it is; drag along it to find the spot on the map. The menu above the curve switches between the fixed avalanche colours and your own slope classes; with your classes, direction and altitude filters count just as on the map (marked * in the key), and edits show up when you press Redraw map. "Steepest ground" is the slope of the terrain the line crosses, which is what matters for avalanches, and a dot marks its steepest spot on the map. "Steepest track" is how steeply the line itself climbs or drops, averaged over about 60 m, in the direction you drew it — a comfortable skin track is usually 10–15°. Both come from the same coarse elevation tiles, so short steep steps can hide between the samples.</p>
+      <p class="note">The time is Werner Munter's rule: one unit per kilometre and one per 100 m of ascent or descent, divided by 4 units an hour going up, 6 on the flat, and 10 skiing down (6 walking down). It leaves out breaks, transitions and trail breaking, so calibrate it against your own tours. The % box to its left scales it to your own pace: at 70% you move at 70% of Munter's speed, so the time, and every arrival time worked out from it, gets longer. Save GPX writes the line with elevations as a track that watches and phone apps import as a course.</p>
       <p class="note">From the start time you give, the same Munter time says when you reach each point of the line. The measure box then says how much of the way is in sun as you pass, on the date set under Sun exposure, and which spot has had the most sun before you get there, the one most likely to be soft or wet. The first strip under the curve is sun (yellow) or shade (blue) at the time you pass. With Wind exposure on, the second strip shows lee (pink) and exposed (teal) ground, and stretches over 30° in the lee are edged pink on the map: that is classic wind slab terrain. It is only as good as the Munter estimate of your pace and the coarse terrain models behind it.</p>
       <p class="note">Slope is computed in your browser from open 10–30 m elevation tiles, so it is coarser than Kartverket's 1 m laser data. Treat the low classes as indicative and verify steep terrain against the official layer for the country you are in.</p>
     </section>

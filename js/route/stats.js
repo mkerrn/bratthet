@@ -8,12 +8,17 @@ const MUNTER = {
 let munterMode = 'ski';
 try { const m = localStorage.getItem('bratthet.munter'); if(MUNTER[m]) munterMode = m; } catch(e){}
 munterModeEl.value = munterMode;
+/* Your own pace as a percentage of Munter's: at 70% every leg takes 1/0.7 as
+   long. It lives inside munterTime so arrival times and the GPX note follow. */
+let munterPace = 100;
+try { const v = +localStorage.getItem('bratthet.munterPace'); if(v >= 30 && v <= 200) munterPace = v; } catch(e){}
+munterPaceEl.value = munterPace;
 
 function munterTime(p, mode){
-  const r = MUNTER[mode];
-  const up   = (p.distUp/1000   + p.up/100)   / r.up;
-  const down = (p.distDown/1000 + p.down/100) / r.down;
-  const flat = (p.distFlat/1000) / r.flat;
+  const r = MUNTER[mode], k = 100/munterPace;
+  const up   = (p.distUp/1000   + p.up/100)   / r.up   * k;
+  const down = (p.distDown/1000 + p.down/100) / r.down * k;
+  const flat = (p.distFlat/1000) / r.flat * k;
   return {up:up, down:down, flat:flat, total:up+down+flat};
 }
 function fmtHours(h){
@@ -174,27 +179,20 @@ munterModeEl.onchange = ()=>{
   try { localStorage.setItem('bratthet.munter', munterMode); } catch(e){}
   if(curProfile){ showTime(curProfile); updateRouteExposure(); }
 };
+munterPaceEl.onchange = ()=>{
+  const v = +munterPaceEl.value;
+  munterPace = v >= 30 && v <= 200 ? v : 100;
+  munterPaceEl.value = munterPace;
+  try { localStorage.setItem('bratthet.munterPace', munterPace); } catch(e){}
+  if(curProfile){ showTime(curProfile); updateRouteExposure(); }
+};
 
-/* Red over the stretches that cross ground of 30° or more, and a dot on the
-   single steepest spot, so the answer to "does it stay below 30?" is on the map. */
+/* A dot on the single steepest spot, so the answer to "does it stay below
+   30?" is on the map. */
 let scrubMarker = null;
 function drawProfileOnMap(p){
   profileLayer.clearLayers();
   scrubMarker = null;
-  let run = null;
-  for(let i=0;i<p.samples.length;i++){
-    if(p.ground[i] >= STEEP_WARN){
-      if(!run) run = i ? [p.samples[i-1]] : [];
-      run.push(p.samples[i]);
-    } else if(run){
-      run.push(p.samples[i]);
-      L.polyline(run, {color:'#ff4d4d', weight:5, opacity:.95, interactive:false}).addTo(profileLayer);
-      run = null;
-    }
-  }
-  if(run && run.length > 1)
-    L.polyline(run, {color:'#ff4d4d', weight:5, opacity:.95, interactive:false}).addTo(profileLayer);
-
   const s = p.samples[p.maxGroundIdx];
   L.circleMarker(s, {radius:5, color:'#fff', weight:2, fillColor: groundColor(p.maxGround) || '#9fd88a',
     fillOpacity:1, interactive:false})

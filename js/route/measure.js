@@ -49,6 +49,7 @@ function setMeasuring(on){
   measuring = on;
   measBtn.classList.toggle('on', on);
   measureBox.classList.toggle('on', on);
+  document.body.classList.toggle('measuring', on);   // shows the profile and fold buttons on the scale card
   document.getElementById('map').classList.toggle('measuring', on);
   if(on){
     drawMeasure();
@@ -65,7 +66,7 @@ document.getElementById('measUndo').onclick = ()=>{ mpts.pop(); drawMeasure(); }
 document.getElementById('measClear').onclick = ()=>{ mpts = []; drawMeasure(); };
 document.getElementById('measDone').onclick = ()=>{ mpts = []; drawMeasure(); setMeasuring(false); };
 
-/* ---------- measure box: profile on/off and folding ---------- */
+/* ---------- measure box: profile on/off and folding (buttons on the scale card) ---------- */
 /* Both choices are remembered, so a phone user who always wants the map
    clear of the profile only has to say so once. */
 const measProfBtn = document.getElementById('measProfBtn');

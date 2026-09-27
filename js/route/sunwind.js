@@ -186,7 +186,7 @@ function showRouteWind(p){
     } else if(run){ run.push(p.samples[i]); drawRun(run); run = null; }
   }
   if(run) drawRun(run);
-  /* keep the red steep stretches on top, so steep and loaded shows as red edged in pink */
+  /* keep the steepest-spot dot on top of the pink */
   profileLayer.eachLayer(l=>{ if(l.bringToFront) l.bringToFront(); });
   routeWindEl.innerHTML =
     'Wind from ' + dirName(p.windFrom) + ': lee <b>' + fmtLen(lee) + '</b> · exposed ' + fmtLen(bare) +

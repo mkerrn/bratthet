@@ -14,6 +14,7 @@ const measureTime = document.getElementById('measureTime');
 const munterOut = document.getElementById('munterOut');
 const munterSplit = document.getElementById('munterSplit');
 const munterModeEl = document.getElementById('munterMode');
+const munterPaceEl = document.getElementById('munterPace');
 const gpxBtn = document.getElementById('measGpx');
 const profileBox = document.getElementById('profileBox');
 const profileSvg = document.getElementById('profileSvg');
