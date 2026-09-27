@@ -15,9 +15,9 @@
 /* Danger scale: the five European levels, plus regions without a rating. */
 [hidden]{display:none !important}
 .dz-row{display:flex;align-items:center;gap:10px;margin-top:8px}
-.dz-legend{display:flex;gap:3px;font-size:10.5px;flex:0 0 auto}
-.dz-legend span{width:20px;padding:2px 0;text-align:center;border-radius:2px;color:#111;font-weight:600}
-.dz-legend span.none{width:36px;color:var(--muted);font-weight:400;border:1px dashed var(--muted)}
+.dz-legend{display:flex;gap:3px;font-size:10.5px;flex:1 1 auto}
+.dz-legend span{flex:1 1 0;min-width:20px;padding:2px 0;text-align:center;border-radius:2px;color:#111;font-weight:600}
+.dz-legend span.none{flex-grow:1.8;color:var(--muted);font-weight:400;border:1px dashed var(--muted)}
 .dz-row .sel{margin-left:auto}
 .dz{display:inline-block;min-width:16px;padding:0 4px;margin-right:4px;border-radius:2px;
   text-align:center;font-weight:700;color:#111;font-variant-numeric:tabular-nums}
