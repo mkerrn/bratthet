@@ -203,5 +203,5 @@ bandsEl.addEventListener('click', e=>{
     renderBands();
   }
 });
-document.getElementById('addBand').onclick = ()=>{ bands.push(newBand(0, 19, '#4fa35a')); renderBands(); };
+document.getElementById('addBand').onclick = ()=>{ bands.push(newBand(29, 90, '#d7301f')); renderBands(); };
 renderBands();

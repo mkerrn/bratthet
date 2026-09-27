@@ -139,3 +139,4 @@ const SlopeLayer = L.GridLayer.extend({
   }
 });
 const slope = new SlopeLayer({maxZoom:18, opacity:0.65, tileSize:256, pane:'slopePane'});
+document.getElementById('slopeOpacity').oninput = e=> slope.setOpacity(e.target.value/100);
