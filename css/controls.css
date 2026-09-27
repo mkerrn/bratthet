@@ -1,0 +1,30 @@
+/* Selects, status lines, avalanche danger legend, phone layout. */
+/* Selects and the date stepper share the look of the other inputs. */
+.sel{flex:0 0 auto;max-width:100%;padding:4px 6px;font-size:12px;background:var(--panel-2);color:var(--text);
+  border:1px solid var(--line);border-radius:3px}
+.sel.wide{flex:1;min-width:0}
+.datein{flex:1;min-width:0;padding:3px 5px;font-size:12px;background:var(--panel-2);color:var(--text);
+  border:1px solid var(--line);border-radius:3px;color-scheme:dark}
+.row .mbtn{padding:3px 8px}
+/* Status lines that matter for safety stay visible even with explanations off. */
+.live{margin:6px 0 0;font-size:11px;line-height:1.5;color:var(--muted)}
+.live:empty{display:none}
+.live.warn{color:#ffcf70}
+.legend-img{display:block;max-width:100%;margin-top:6px;border-radius:3px;background:#fff}
+
+/* Danger scale: the five European levels, plus regions without a rating. */
+[hidden]{display:none !important}
+.dz-row{display:flex;align-items:center;gap:10px;margin-top:8px}
+.dz-legend{display:flex;gap:3px;font-size:10.5px;flex:0 0 auto}
+.dz-legend span{width:20px;padding:2px 0;text-align:center;border-radius:2px;color:#111;font-weight:600}
+.dz-legend span.none{width:36px;color:var(--muted);font-weight:400;border:1px dashed var(--muted)}
+.dz-row .sel{margin-left:auto}
+.dz{display:inline-block;min-width:16px;padding:0 4px;margin-right:4px;border-radius:2px;
+  text-align:center;font-weight:700;color:#111;font-variant-numeric:tabular-nums}
+#readout .fc{margin-top:4px;font-size:11.5px;color:var(--text)}
+#readout .fc a{color:var(--snow)}
+@media (max-width:640px){
+  #panel{left:12px;right:12px;width:auto}
+  #panel.closed{left:auto;right:12px}
+  #bottomLeft{bottom:20px;font-size:12px}
+}

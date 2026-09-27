@@ -1,0 +1,107 @@
+/* On-map UI: bottom-left cards, measuring tape, elevation profile, map buttons. */
+/* Everything in the bottom left corner is one stack, so the scale sits
+   directly above the readout however tall either of them gets. */
+#bottomLeft{
+  position:absolute;z-index:1000;left:12px;bottom:24px;
+  display:flex;flex-direction:column;align-items:flex-start;gap:6px;
+  max-width:calc(100% - 84px);
+}
+.card{
+  padding:7px 11px;font-size:12.5px;
+  background:rgba(18,35,44,.92);border:1px solid var(--line);border-radius:4px;
+}
+#readout b{font-weight:600;font-variant-numeric:tabular-nums}
+#readout .sub{margin-top:2px;font-size:11px;color:var(--muted);font-variant-numeric:tabular-nums}
+
+#scaleBox{font-size:11px;color:var(--muted);padding:6px 10px 7px}
+#scaleRow{display:flex;align-items:center;gap:8px}
+#scaleBar{
+  height:7px;width:80px;
+  border:1.5px solid var(--text);border-top:none;
+  transition:width .12s linear;
+}
+#scaleLabel{color:var(--text);font-variant-numeric:tabular-nums;font-size:11.5px}
+#contourInfo{margin-top:3px;display:none}
+#contourInfo.on{display:block}
+
+#measureBox{display:none}
+#measureBox.on{display:block}
+#measureTotal b{font-weight:600;font-variant-numeric:tabular-nums;font-size:14px}
+#measureSub{font-size:11px;color:var(--muted);margin-top:2px}
+#measureGain{font-size:11.5px;margin-top:3px;display:none;font-variant-numeric:tabular-nums}
+#measureGain.on{display:block}
+#measureGain .up{color:#ffb020}
+#measureGain .dn{color:#8fd0ff}
+#measureGain .wait{color:var(--muted)}
+.mrow{display:flex;gap:6px;margin-top:7px}
+.mbtn{
+  padding:3px 9px;font-size:11px;background:var(--panel-2);color:var(--text);
+  border:1px solid var(--line);border-radius:3px;cursor:pointer;
+}
+.mbtn:hover{background:#264556}
+.mbtn:disabled{opacity:.4;cursor:default;background:var(--panel-2)}
+#measureSteep,#measureTime{font-size:11.5px;margin-top:3px;display:none;font-variant-numeric:tabular-nums}
+#measureSteep.on,#measureTime.on{display:block}
+#measureSteep b,#measureTime b{font-weight:600}
+#measureSteep .warn{color:#ff8a7a}
+#measureSteep .ok{color:#9fd88a}
+#measureSteep .sub,#measureTime .sub{font-size:11px;color:var(--muted);margin-top:1px}
+#munterMode{margin-left:4px;padding:1px 3px;font-size:11px;background:var(--panel-2);color:var(--text);
+  border:1px solid var(--line);border-radius:3px}
+
+/* Elevation profile along the measured line. It takes the bottom edge while
+   measuring and pushes the corner stack up above it. */
+#profileBox{
+  position:absolute;z-index:1000;left:12px;right:70px;bottom:24px;height:136px;
+  padding:6px 10px 4px;display:none;flex-direction:column;
+}
+body.has-profile #profileBox{display:flex}
+body.has-profile #bottomLeft{bottom:168px}
+/* taps add points while measuring, so the tap readout has nothing to say */
+body.has-profile #readout{display:none}
+#profileHead{display:flex;align-items:center;gap:10px;min-height:16px;font-size:11px;color:var(--muted);
+  font-variant-numeric:tabular-nums}
+#profileRead{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#profileRead b{color:var(--text);font-weight:600}
+#profileKey{display:flex;gap:2px;flex:0 0 auto;font-size:9.5px}
+#profileKey span{padding:0 4px;border-radius:2px;color:#111;font-weight:600;white-space:nowrap}
+#profileColor{flex:0 0 auto;padding:1px 3px;font-size:11px;background:var(--panel-2);color:var(--text);
+  border:1px solid var(--line);border-radius:3px}
+#profileSvg{flex:1;width:100%;min-height:0;display:block;touch-action:none;cursor:crosshair}
+#profileSvg .grid{stroke:var(--line);stroke-width:1}
+#profileSvg .lbl{fill:var(--muted);font-size:9.5px;font-variant-numeric:tabular-nums}
+#profileSvg .vtx{stroke:var(--text);stroke-opacity:.22;stroke-dasharray:2 3}
+#profileSvg .curve{fill:none;stroke:#ffb020;stroke-width:1.8;stroke-linejoin:round}
+#profileSvg .flat{fill:var(--snow);fill-opacity:.08}
+#profileSvg .peak{fill:var(--text);font-size:10px;font-weight:600;text-anchor:middle}
+#profileSvg .scrub{stroke:var(--text);stroke-width:1;pointer-events:none}
+#profileSvg .scrubDot{fill:#ffb020;stroke:var(--panel);stroke-width:1.5;pointer-events:none}
+@media (max-width:640px){
+  #profileKey{display:none}
+}
+.leaflet-tooltip.meas{
+  background:rgba(18,35,44,.92);border:1px solid var(--line);color:var(--text);
+  font-size:11px;padding:1px 5px;box-shadow:none;font-variant-numeric:tabular-nums;
+}
+.leaflet-tooltip.meas:before{display:none}
+#map.measuring{cursor:crosshair}
+
+#measBtn{
+  position:absolute;z-index:1000;right:12px;bottom:80px;width:46px;height:46px;
+  display:flex;align-items:center;justify-content:center;
+  background:rgba(18,35,44,.92);border:1px solid var(--line);border-radius:50%;
+  color:var(--text);cursor:pointer;padding:0;
+}
+#measBtn.on{background:#ffb020;border-color:#ffb020;color:var(--ink)}
+#measBtn svg{width:22px;height:22px;display:block}
+
+#locBtn{
+  position:absolute;z-index:1000;right:12px;bottom:24px;width:46px;height:46px;
+  display:flex;align-items:center;justify-content:center;
+  background:rgba(18,35,44,.92);border:1px solid var(--line);border-radius:50%;
+  color:var(--text);cursor:pointer;padding:0;
+}
+#locBtn.on{background:var(--snow);border-color:var(--snow);color:var(--ink)}
+#locBtn svg{width:22px;height:22px;display:block}
+.me-arrow{width:34px;height:34px;transition:transform .12s linear}
+.leaflet-control-attribution{font-size:10px}

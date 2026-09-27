@@ -1,0 +1,75 @@
+/* Inside the layers panel: slope classes, direction dial, inputs, layer order list. */
+.band{display:grid;grid-template-columns:44px 10px 44px 1fr 24px;gap:6px;align-items:center;margin-bottom:6px}
+.band input[type=number]{
+  width:100%;padding:4px 5px;font-size:12px;background:var(--panel-2);color:var(--text);
+  border:1px solid var(--line);border-radius:3px;
+}
+.band .dash{text-align:center;color:var(--muted);font-size:12px}
+.band input[type=color]{width:100%;height:24px;padding:0;border:1px solid var(--line);border-radius:3px;background:none}
+.band button{background:none;border:none;color:var(--muted);cursor:pointer;font-size:15px;line-height:1;padding:2px}
+.band button:hover{color:#ff9a8b}
+.bandWrap{margin-bottom:10px}
+.bandWrap .band{margin-bottom:3px}
+.bf-toggle{
+  display:block;width:100%;text-align:left;padding:2px 0;background:none;border:none;
+  font:inherit;font-size:11px;color:var(--muted);cursor:pointer;
+}
+.bf-toggle:hover{color:var(--text)}
+.bf-toggle.active{color:var(--snow)}
+.bf-edit{display:grid;grid-template-columns:auto 1fr;gap:12px;align-items:start;
+  margin-top:5px;padding:8px;border:1px solid var(--line);border-radius:4px}
+/* Direction dial: north up, the chosen range drawn as a wedge. */
+.compass{width:112px;height:112px;display:block;touch-action:manipulation;cursor:crosshair;user-select:none;-webkit-user-select:none}
+.compass .dial{fill:var(--panel-2);stroke:var(--line);stroke-width:1}
+.compass .wedge{fill:var(--snow);fill-opacity:.38;stroke:var(--snow);stroke-width:1}
+.compass.is-all .wedge{fill-opacity:.16;stroke:none}
+.compass .preview{fill:var(--snow);fill-opacity:.18;stroke:var(--snow);stroke-width:1;stroke-dasharray:3 2}
+.compass .tick{stroke:var(--muted);stroke-width:1}
+.compass .lbl{fill:var(--text);font-size:10px;font-weight:600;text-anchor:middle;dominant-baseline:central;pointer-events:none}
+.compass .mark{stroke:var(--snow);stroke-width:2;stroke-linecap:round;pointer-events:none}
+.compass .allbtn{cursor:pointer}
+.compass .allbtn circle{fill:var(--panel);stroke:var(--line);stroke-width:1}
+.compass .allbtn:hover circle{stroke:var(--snow)}
+.compass.is-all .allbtn circle{fill:var(--snow);stroke:var(--snow)}
+.compass.is-all .allbtn text{fill:var(--ink)}
+.dial-hint{margin:5px 0 0;width:112px;font-size:10.5px;line-height:1.35;color:var(--muted)}
+.bf-fields label{display:block;font-size:11px;color:var(--muted);margin-bottom:4px}
+.bf-fields .grp + .grp{margin-top:10px}
+.bf-fields .pair{display:grid;grid-template-columns:1fr 10px 1fr;gap:4px;align-items:center}
+.bf-fields input{
+  width:100%;padding:4px 5px;font-size:12px;background:var(--panel-2);color:var(--text);
+  border:1px solid var(--line);border-radius:3px;
+}
+.bf-fields .dash{text-align:center;color:var(--muted);font-size:12px}
+.bf-fields p{margin:8px 0 0;font-size:10.5px;line-height:1.4;color:var(--muted)}
+
+.row{display:flex;align-items:center;gap:8px;margin-bottom:8px;font-size:12.5px}
+.row label{flex:1;cursor:pointer}
+input[type=range]{width:100%;accent-color:var(--snow)}
+input[type=text]{
+  width:100%;padding:5px 6px;font-size:11px;background:var(--panel-2);color:var(--text);
+  border:1px solid var(--line);border-radius:3px;font-family:ui-monospace,Menlo,monospace;
+}
+.btn{
+  padding:5px 10px;font-size:12px;background:var(--panel-2);color:var(--text);
+  border:1px solid var(--line);border-radius:3px;cursor:pointer;
+}
+.btn:hover{background:#264556}
+.btn.primary{background:var(--snow);color:var(--ink);border-color:var(--snow);font-weight:600}
+.actions{display:flex;gap:8px;margin-top:10px}
+
+/* Layer order list: top row is drawn on top of the map. */
+#order{list-style:none;margin:0;padding:0;border:1px solid var(--line);border-radius:4px;overflow:hidden}
+#order li{display:flex;align-items:center;gap:8px;padding:5px 6px 5px 8px;font-size:12.5px;background:var(--panel-2)}
+#order li input[type=checkbox]{margin:0;flex:0 0 auto;accent-color:var(--snow);cursor:pointer}
+#order li label{flex:1;cursor:pointer}
+#order li.hidden-layer label{color:var(--muted)}
+#order li + li{border-top:1px solid var(--line)}
+#order li span{flex:1}
+#order li.fixed{background:transparent;color:var(--muted);padding-left:30px}
+#order button{
+  width:24px;height:22px;padding:0;font-size:11px;line-height:1;background:var(--panel);color:var(--text);
+  border:1px solid var(--line);border-radius:3px;cursor:pointer;
+}
+#order button:hover:not(:disabled){background:#264556}
+#order button:disabled{opacity:.3;cursor:default}

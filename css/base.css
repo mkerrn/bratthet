@@ -1,0 +1,59 @@
+/* Colours, page shell, the layers panel frame, light dial, headings. */
+:root{
+  --ink:#0d1b22;
+  --paper:#f2efe6;
+  --panel:#12232c;
+  --panel-2:#1b3340;
+  --line:#2e4a58;
+  --text:#e8eef0;
+  --muted:#93aab5;
+  --snow:#cfe4ec;
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;font-family:"Inter","Helvetica Neue",Arial,sans-serif;color:var(--text)}
+#map{position:absolute;inset:0;background:var(--paper)}
+
+#panel{
+  position:absolute;z-index:1000;top:12px;right:12px;width:310px;max-height:calc(100% - 24px);
+  overflow:auto;background:var(--panel);border:1px solid var(--line);border-radius:6px;
+  box-shadow:0 10px 30px rgba(0,0,0,.35);
+}
+#panel header{
+  display:flex;align-items:baseline;justify-content:space-between;gap:8px;
+  padding:12px 14px;border-bottom:1px solid var(--line);cursor:pointer;
+}
+#panel h1{margin:0;font-size:15px;font-weight:600;letter-spacing:.01em}
+#panel header span{font-size:12px;color:var(--muted)}
+#body{padding:12px 14px 16px}
+#panel.closed #body{display:none}
+/* Collapsed it should be a tab, not an empty bar: let the header set the
+   width and keep only a small gap between the title and the toggle. */
+#panel.closed{width:auto;min-width:0;overflow:visible}
+#panel.closed header{gap:14px;padding:9px 12px;border-bottom:none}
+
+/* Explanations, including the heatmap status line, are hidden until the
+   switch near the bottom of the panel is on. The safety notes (.always)
+   are never hidden. */
+#panel:not(.show-info) section:not(.always) p.note,
+#panel:not(.show-info) .bf-fields p,
+#panel:not(.show-info) .info-only{display:none}
+#panel p.note.status:empty{display:none}
+.infobox{border-top:1px solid var(--line);padding-top:12px}
+.infobox .row{margin-bottom:0}
+
+/* Light direction for the hillshading: the sun sits on the rim where the
+   light comes from, north at the top. */
+.sun-dial{width:40px;height:40px;flex:0 0 40px;cursor:pointer;touch-action:none;border-radius:50%}
+.sun-dial .dial{fill:var(--panel-2);stroke:var(--line);stroke-width:1}
+.sun-dial .tick{stroke:var(--muted);stroke-width:1.5}
+.sun-dial .ray{stroke:#ffb020;stroke-width:1.5;stroke-linecap:round}
+.sun-dial .sun{fill:#ffb020}
+.sun-dial:focus-visible{outline:2px solid var(--snow);outline-offset:2px}
+.sun-deg{font-size:11px;color:var(--muted);min-width:26px;text-align:right;font-variant-numeric:tabular-nums}
+.shade-row.off .sun-dial{opacity:.5}
+
+section{margin-bottom:18px}
+section:last-child{margin-bottom:0}
+h2{margin:0 0 8px;font-size:12px;font-weight:600;color:var(--snow)}
+p.note{margin:6px 0 0;font-size:11px;line-height:1.5;color:var(--muted)}
+a{color:var(--snow)}
