@@ -23,6 +23,8 @@
 .swatches{display:flex;flex-wrap:wrap;gap:4px 12px;font-size:12px;color:var(--muted);margin:2px 0 6px}
 .swatches span{display:flex;align-items:center;gap:5px}
 .swatches i{display:inline-block;width:14px;height:14px;border-radius:2px}
+.swatches label{display:flex;align-items:center;gap:5px;cursor:pointer}
+.swatches label input{margin:0}
 .wind-dial .ray{stroke:#8fd0ff}
 .wind-dial .sun{fill:#8fd0ff}
 

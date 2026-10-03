@@ -2,8 +2,9 @@
 
 For each test area in areas.json:
   - Terrarium z13 tiles (the app's elevation), kept as raw RGBA so run.js
-    decodes them with the app's own terrariumDecode. One ring of extra tiles
-    around the area, because the app models each tile on a 3x3 block.
+    decodes them with the app's own terrariumDecode. Two rings of extra tiles
+    around the area: the app models each tile on a 3x3 block, and the release
+    areas of each of those tiles look into their own neighbours.
   - Copernicus GLO-30 resampled (bilinear) onto the same web mercator z13
     pixel grid, as float32 heights per tile. Used from session 3 on.
   - NVE "Bratthet med utlop" exports on the same grid, 256 px per tile, for
@@ -78,7 +79,7 @@ def fetch_terrarium(z, x0, y0, x1, y1):
         rgba.tofile(path)
         return 1
 
-    jobs = [(x, y) for x in range(x0 - 1, x1 + 2) for y in range(y0 - 1, y1 + 2)]
+    jobs = [(x, y) for x in range(x0 - 2, x1 + 3) for y in range(y0 - 2, y1 + 3)]
     with ThreadPoolExecutor(8) as ex:
         n = sum(ex.map(one, jobs))
     return n, len(jobs)

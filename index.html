@@ -124,17 +124,15 @@
     </section>
 
     <section>
-      <h2 data-layer="runout">Alpha angle runout</h2>
+      <h2 data-layer="runout">Avalanche runout (alpha)</h2>
       <input type="checkbox" id="runOn" hidden>
-      <div class="row">
-        <label for="runAlpha" style="flex:0 0 auto;white-space:nowrap">Alpha</label>
-        <input type="number" id="runAlpha" value="18" min="5" max="45" step="1" style="flex:1 1 44px;min-width:0;padding:4px 5px;font-size:12px;background:var(--panel-2);color:var(--text);border:1px solid var(--line);border-radius:3px">
-        <label for="runRelease" style="flex:0 0 auto;white-space:nowrap">Release</label>
-        <input type="number" id="runRelease" value="30" min="20" max="60" step="1" style="flex:1 1 44px;min-width:0;padding:4px 5px;font-size:12px;background:var(--panel-2);color:var(--text);border:1px solid var(--line);border-radius:3px">
-        <input type="color" id="runColor" value="#b05ad6" aria-label="Runout colour" style="flex:0 0 36px;height:24px;padding:0;border:1px solid var(--line);border-radius:3px;background:none">
+      <div class="swatches run-bands">
+        <label><input type="checkbox" id="runShort" checked><i style="background:#004DA8"></i>Short, 32°</label>
+        <label><input type="checkbox" id="runMedium" checked><i style="background:#4C9BFF"></i>Medium, 27°</label>
+        <label><input type="checkbox" id="runLong" checked><i style="background:#9AB1E6"></i>Long, 23°</label>
       </div>
-      <input type="range" id="runOpacity" min="0" max="100" value="45">
-      <p class="note">Snow is released from everything steeper than the release angle and allowed to run downhill while the line back to its start zone stays steeper than the alpha angle. 18° is the conservative field rule; 20–22° is closer to what most paths actually do. Computed in your browser from the same coarse elevation tiles, so it is an indication of where runout is plausible, not a hazard map.</p>
+      <input type="range" id="runOpacity" min="0" max="100" value="55" aria-label="Runout layer strength">
+      <p class="note">How far avalanches from the slopes above can run, in three bands built the way NVE builds the runout on Varsom's steepness map. Start zones are slopes from about 28° that are sheltered from the wind (ridges must be steeper), and snow runs downhill until the line back up to its start zone is flatter than the band's angle. In mapped avalanche paths the median avalanche stops before 32°, one in four runs past 27° and one in twenty past 23°. Those numbers come from avalanche paths and are dominated by large natural avalanches, so they say how far snow can go, not whether a slope will release today. Forest is ignored, so below the treeline it shows runout where trees may hold the snow. Unlike NVE's map it also colours the steep ground the snow starts on and runs through. The colours are NVE's, so in Norway switch one of the two layers off to compare them. Computed in your browser from coarse elevation tiles: an indication of where runout is plausible, not a hazard map.</p>
     </section>
 
     <section>

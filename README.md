@@ -8,7 +8,7 @@ A map for getting ideas for ski tours in Norway and the Alps. It is a GitHub Pag
 
 - **Angle classes.** Colours slopes by steepness, worked out from elevation data. You set your own angle ranges, and you can limit each one to certain directions (the compass dial) and heights.
 - **Official steepness.** NVE's avalanche terrain layer in Norway, swisstopo's slope classes in the Alps and IGN's slope map in France. The app picks the right one for where you are looking.
-- **Alpha angle runout.** A rough model of how far an avalanche could run from steep slopes above.
+- **Avalanche runout (alpha).** How far avalanches from the slopes above could run, in three bands (32°, 27°, 23°) built the way NVE builds the runout on Varsom's steepness map, and in NVE's colours. Computed in the browser, so it works outside Norway too.
 - **Hillshading.** Shading from the same elevation data. You can turn the light direction.
 - **Snow condition.** seNorge snow depth and new snow (Norway), plus MODIS and Sentinel satellite snow images for a chosen date.
 - **Avalanche forecast.** Danger levels by region from Varsom (Norway) and EAWS (the Alps and the rest of Europe), with a link to the local forecast service.

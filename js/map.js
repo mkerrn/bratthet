@@ -44,7 +44,7 @@ const LAYER_GROUPS = {
   piste:  {name:'Ski pistes',                   pane:'pistePane'},
   heat:   {name:'Heatmap',                      pane:'heatPane'},
   danger: {name:'Avalanche forecast',           pane:'dangerPane'},
-  runout: {name:'Alpha angle runout',  pane:'runoutPane'},
+  runout: {name:'Avalanche runout (alpha)',     pane:'runoutPane'},
   aval:   {name:'Official steepness',  pane:'avalPane'},
   slope:  {name:'Angle classes',                pane:'slopePane'},
   wind:   {name:'Wind exposure',                pane:'windPane'},

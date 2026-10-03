@@ -179,6 +179,14 @@ Same algorithm, no code changes needed to "extend" it, since Terrarium covers Eu
 
 ## Status
 
+- 2026-10-03, **session 2 done.** Numbers, the variants tried and the forest finding are in [alpha-runout-results.md](alpha-runout-results.md#session-2-the-nve-style-model-in-the-app).
+  - The app now draws three NVE-coloured bands (32/27/23°) from AutoATES release areas (`praTile`, PRA threshold 0.25, shelter on a 10 m lattice) and a routed runout (`runoutFlow`: Flow-Py's exp-8 weights times persistence, a spreading budget of 0.5, a 270 m energy cap, heading carried on ground under 3°). The custom alpha/release/colour inputs are gone. The layer is still off by default, its opacity starts at 55, and each band has a checkbox.
+  - Held-out F1 is **0.86 / 0.90 / 0.90** (baseline 0.79 / 0.84 / 0.85), and the p90 edge distance NVE→model is 82 / 116 / 164 m (baseline 132 / 176 / 297).
+  - Routing chosen: variant c in spirit (Flow-Py weights), but as one pass per alpha with a spreading budget instead of a flux. Variant b was not needed. It barely moves F1 but halves the edge error against the envelope.
+  - **Finding: NVE's runout seems to account for forest**, contrary to section 1. Below the treeline, NVE draws runout under only 36–57 % of its own steep ground, against 86–97 % above it (Narvik, Hemsedal). This is most of what is left of the error, and it caps calibration F1 at about 0.80 at 23°. Not fixed: it needs a forest data source (a decision for Mads). The panel note says forest is ignored.
+  - Departure from step 4: the bands are **not** blanked over 27° as on NVE's map. Our Terrarium slope runs steeper than NVE's 10 m classes, and blanking cut F1 to 0.74. The bands cover the start zones and tracks instead, and the note says so.
+  - Speed: the work runs in up to four Web Workers (`js/runout-worker.js`), with a main-thread fallback. A laptop screen at Lyngen fills in about 8 s. Not measured on a real phone yet.
+  - **Next (session 3):** as planned, with `node run.js --model app --dem glo30`. Score the GLO-30 runs against the `app` model, not the baseline. Also check the 7–9 m GLO-30 offset (session 1 note) first.
 - 2026-10-03, **session 1 done.** Results and how to rerun are in [alpha-runout-results.md](alpha-runout-results.md).
   - `js/runout-core.js` now holds the pure maths: `tileLat`, `tileCell`, `terrariumDecode`, `slopeAspect`, `blockFromTiles`, `runoutCone` and `runoutMiddle`. It loads before `slope.js`. `loadDem`/`demBlock` in `slope.js` and `runoutMask` in `runout.js` call it. Its output is identical to the old code (0 differing cells on Lyngen tiles at α 18/23/32).
   - The `tools/runout-check/` harness has `areas.json`, `fetch.py`, `run.js`, `score.py` and `view.py`. The cache holds Terrarium, GLO-30 and NVE data for all 16 areas: 9 Norwegian/Svalbard (4 for calibration, 5 held out) and 7 Alpine.

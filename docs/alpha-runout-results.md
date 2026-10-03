@@ -8,12 +8,13 @@ Measured results for the plan in [alpha-runout-plan.md](alpha-runout-plan.md). E
 cd tools/runout-check
 python3 -m venv .venv && .venv/bin/pip install numpy pillow scipy rasterio
 .venv/bin/python fetch.py            # Terrarium, GLO-30 and NVE into cache/ (about 1 minute)
-node run.js                          # the model over the Norwegian areas -> cache/<area>/model-baseline.u8
-.venv/bin/python score.py            # the tables below
+node run.js                          # session 1 baseline -> cache/<area>/model-baseline.u8
+node run.js --model app --tag app    # what the app draws now (session 2)
+.venv/bin/python score.py            # baseline tables; add --tag app for the app's
 .venv/bin/python view.py lyngen      # picture: blue both, red model only, orange NVE only, grey NVE >27°
 ```
 
-`run.js` takes `--dem terrarium|glo30`, `--release <deg>` and `--tag <name>`, and `score.py`/`view.py` take the same `--tag`. Test areas, and which are for calibration and which are held out, are in `areas.json`.
+`run.js` takes `--model app|baseline|pra`, `--dem terrarium|glo30` and `--tag <name>`, plus the model knobs listed at the top of the file. `score.py`/`view.py` take the same `--tag`. `fetch.py` fetches two rings of Terrarium tiles around each area, because each tile's release areas look into its own neighbours. Test areas, and which are for calibration and which are held out, are in `areas.json`.
 
 **Scoring grid.** Everything is compared on the app's block grid: one cell per 2×2 Terrarium z13 pixels, sampled at the top-left pixel as `demBlock` does (13 m cells at Lyngen, 19 m at Hemsedal, 8 m on Svalbard). NVE is exported at 256 px per tile on the same Web Mercator grid, so NVE pixel (2i, 2j) is the same spot. Shifting the model by one cell in any direction lowers F1 and start-zone agreement, so the grids line up.
 
@@ -102,6 +103,139 @@ Timing is Node on an Apple M1 Pro, for all three alphas on one tile's 3×3 block
 - **Hemsedal has the lowest recall at 32° (0.68).** That fits its rounder terrain: NVE's PRA starts at about 28.5° on sheltered slopes, while the baseline needs 30°.
 - **Start zones.** Of our ≥30° cells, 87–95 % are >27° at NVE, and we cover 89–97 % of NVE's >30° cells, so the slopes agree well on the same 10 m data. Only 58–74 % of NVE's "start cells" (>27° cells touching runout) are ours, because 27–30° cells can be PRA for NVE.
 - **Svalbard is dominated by DEM artefacts.** ArcticDEM has noise and a stepped data edge over Isfjorden/Adventfjorden, and isolated height spikes each become a ≥30° "start zone" with a large octagonal cone around it. That gives precision 0.38 at 32° and a model→NVE p90 of 1.2 km. The PRA sieve (dropping clusters of ≤3 cells) should remove the spikes. Consider masking ArcticDEM water as well.
+
+## Session 2: the NVE-style model in the app
+
+What the app draws now, scored with `node run.js --model app` (2026-10-03):
+
+- **Start zones (PRA)**: AutoATES v2.0 as in the plan (Cauchy slope, median wind shelter within 60 m, fuzzy AND, sieve of ≤3 cells), worked on the full-resolution z13 tile with its neighbours (`praTile`). The shelter median is taken on a 10 m lattice (NVE's grid) rounded to our pixels, which gave the same scores at half the cost. Threshold **0.25** (AutoATES default 0.15; 0.10–0.35 all score within 0.01). A block cell is a start zone when any of its 2×2 pixels is (`praBlock`).
+- **Routing** (`runoutFlow`): the same energy line as before, capped at 270 m above ground (Flow-Py's `max_z_delta`), but each step is weighted by Flow-Py's `tan(β/2 + 45°)^8` times a persistence term (1 straight on, 0.71 at 45°, 0 at 90°). Each path has a spreading budget that starts at 1 and is multiplied by the step's weight relative to the best step; the path stops below **0.5**. On ground under 3° the direction is carried on unchanged. It all runs as one pass per alpha, not one simulation per start cell.
+- **Bands**: one byte per cell, 0–3 (`runoutBands`). Start zones and steep ground are included (see "What the app shows" below).
+
+Full tables:
+
+**Short runout, α 32°**
+
+| area | α | NVE km² | model km² | precision | recall | F1 | IoU | edge NVE→model m (median / p90) | edge model→NVE m (median / p90) |
+|---|---|---|---|---|---|---|---|---|---|
+| lyngen | 32° | 23.88 | 23.76 | 0.87 | 0.87 | 0.87 | 0.77 | 27 / 119 | 42 / 179 |
+| narvik | 32° | 12.15 | 16.13 | 0.67 | 0.88 | 0.76 | 0.61 | 28 / 157 | 44 / 214 |
+| romsdalen | 32° | 30.57 | 32.06 | 0.85 | 0.89 | 0.87 | 0.78 | 25 / 113 | 50 / 197 |
+| hemsedal | 32° | 9.62 | 10.63 | 0.71 | 0.78 | 0.74 | 0.59 | 26 / 132 | 26 / 134 |
+| **all calib** | 32° | 76.23 | 82.58 | 0.80 | 0.87 | 0.84 | 0.72 | 27 / 128 | 42 / 186 |
+| tamok | 32° | 35.65 | 36.78 | 0.91 | 0.94 | 0.92 | 0.85 | 19 / 86 | 30 / 201 |
+| senja | 32° | 23.69 | 23.57 | 0.90 | 0.89 | 0.90 | 0.81 | 13 / 67 | 30 / 153 |
+| sunnmore | 32° | 34.41 | 34.97 | 0.84 | 0.85 | 0.85 | 0.73 | 36 / 144 | 56 / 221 |
+| jotunheimen | 32° | 28.71 | 27.81 | 0.88 | 0.85 | 0.87 | 0.76 | 18 / 73 | 26 / 138 |
+| svalbard | 32° | 5.85 | 6.96 | 0.66 | 0.79 | 0.72 | 0.56 | 8 / 60 | 39 / 583 |
+| **all holdout** | 32° | 128.31 | 130.09 | 0.85 | 0.88 | 0.86 | 0.76 | 18 / 82 | 36 / 212 |
+
+**Medium runout, α 27°**
+
+| area | α | NVE km² | model km² | precision | recall | F1 | IoU | edge NVE→model m (median / p90) | edge model→NVE m (median / p90) |
+|---|---|---|---|---|---|---|---|---|---|
+| lyngen | 27° | 36.54 | 36.87 | 0.91 | 0.92 | 0.91 | 0.84 | 30 / 167 | 55 / 253 |
+| narvik | 27° | 18.18 | 27.48 | 0.58 | 0.88 | 0.70 | 0.54 | 31 / 197 | 58 / 261 |
+| romsdalen | 27° | 38.94 | 43.27 | 0.84 | 0.93 | 0.88 | 0.78 | 35 / 159 | 53 / 201 |
+| hemsedal | 27° | 17.99 | 21.31 | 0.67 | 0.80 | 0.73 | 0.57 | 37 / 194 | 37 / 158 |
+| **all calib** | 27° | 111.65 | 128.93 | 0.78 | 0.90 | 0.84 | 0.72 | 37 / 183 | 51 / 225 |
+| tamok | 27° | 58.28 | 57.65 | 0.95 | 0.94 | 0.94 | 0.89 | 27 / 123 | 30 / 177 |
+| senja | 27° | 33.63 | 35.06 | 0.88 | 0.91 | 0.89 | 0.81 | 27 / 115 | 48 / 204 |
+| sunnmore | 27° | 47.42 | 51.58 | 0.83 | 0.90 | 0.87 | 0.76 | 40 / 215 | 64 / 248 |
+| jotunheimen | 27° | 53.53 | 50.53 | 0.94 | 0.89 | 0.92 | 0.84 | 26 / 93 | 36 / 179 |
+| svalbard | 27° | 17.92 | 17.44 | 0.87 | 0.85 | 0.86 | 0.76 | 11 / 77 | 32 / 487 |
+| **all holdout** | 27° | 210.77 | 212.26 | 0.90 | 0.90 | 0.90 | 0.82 | 19 / 116 | 39 / 225 |
+
+**Long runout, α 23°**
+
+| area | α | NVE km² | model km² | precision | recall | F1 | IoU | edge NVE→model m (median / p90) | edge model→NVE m (median / p90) |
+|---|---|---|---|---|---|---|---|---|---|
+| lyngen | 23° | 42.42 | 44.99 | 0.88 | 0.94 | 0.91 | 0.83 | 40 / 207 | 67 / 293 |
+| narvik | 23° | 22.28 | 38.77 | 0.50 | 0.88 | 0.64 | 0.47 | 51 / 253 | 80 / 324 |
+| romsdalen | 23° | 43.33 | 51.17 | 0.79 | 0.93 | 0.86 | 0.75 | 50 / 225 | 73 / 245 |
+| hemsedal | 23° | 26.13 | 33.24 | 0.61 | 0.78 | 0.69 | 0.52 | 56 / 237 | 42 / 208 |
+| **all calib** | 23° | 134.17 | 168.17 | 0.72 | 0.90 | 0.80 | 0.67 | 53 / 233 | 67 / 273 |
+| tamok | 23° | 71.59 | 72.22 | 0.94 | 0.95 | 0.95 | 0.90 | 38 / 220 | 61 / 245 |
+| senja | 23° | 38.45 | 43.37 | 0.81 | 0.92 | 0.86 | 0.76 | 38 / 161 | 72 / 268 |
+| sunnmore | 23° | 51.33 | 60.10 | 0.80 | 0.93 | 0.86 | 0.75 | 53 / 267 | 80 / 282 |
+| jotunheimen | 23° | 72.76 | 68.59 | 0.96 | 0.90 | 0.93 | 0.87 | 36 / 127 | 41 / 255 |
+| svalbard | 23° | 28.05 | 26.78 | 0.91 | 0.87 | 0.89 | 0.80 | 16 / 99 | 63 / 516 |
+| **all holdout** | 23° | 262.18 | 271.06 | 0.89 | 0.91 | 0.90 | 0.82 | 30 / 164 | 63 / 297 |
+
+**Start zones** (rough check: NVE >27° cells touching NVE runout, against our PRA cells)
+
+| area | NVE start cells covered by ours | our start cells on NVE >27° | our start cells on NVE >30° | NVE >30° cells that are ours |
+|---|---|---|---|---|
+| lyngen | 0.67 | 0.89 | 0.68 | 0.91 |
+| narvik | 0.75 | 0.85 | 0.56 | 0.89 |
+| romsdalen | 0.80 | 0.91 | 0.70 | 0.79 |
+| hemsedal | 0.71 | 0.79 | 0.51 | 0.90 |
+| tamok | 0.74 | 0.87 | 0.61 | 0.93 |
+| senja | 0.80 | 0.90 | 0.62 | 0.82 |
+| sunnmore | 0.76 | 0.91 | 0.70 | 0.85 |
+| jotunheimen | 0.75 | 0.88 | 0.60 | 0.91 |
+| svalbard | 0.70 | 0.89 | 0.46 | 0.87 |
+
+### Against the baseline
+
+| | calib F1 32° / 27° / 23° | holdout F1 32° / 27° / 23° | holdout edge NVE→model p90 (m) | holdout edge model→NVE p90 (m) |
+|---|---|---|---|---|
+| baseline (slope ≥30°, envelope) | 0.81 / 0.79 / 0.75 | 0.79 / 0.84 / 0.85 | 132 / 176 / 297 | 314 / 351 / 400 |
+| **app (PRA, flow)** | **0.84 / 0.84 / 0.80** | **0.86 / 0.90 / 0.90** | **82 / 116 / 164** | **212 / 225 / 297** |
+
+The held-out areas were not used for any choice. Svalbard gains the most (F1 0.52 → 0.72 at 32°): the sieve removes the ArcticDEM spikes that each grew a cone. Tamok, Jotunheimen, Lyngen and Senja are at F1 0.86–0.95 in all three bands.
+
+### What was tried (calibration areas, pooled)
+
+| variant | F1 32° / 27° / 23° | model km² at 23° (NVE 134) | edge NVE→model p90 at 23° |
+|---|---|---|---|
+| baseline | 0.81 / 0.79 / 0.75 | 176 | 325 |
+| PRA 0.15, envelope, start cells left out of the footprint | 0.77 / 0.76 / 0.73 | 169 | 283 |
+| PRA 0.15, envelope | 0.83 / 0.82 / 0.78 | 193 | 1127 |
+| + energy cap 270 m | 0.84 / 0.83 / 0.80 | 188 | 777 |
+| flow, budget 0.3, flat rule, cap 270 (rows below: these settings unless named) | 0.84 / 0.84 / 0.80 | 182 | 361 |
+| PRA 0.25 | 0.85 / 0.84 / 0.80 | 178 | 353 |
+| **flow, budget 0.5, PRA 0.25 (app)** | **0.84 / 0.84 / 0.80** | **168** | **231** |
+| PRA 0.25, budget 0.15 | 0.85 / 0.84 / 0.80 | 182 | 564 |
+| PRA 0.25, no persistence | 0.85 / 0.84 / 0.80 | 169 | 320 |
+| app settings without the flat rule | 0.84 / 0.84 / 0.80 | 171 | 258 |
+| energy cap 120 m | 0.80 / 0.82 / 0.81 | 162 | 288 |
+| alphas 34/29/25 instead of 32/27/23 | 0.81 / 0.83 / 0.81 | 160 | 330 |
+| alpha distance along the surface, not horizontal | 0.55 / 0.78 / 0.81 | 154 | 294 |
+
+- **Leaving start cells out lost recall.** NVE leaves out ground over 27°, not start zones, and its runout covers 27–30° ground in the tracks. Including start cells in the footprint (and letting the scorer skip NVE's >27° cells) was the biggest single gain.
+- **Routing hardly changes F1 but halves the edge error.** The envelope encloses NVE's footprint with a wide margin (NVE→model p90 0.8–1.1 km at 23°). Routing keeps the footprint close to NVE's edges, and the area comes down from 193 to 168 km².
+- **F1 has a ceiling around 0.80 at 23° on the calibration set** whatever the routing, cap or angles. Shrinking the footprint costs as much recall as it gains precision, because the remaining error is not in the routing (next section).
+- Surface distance and steeper alphas were rejected. They shorten the long band but make the short band too short. The plan's angles stay.
+
+### Why Narvik and Hemsedal score lower: NVE appears to account for forest
+
+Most of the remaining false positives are below the treeline. Share of model runout cells that NVE does not have, by elevation (23° band):
+
+| area | 0–200 m | 200–400 m | 400–600 m | 600–800 m | 800–1000 m | 1000–1200 m |
+|---|---|---|---|---|---|---|
+| Narvik | 0.79 | 0.68 | 0.29 | 0.08 | 0.08 | 0.08 |
+| Romsdalen | 0.33 | 0.43 | 0.28 | 0.04 | 0.04 | 0.06 |
+| Hemsedal | – | – | – | 0.53 | 0.65 | 0.20 |
+| Lyngen | 0.26 | 0.12 | 0.05 | 0.04 | 0.04 | 0.13 |
+
+That alone could be runout tails on valley floors. NVE's own data settles it: take the <27° cells right below NVE's own >30° ground (2 cells, lower than the steep ground) and count how often NVE draws runout there:
+
+| area | 0–200 m | 200–400 m | 400–600 m | 600–800 m | 800–1000 m | 1000–1200 m | 1200–1400 m |
+|---|---|---|---|---|---|---|---|
+| Narvik | 0.36 | 0.44 | 0.74 | 0.95 | 0.96 | 0.86 | 0.72 |
+| Hemsedal | – | – | – | 0.56 | 0.57 | 0.86 | 0.93 |
+| Lyngen | 0.71 | 0.81 | 0.95 | 0.96 | 0.84 | 0.68 | 0.44 |
+| Tamok | 0.83 | 0.97 | 0.97 | 0.96 | 0.92 | 0.81 | 0.44 |
+
+Below about 400 m at Narvik and 1000 m at Hemsedal, NVE leaves out the runout under half of its own steep ground. Wind shelter does not depend on elevation, so NVE's start zones seem to be thinned by forest (the drop at the highest band is small summit cliffs). The plan assumed "no forest input". NVE's public description doesn't say either way, and AutoATES v2.0 does take forest density as an input. **Not changed in this session**: adding forest needs a forest data source (for example SR16 in Norway or Copernicus tree cover density), which is a separate decision. Until then, the layer over-warns below the treeline, and the panel note says forest is ignored.
+
+The sea is a smaller part. NVE does draw runout over water (p90 about 300 m from shore), and the model goes further over open fjords (Narvik: 46,000 cells on flat sea against NVE's 8,000 with the first routed version). The cap and the flat-ground rule took some of it off.
+
+### What the app shows
+
+- Bands on all ground the snow reaches, start zones included. Leaving out ground over 27° as NVE does (`--maxslope 27`) dropped calibration F1 to 0.74 / 0.75 / 0.73: our slope from the 7–9 m Terrarium pixels runs steeper than NVE's 10 m classes and cut holes in a fifth of NVE's bands. Leaving out only our start zones did about as badly (0.79 / 0.79 / 0.76).
+- **Speed**: Node on an M1 Pro, one process, for the three bands of one tile including its share of release areas: 270 ms at Lyngen (76 ms of it PRA), 110 ms at Hemsedal and on Svalbard, against 50–120 ms for the old single-alpha model. In the browser the work runs in up to four Web Workers (`js/runout-worker.js`, the same `runout-core.js`). A 1200×900 screen at Lyngen (20 tiles, release areas for the ring around them, DEM downloads included) fills in about 8 s in headless Chrome with 4 workers, and 18 s with no worker (the fallback). Expect a phone to take two to four times that.
 
 ## Notes for session 3 (GLO-30)
 

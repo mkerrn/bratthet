@@ -102,7 +102,12 @@ def main():
     res = {a['name']: score_area(a['name'], tag) for a in areas}
     sets = {a['name']: a['set'] for a in areas}
     meta0 = next(iter(res.values()))[2]
-    print(f"Model `{tag}`: {meta0['dem']} DEM, release slope ≥ {meta0['release']}°\n")
+    if meta0.get('model', 'baseline') == 'baseline':
+        print(f"Model `{tag}`: {meta0['dem']} DEM, release slope ≥ {meta0['release']}°, envelope\n")
+    else:
+        print(f"Model `{tag}`: {meta0['dem']} DEM, `{meta0['model']}`, PRA {meta0.get('pra')}, "
+              f"route {meta0.get('route') if meta0['model'] != 'app' else 'flow'} {meta0.get('flow')}, "
+              f"leaving out slopes over {meta0.get('maxslope')}°\n")
     for k, alpha, name in CLASSES:
         print(f'**{name.capitalize()} runout, α {alpha}°**\n\n{HEAD}')
         for s in ('calib', 'holdout'):
@@ -115,7 +120,7 @@ def main():
                 print(line(f'**all {s}**', alpha, tot('tp'), tot('fp'), tot('fn'), tot('nve_km2'), tot('mod_km2'),
                            cat('d_nm'), cat('d_mn')))
         print()
-    print('**Start zones** (rough check: NVE >27° cells touching NVE runout, against our slope ≥ release cells)\n')
+    print('**Start zones** (rough check: NVE >27° cells touching NVE runout, against our start cells)\n')
     print('| area | NVE start cells covered by ours | our start cells on NVE >27° | our start cells on NVE >30° '
           '| NVE >30° cells that are ours | ms per tile |\n|---|---|---|---|---|---|')
     for n, (_, p, meta) in res.items():

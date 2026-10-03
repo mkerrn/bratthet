@@ -8,8 +8,6 @@ document.getElementById('apply').onclick = ()=>{
   slope.redraw();
   renderProfileKey();
   renderProfile();
-  runoutCache.clear();
-  if(map.hasLayer(runout)) runout.redraw();
   detectedZ = null;
   buildHeatmap();
 };
@@ -28,9 +26,9 @@ document.getElementById('steepSrc').onchange = e=>{
   applySteep();
 };
 document.getElementById('runOn').onchange = applyRunout;
-document.getElementById('runColor').oninput = ()=>{ if(map.hasLayer(runout)) runout.redraw(); };
-document.getElementById('runAlpha').onchange = ()=>{ if(map.hasLayer(runout)) applyRunout(); };
-document.getElementById('runRelease').onchange = ()=>{ if(map.hasLayer(runout)) applyRunout(); };
+for(const id of RUN_BAND_IDS){
+  document.getElementById(id).onchange = ()=>{ if(map.hasLayer(runout)) runout.redraw(); };
+}
 document.getElementById('runOpacity').oninput = e=> runout.setOpacity(e.target.value/100);
 document.getElementById('heatOn').onchange = ()=> buildHeatmap();
 document.getElementById('jumpTo').onchange = e=>{

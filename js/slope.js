@@ -35,14 +35,20 @@ function loadDem(z,x,y){
 }
 function loadSlope(z,x,y){ return loadDem(z,x,y).then(d=>d.slope); }
 
+/* A tile and its eight neighbours as [{dx, dy, d}], null where a tile
+   failed. load is loadDem or anything that resolves to the same record. */
+function demParts(z,x,y,load){
+  const jobs = [];
+  for(let dy=-1; dy<=1; dy++) for(let dx=-1; dx<=1; dx++){
+    jobs.push((load || loadDem)(z, x+dx, y+dy).then(d=>({dx,dy,d})).catch(()=>null));
+  }
+  return Promise.all(jobs);
+}
+
 /* The 3×3 block around a tile (see blockFromTiles in runout-core.js). Not
    cached: the tiles are, and each layer caches its own result. */
 async function demBlock(z,x,y){
-  const jobs = [];
-  for(let dy=-1; dy<=1; dy++) for(let dx=-1; dx<=1; dx++){
-    jobs.push(loadDem(z, x+dx, y+dy).then(d=>({dx,dy,d})).catch(()=>null));
-  }
-  return blockFromTiles(await Promise.all(jobs));
+  return blockFromTiles(await demParts(z,x,y));
 }
 
 const SlopeLayer = L.GridLayer.extend({
