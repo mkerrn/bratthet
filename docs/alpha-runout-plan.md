@@ -108,25 +108,38 @@ A command-line harness. It needs no browser, and it must not drift from the app'
    b. envelope + "no step to a neighbour more than X° flatter than the steepest descent unless the energy line is high", a cheap stand-in for Flow-Py's exp-8 weighting
    c. a crude flux version: each cell passes on a share weighted by `tan(β/2)^8`, and branches below a flux threshold die out
    Choose by F1 and edge distance on the calibration areas, and accept extra cost only if it clearly helps. Also tune the PRA threshold (0.10–0.30) and `c` for slope, which the paper says are the most effective knobs.
-4. **Layer and UI** (`index.html` runout section, `js/runout.js`):
-   - Default mode **"NVE-style"**: three nested bands in NVE's colours (short darkest), with a checkbox per band.
-   - Keep the **custom single alpha** (with the 18° field rule) as a second mode. See the open questions.
-   - A note in the existing voice explaining what the percentiles mean (a median avalanche from a path reaches 32°, one in four reaches 27°, one in twenty reaches 23°), that the data comes from avalanche paths and is dominated by large natural avalanches, that forest is ignored, and that this is an indication rather than a hazard map. Keep the safety wording.
+4. **Layer and UI** (`index.html` runout section, `js/runout.js`, `js/controls.js`). **The NVE-style bands replace the current layer entirely.** There is no custom-alpha mode.
+   - **Remove**: the `runAlpha`, `runRelease` and `runColor` inputs in `index.html`, their handlers in `js/controls.js` (lines 31–33 today), and the `runAlpha`/`runRelease` globals in `runout.js`. Release comes from the PRA now, and the angles are fixed at 32/27/23.
+   - **Keep**: `runOn`, `runOpacity`, the `runout` entry in `LAYER_GROUPS`/`LAYER_TOGGLES`/`layerOrder` (`js/map.js`) and the `runoutPane`. Rename the layer to something like "Avalanche runout (alpha)" in both `map.js` and the `<h2>`.
+   - **Colours: the same as NVE's layer**, fixed (no colour picker): short `#004DA8`, medium `#4C9BFF`, long `#9AB1E6`. Draw the bands nested, with the longest underneath, so each cell shows the shortest class that reaches it, as NVE does. Start the opacity slider at 55 to match the NVE layer's 0.55. The panel gets a small legend: three swatches, each with a checkbox (short/medium/long, 32°/27°/23°) so one band can be hidden.
+   - Because the colours are the same, our layer and NVE's look alike when both are on in Norway. The note should say to switch one off to compare.
+   - **Off by default everywhere.** That is already the case: `runOn` starts unchecked and layer state is not saved between visits. Don't tie it to `REGIONS`/auto mode and don't switch it on anywhere.
+   - Rewrite the note in the existing voice: what the percentiles mean (a median avalanche from a path reaches 32°, one in four reaches 27°, one in twenty reaches 23°); that the data comes from avalanche paths and is dominated by large natural avalanches; that forest is ignored; and that it is an indication, not a hazard map. Drop the old "18° field rule" sentence along with the control. Keep the safety wording.
    - If it is still slow on phones after step 1, consider a Web Worker that loads `util.js` and `runout-core.js` with `importScripts` (still no modules or bundler).
 5. Run the final harness numbers on the **held-out** areas and write them to the results file. Smoke test, commit, push.
 
 ### Session 3: the rest of Europe, and how accurate it is there
 Same algorithm, no code changes needed to "extend" it, since Terrarium covers Europe. The work is finding out how far to trust it:
-1. **The cost of a coarser DEM, measured in Norway.** Run the model on a Europe-like DEM over the Norwegian test areas and score it against NVE:
-   - Copernicus GLO-30 (open on AWS, `s3://copernicus-dem-30m`, COG, no login), and/or
-   - EU-DEM itself (Copernicus Land Service, free login, so the user may need to download it), and
-   - Terrarium resampled to about 27 m (z12) as a cheap proxy.
-   The drop in F1 and edge distance relative to the 10 m run is the **"Europe penalty"** that comes from the DEM alone.
-2. **Alpine check with a good reference DEM.**
-   - Austria (Terrarium is 10 m there): Arlberg / Ötztal, model on 10 m versus on EU-DEM/GLO-30.
-   - Switzerland: swissALTI3D (free, 0.5/2 m via the swisstopo STAC API) resampled to 10 m as the reference run, compared with the Terrarium (EU-DEM) run.
-   - Slope check: our slope >30° from Terrarium versus `ch.swisstopo.hangneigung-ueber_30` and IGN's carte des pentes (already in the app). This shows directly how many release cells EU-DEM misses in steep, narrow terrain.
+1. **The cost of a coarser DEM, measured in Norway** (the most valuable test, because NVE is the reference there). Run the model on **EU-DEM over the Norwegian test areas**, i.e. the exact terrain data the app gets in the Alps, and score it against NVE. The drop in F1 and edge distance relative to the Terrarium 10 m run is the **"Europe penalty"** that comes from the DEM alone. Before scoring, resample the EU-DEM onto the same Web Mercator z13 grid with bilinear interpolation, the way Terrarium does, then send it through `demBlock`'s halving, so the test sees what the app would see.
+2. **Alpine check with a good reference DEM.** In the Alps the app already gets EU-DEM from Terrarium, so what is missing there is a *better* DEM to compare against:
+   - Austria (Terrarium is 10 m there): Arlberg, Ötztal and Hohe Tauern, model on Terrarium 10 m versus on the downloaded EU-DEM.
+   - Switzerland: swissALTI3D (free, no login; 2 m tiles of 1 km² from the swisstopo STAC API, a few MB each, so about 100 tiles per 10 × 10 km area) resampled to 10 m as the reference run, compared with the Terrarium (EU-DEM) run. Davos and the Valais.
+   - Slope check: our slope >30° from Terrarium versus `ch.swisstopo.hangneigung-ueber_30` and IGN's carte des pentes (Chamonix/Écrins; both already in the app). This shows directly how many release cells EU-DEM misses in steep, narrow terrain.
    - Qualitative cross-check against `ch.bafu.silvaprotect-lawinen` (SilvaProtect-CH, a modelled avalanche process layer with different assumptions, so it serves as a sanity check rather than ground truth).
+
+   **Getting the EU-DEM data (decided: download it rather than use GLO-30).** EU-DEM v1.1 comes in 1000 × 1000 km tiles in EPSG:3035, named after their south-west corner. Every test area falls in just **three tiles** (checked with pyproj):
+
+   | Tile | Covers | Test areas |
+   |---|---|---|
+   | **E40N20** | the whole Alps, from the Maritime Alps (44°N) to the Julian Alps | Chamonix, Écrins, Davos, Arlberg, Ötztal, Dolomites, Hohe Tauern |
+   | **E40N40** | southern Norway | Romsdalen, Sunnmøre, Jotunheimen, Hemsedal |
+   | **E40N50** | northern Norway | Lyngen, Tamok, Senja, Narvik |
+   | *E30N20* (optional) | Western Alps edge (Vercors, Chartreuse), Pyrenees | only if the Pyrenees are tested |
+
+   About 350–400 MB each, so roughly 1.2 GB for the three (1.6 GB with the optional one). That is easily feasible, and the six to eight tiles once considered aren't needed.
+   - Mads downloads the tiles from the Copernicus Land Monitoring Service (free login) and puts the zips in `tools/runout-check/dem/` (gitignored). Check first that EU-DEM v1.1 is still offered there, because it has been marked as superseded by the Copernicus DEM. If it is gone, GLO-30 (open on AWS, `s3://copernicus-dem-30m`, no login) is the fallback.
+   - `fetch.py` reads only a window of each test area out of the GeoTIFF (with rasterio windowed reads, without loading the whole tile), reprojects it to Web Mercator, and saves a small crop (a few MB) to the cache. After that the full tiles can be deleted.
+   - Do this download while session 2 is running, so it is ready when session 3 starts.
 3. **Things a DEM can't fix**, from the literature and written up briefly:
    - Alpha statistics in the Alps (NVE's 19k-avalanche check, plus published alpha–beta fits for Austria and Switzerland)
    - Forest: the treeline is at about 2000 m in the Alps versus 600–1000 m in Norway, so far more steep forest will be marked as release area (the same simplification Varsom makes, but it matters more there)
@@ -153,18 +166,18 @@ Same algorithm, no code changes needed to "extend" it, since Terrarium covers Eu
 - Each has a clear, testable result and a commit (harness + baseline → calibrated app layer → Europe study), and this file passes the state between them.
 - Session 2 is an iterative calibration loop and session 3 is mostly data-heavy research (downloads, resampling, literature). Running them in one session would mean carrying large, unrelated context and risks the Europe work being rushed.
 - Session 1 is a hard prerequisite for both: without the harness there is no way to say what "matches Varsom" means.
-- Some parallelism is possible: the data work in session 3 (getting GLO-30/EU-DEM/swissALTI3D for the test areas, the slope comparison against swisstopo/IGN) only needs the session 1 harness and could run alongside session 2. Its final numbers must still be produced with session 2's calibrated model.
+- Some parallelism is possible: the data work in session 3 (the EU-DEM download, swissALTI3D for the test areas, the slope comparison against swisstopo/IGN) only needs the session 1 harness and could run alongside session 2. Its final numbers must still be produced with session 2's calibrated model.
 
 ---
 
-## 7. Open questions for Mads
+## 7. Decisions (Mads, 2026-10-03)
 
-1. Keep the custom single-alpha mode (18° field rule) next to the NVE-style bands, or replace it entirely?
-2. In Norway, should the new layer default to off when the official NVE layer is shown (they overlap)?
-3. EU-DEM needs a free Copernicus login to download. Fine to use GLO-30 as the stand-in, or will you download EU-DEM tiles for a few areas?
-
----
+1. **The NVE-style bands replace the custom single-alpha layer.** There is no custom alpha or release input, and no colour picker.
+2. **The new layer is off by default everywhere**, Norway included. It is never switched on automatically.
+3. **EU-DEM will be downloaded** (three tiles, about 1.2 GB; see session 3) instead of using GLO-30 as a stand-in.
+4. **Colours match NVE's layer**: `#004DA8` / `#4C9BFF` / `#9AB1E6` for short / medium / long.
 
 ## Status
 
+- 2026-10-03: decisions added (section 7): replace the custom mode, off by default, NVE colours, EU-DEM tiles E40N20/E40N40/E40N50. Still no code changed.
 - 2026-10-01: plan written. Checked during planning: the NVE per-class export and its band encoding, the Terrarium source per region, and the PRA and Flow-Py parameters from the AutoATES v2.0 code. No code changed yet.
