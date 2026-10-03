@@ -1,12 +1,7 @@
 /* ---------- modelled runout, alpha angle rule ----------
-   Anything steeper than the release threshold is treated as a possible start
-   zone. Snow is then let run downhill from it, and it is allowed to keep going
-   only while the line back to its start zone is steeper than the alpha angle.
-   The classic field rule of thumb: sight 18–20° up from where you stand, and
-   if that line reaches the start zone you are standing in the runout.
-   Distance is measured along the flow path rather than straight through the
-   mountain, which is what a hand-drawn alpha angle uses, so this runs slightly
-   short in strongly curved paths.                                            */
+   The model itself is runoutCone in runout-core.js. The classic field rule of
+   thumb: sight 18–20° up from where you stand, and if that line reaches the
+   start zone you are standing in the runout.                                 */
 const RUN_N = BLOCK_N;
 const runoutCache = new Map();
 let runAlpha = 18, runRelease = 30;
@@ -18,64 +13,7 @@ async function runoutMask(z,x,y,alpha,release){
   /* Avalanches do not respect tile edges, so model a 3×3 block and keep the
      middle. Without this every tile boundary grows a false stopping line. */
   const b = await demBlock(z,x,y);
-  const M = b.M, el = b.el, sl = b.sl, cell = b.cell;
-
-  const tanA = Math.tan(alpha*Math.PI/180);
-  /* P is the height of the alpha cone above sea level at each cell. Snow can be
-     there if the cone still clears the ground. Cone height only ever falls
-     along a path, so this is Dijkstra with the highest value popped first.
-     P must be Float64: with Float32 a popped key no longer equals the value
-     stored for its own cell and every entry looks stale. */
-  const P = new Float64Array(M*M).fill(-Infinity);
-  const hk = [], hv = [];
-  function push(k,v){
-    let i = hk.length; hk.push(k); hv.push(v);
-    while(i>0){
-      const p=(i-1)>>1; if(hk[p]>=hk[i]) break;
-      const a=hk[p]; hk[p]=hk[i]; hk[i]=a;
-      const b=hv[p]; hv[p]=hv[i]; hv[i]=b; i=p;
-    }
-  }
-  function pop(){
-    const k=hk[0], v=hv[0], n=hk.length-1;
-    hk[0]=hk[n]; hv[0]=hv[n]; hk.pop(); hv.pop();
-    let i=0;
-    for(;;){
-      const l=2*i+1, r=l+1; let m=i;
-      if(l<hk.length && hk[l]>hk[m]) m=l;
-      if(r<hk.length && hk[r]>hk[m]) m=r;
-      if(m===i) break;
-      const a=hk[m]; hk[m]=hk[i]; hk[i]=a;
-      const b=hv[m]; hv[m]=hv[i]; hv[i]=b; i=m;
-    }
-    return [k,v];
-  }
-
-  for(let i=0;i<M*M;i++){
-    if(!isNaN(el[i]) && sl[i] >= release){ P[i] = el[i]; push(el[i], i); }
-  }
-  while(hk.length){
-    const popped = pop(), p = popped[0], i = popped[1];
-    if(p < P[i]) continue;                                  // stale entry
-    const yy = (i/M)|0, xx = i - yy*M;
-    for(let dy=-1; dy<=1; dy++) for(let dx=-1; dx<=1; dx++){
-      if(!dx && !dy) continue;
-      const nx = xx+dx, ny = yy+dy;
-      if(nx<0 || ny<0 || nx>=M || ny>=M) continue;
-      const j = ny*M + nx, zj = el[j];
-      if(isNaN(zj)) continue;
-      const cand = p - tanA*cell*((dx && dy) ? Math.SQRT2 : 1);
-      /* No downhill-only rule: run-up onto the opposite side is real, and a
-         hard downhill test makes the model stop dead on flat valley floors. */
-      if(cand > zj && cand > P[j]){ P[j] = cand; push(cand, j); }
-    }
-  }
-
-  const mask = new Uint8Array(RUN_N*RUN_N);
-  for(let j=0;j<RUN_N;j++) for(let i=0;i<RUN_N;i++){
-    const s = (j+RUN_N)*M + (i+RUN_N);
-    mask[j*RUN_N+i] = (P[s] > el[s] && sl[s] < release) ? 1 : 0;
-  }
+  const mask = runoutMiddle(b, runoutCone(b, alpha, release), release);
   if(runoutCache.size > 200) runoutCache.clear();
   runoutCache.set(key, mask);
   return mask;
