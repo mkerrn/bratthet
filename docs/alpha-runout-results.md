@@ -7,14 +7,14 @@ Measured results for the plan in [alpha-runout-plan.md](alpha-runout-plan.md). E
 ```sh
 cd tools/runout-check
 python3 -m venv .venv && .venv/bin/pip install numpy pillow scipy rasterio
-.venv/bin/python fetch.py            # Terrarium, GLO-30 and NVE into cache/ (about 1 minute)
+.venv/bin/python fetch.py            # Terrarium, GLO-30, tree cover and NVE into cache/ (a few minutes)
 node run.js                          # session 1 baseline -> cache/<area>/model-baseline.u8
 node run.js --model app --tag app    # what the app draws now (session 2)
 .venv/bin/python score.py            # baseline tables; add --tag app for the app's
 .venv/bin/python view.py lyngen      # picture: blue both, red model only, orange NVE only, grey NVE >27°
 ```
 
-`run.js` takes `--model app|baseline|pra`, `--dem terrarium|glo30` and `--tag <name>`, plus the model knobs listed at the top of the file. `score.py`/`view.py` take the same `--tag`. `fetch.py` fetches two rings of Terrarium tiles around each area, because each tile's release areas look into its own neighbours. Test areas, and which are for calibration and which are held out, are in `areas.json`.
+`run.js` takes `--model app|baseline|pra`, `--dem terrarium|glo30`, `--forest 0|1`, `--forestmu a,b,c` and `--tag <name>`, plus the model knobs listed at the top of the file. `score.py`/`view.py` take the same `--tag`. `fetch.py` fetches two rings of Terrarium tiles around each area, because each tile's release areas look into its own neighbours. Test areas, and which are for calibration and which are held out, are in `areas.json`.
 
 **Scoring grid.** Everything is compared on the app's block grid: one cell per 2×2 Terrarium z13 pixels, sampled at the top-left pixel as `demBlock` does (13 m cells at Lyngen, 19 m at Hemsedal, 8 m on Svalbard). NVE is exported at 256 px per tile on the same Web Mercator grid, so NVE pixel (2i, 2j) is the same spot. Shifting the model by one cell in any direction lowers F1 and start-zone agreement, so the grids line up.
 
@@ -228,7 +228,7 @@ That alone could be runout tails on valley floors. NVE's own data settles it: ta
 | Lyngen | 0.71 | 0.81 | 0.95 | 0.96 | 0.84 | 0.68 | 0.44 |
 | Tamok | 0.83 | 0.97 | 0.97 | 0.96 | 0.92 | 0.81 | 0.44 |
 
-Below about 400 m at Narvik and 1000 m at Hemsedal, NVE leaves out the runout under half of its own steep ground. Wind shelter does not depend on elevation, so NVE's start zones seem to be thinned by forest (the drop at the highest band is small summit cliffs). The plan assumed "no forest input". NVE's public description doesn't say either way, and AutoATES v2.0 does take forest density as an input. **Not changed in this session**: adding forest needs a forest data source (for example SR16 in Norway or Copernicus tree cover density), which is a separate decision. Until then, the layer over-warns below the treeline, and the panel note says forest is ignored.
+Below about 400 m at Narvik and 1000 m at Hemsedal, NVE leaves out the runout under half of its own steep ground. Wind shelter does not depend on elevation, so NVE's start zones seem to be thinned by forest (session 3 tested this with real tree cover data: forest explains only part of it, see the next section) (the drop at the highest band is small summit cliffs). The plan assumed "no forest input". NVE's public description doesn't say either way, and AutoATES v2.0 does take forest density as an input. **Not changed in this session**: adding forest needs a forest data source (for example SR16 in Norway or Copernicus tree cover density), which is a separate decision. Until then, the layer over-warns below the treeline, and the panel note says forest is ignored.
 
 The sea is a smaller part. NVE does draw runout over water (p90 about 300 m from shore), and the model goes further over open fjords (Narvik: 46,000 cells on flat sea against NVE's 8,000 with the first routed version). The cap and the flat-ground rule took some of it off.
 
@@ -236,6 +236,52 @@ The sea is a smaller part. NVE does draw runout over water (p90 about 300 m from
 
 - Bands on all ground the snow reaches, start zones included. Leaving out ground over 27° as NVE does (`--maxslope 27`) dropped calibration F1 to 0.74 / 0.75 / 0.73: our slope from the 7–9 m Terrarium pixels runs steeper than NVE's 10 m classes and cut holes in a fifth of NVE's bands. Leaving out only our start zones did about as badly (0.79 / 0.79 / 0.76).
 - **Speed**: Node on an M1 Pro, one process, for the three bands of one tile including its share of release areas: 270 ms at Lyngen (76 ms of it PRA), 110 ms at Hemsedal and on Svalbard, against 50–120 ms for the old single-alpha model. In the browser the work runs in up to four Web Workers (`js/runout-worker.js`, the same `runout-core.js`). A 1200×900 screen at Lyngen (20 tiles, release areas for the ring around them, DEM downloads included) fills in about 8 s in headless Chrome with 4 workers, and 18 s with no worker (the fallback). Expect a phone to take two to four times that.
+
+## Session 3: forest in the start zones
+
+Mads asked for forest if it was feasible. It is, and the app now uses it.
+
+**Data.** The Copernicus High Resolution Layer *Tree Cover Density 2018* (10 m, 0–100 % canopy cover) is on EEA's ArcGIS image server (`image.discomap.eea.europa.eu/.../HRL_TreeCoverDensity_2018/ImageServer`). It covers Europe up to about 72°N (all of mainland Norway and the Alps, not Svalbard). Checked on 2026-10-03:
+
+- It sends CORS headers, so the page can read it directly.
+- `exportImage` with `format=bip` returns the raw values: the first 256×256 bytes are the tree cover per pixel, followed by an 8 KB validity mask. No decoder is needed, unlike TIFF or LERC. The PNG output is colour-mapped and can't be read as values.
+- One 256 px tile takes 0.2–0.9 s. Values over 100 mean no data.
+- NIBIO's SR16 and AR5 WMS also send CORS headers, but they cover Norway only and are rendered maps, so they were not used.
+
+**Model.** AutoATES v2.0's forest membership for percent canopy cover (`pcc`: a 40, b 3.5, c −15, read from `PRA_AutoATES-v2.0.py`) enters the fuzzy AND as its third term. μ is 1 on open ground, 0.5 at 25 % cover and under 0.1 above 40 %. `fetch.py` caches the tree cover per Terrarium tile with the same request the app makes, and `js/runout.js` `loadForest` fetches it per tile next to the DEM. A tile whose tree cover fails is computed without forest. In headless Chrome the browser's bands for two Narvik tiles are identical to the harness's (0 of 16,384 cells differ).
+
+**Scores** (calibration areas, pooled; F1 at 32° / 27° / 23°):
+
+| variant | calib F1 | holdout F1 | holdout edge NVE→model p90 (m) |
+|---|---|---|---|
+| no forest (session 2) | 0.84 / 0.84 / 0.80 | 0.86 / 0.90 / 0.90 | 82 / 116 / 164 |
+| **forest in the start zones, AutoATES pcc (app)** | **0.85 / 0.85 / 0.82** | **0.86 / 0.90 / 0.90** | **87 / 111 / 147** |
+| pcc curve with c 0, 15 or 30 (weaker) | 0.84–0.85 / 0.84–0.85 / 0.80–0.82 | | |
+| sen2cc curve (a 50, b 1.5, c 0) | 0.84 / 0.84 / 0.80 | | |
+| stronger: a 30 or 20, a step at 10 % | 0.84–0.85 / 0.85 / 0.82 | | |
+| + forest friction in the runout, +5° at full cover | 0.85 / 0.86 / 0.84 | 0.84 / 0.89 / 0.90 | 94 / 115 / 139 |
+| + forest friction, +8° | 0.84 / 0.87 / 0.85 | 0.83 / 0.89 / 0.90 | 106 / 125 / 143 |
+| + forest friction, +10° only while the energy line is under 30–120 m (Flow-Py's idea) | 0.84–0.85 / 0.86–0.87 / 0.83–0.84 | | |
+
+- Forest in the start zones helps where there is forest (Narvik 23° F1 0.64 → 0.68, Hemsedal 0.69 → 0.71) and changes nothing above the treeline. The held-out areas are mostly above it.
+- **Forest friction in the runout was not adopted.** It trades the short band for the long one, and on the held-out set it lowers the 32° F1. NVE's description mentions only slope, wind shelter, TauDEM and the alpha angle, and a large avalanche breaks trees anyway.
+- **Forest explains only part of NVE's gaps below the treeline.** Share of model runout that NVE does not have at 23°, by elevation, before and after forest:
+
+  | area | 0–200 m | 200–400 m | 400–600 m |
+  |---|---|---|---|
+  | Narvik, no forest → forest | 0.77 → 0.73 | 0.66 → 0.57 | 0.27 → 0.21 |
+  | Romsdalen | 0.31 → 0.28 | 0.41 → 0.35 | 0.26 → 0.21 |
+
+  | area | 600–800 m | 800–1000 m |
+  |---|---|---|
+  | Hemsedal, no forest → forest | 0.51 → 0.44 | 0.64 → 0.59 |
+
+  Per connected patch of NVE ground over 27° (below 400 m, or 1000 m at Hemsedal), the patches with no NVE runout have 10–20 points more tree cover than those with runout (Narvik 63 against 53 % for patches of 1–10 cells). Patch size matters more, though: at Narvik 37 % of the 1–10-cell patches have runout, against 82 % of the 50–200-cell ones. NVE's start zones may come from a different forest input (for example SR16 stem density) or from a bigger minimum release area. With the data we have, we can't tell which.
+- Our start zones lose more of NVE's steep ground at low elevation than before (NVE >30° cells that are ours: Narvik 0.89 → 0.47), but the runout footprints match better. So TCD 2018 thins in the right places and also in some wrong ones.
+
+Full tables for the app as it is now: `node run.js --model app --tag app && .venv/bin/python score.py --tag app`. Calibration pooled: precision 0.84 / 0.82 / 0.76, recall 0.85 / 0.88 / 0.89. Held out: precision 0.85 / 0.91 / 0.90, recall 0.86 / 0.89 / 0.90.
+
+Tree cover attribution: Copernicus Land Monitoring Service, High Resolution Layer Tree Cover Density 2018, © European Union.
 
 ## Notes for session 3 (GLO-30)
 

@@ -36,10 +36,10 @@ Bratthet is a static GitHub Pages site (a Leaflet map for planning ski tours). I
 | `js/pistes.js` | OpenSnowMap ski piste overlay |
 | `js/gpxtrack.js` | Uploaded GPX files (tracks, routes, waypoints) shown as an overlay |
 | `js/huts.js` | DNT and other huts from the `data/huts.json` OpenStreetMap snapshot (refresh with `tools/update-huts.py`) |
-| `js/runout-core.js` | Pure terrain maths, no DOM: `tileLat`, `tileCell`, `terrariumDecode`, `slopeAspect`, `blockFromTiles`, release areas (`praTile`, `praBlock`), runout routing (`runoutFlow`; `runoutCone` is the old envelope), `runoutBands` (the three NVE bands) and `runoutJob`. Also run in Node by `tools/runout-check` and in `js/runout-worker.js`, so keep it free of DOM/Leaflet |
+| `js/runout-core.js` | Pure terrain maths, no DOM: `tileLat`, `tileCell`, `terrariumDecode`, `slopeAspect`, `blockFromTiles`, release areas (`praTile` with slope, wind shelter and forest; `praBlock`), runout routing (`runoutFlow`; `runoutCone` is the old envelope), `runoutBands` (the three NVE bands) and `runoutJob`. Also run in Node by `tools/runout-check` and in `js/runout-worker.js`, so keep it free of DOM/Leaflet |
 | `js/slope.js` | Terrarium DEM tile loading/cache (`loadDem`, `demCache`), `demParts`/`demBlock` (a tile plus its 8 neighbours, the block at half resolution) and the computed slope layer |
 | `js/hillshade.js` | Hillshade layer and the sun-direction dial |
-| `js/runout.js` | Avalanche runout layer: the three NVE bands, release areas per tile (`loadPra`), the Web Worker pool (`runJob`); `applySlopeVisible`; first `applySteep()` |
+| `js/runout.js` | Avalanche runout layer: the three NVE bands, Copernicus tree cover per tile (`loadForest`), release areas per tile (`loadPra`), the Web Worker pool (`runJob`); `applySlopeVisible`; first `applySteep()` |
 | `js/runout-worker.js` | Web Worker that loads `runout-core.js` with `importScripts` and runs `runoutJob` off the main thread (not a `<script>` tag) |
 | `js/exposure.js` | Sun exposure (solar position, cast shadows, sun hours/time of day) and wind exposure (Winstral shelter index, Open-Meteo wind of the last 3 days, wind dial); `exposureLine` for the readout |
 | `js/readout.js` | Tap the map → slope/elevation/aspect readout |

@@ -71,8 +71,8 @@ function blockFromTiles(parts){
 }
 
 /* ---------- potential release areas (AutoATES v2.0) ----------
-   NVE's start zones come from AutoATES: a fuzzy mix of slope angle and a wind
-   shelter index, with no forest input. The numbers are copied from the
+   NVE's start zones come from AutoATES: a fuzzy mix of slope angle, a wind
+   shelter index and forest cover. The numbers are copied from the
    AutoATES v2.0 code (PRA_AutoATES-v2.0.py), quirks included, so the result
    lines up with Varsom's. Worked on the full resolution tile (about 10 m in
    Norway, the grid NVE used), with a margin from the neighbour tiles so the
@@ -83,9 +83,13 @@ function blockFromTiles(parts){
    Shelter: the median angle (radians) up or down to every cell within 60 m.
    The parameters a 3, b 10, c 3 make that a smooth step around 0: hollows
    and lee sides about 1, ridges about 0.
+   Forest: tree cover in percent (part.d.forest, Copernicus, optional) with
+   AutoATES' canopy cover parameters a 40, b 3.5, c -15, so mu is 0.5 at
+   25 % and under 0.1 above 40 %. Without data, or with forest: false, it
+   is 1. Stronger or weaker curves matched NVE no better.
    AutoATES uses a PRA threshold of 0.15. 0.25 matched NVE slightly better
    in tools/runout-check (docs/alpha-runout-results.md). */
-const PRA_OPTS = {radius:60, spacing:10, threshold:0.25, sieve:3};
+const PRA_OPTS = {radius:60, spacing:10, threshold:0.25, sieve:3, forest:true, forestMu:[40, 3.5, -15]};
 
 /* Median of the first n values of buf, partly reordering it (quickselect).
    Even counts average the two middle values, as numpy's quantile does. */
@@ -109,23 +113,29 @@ function medianOf(buf, n){
 }
 
 /* parts: the tile and its eight neighbours as {dx, dy, d} with d.el the full
-   256×256 heights (null where missing). Returns 1 per pixel of the middle
-   tile where a release area can start. */
+   256×256 heights and d.forest the tree cover (null where missing). Returns
+   1 per pixel of the middle tile where a release area can start. */
 function praTile(parts, cell, opt){
   const o = Object.assign({}, PRA_OPTS, opt);
   const R = Math.ceil(o.radius/cell);
   const Q = R + 5, W = 256 + 2*Q;          // 5 px beyond the tile for the sieve
   const el = new Float32Array(W*W).fill(NaN);
+  const fo = o.forest ? new Uint8Array(W*W) : null;      // tree cover %, 0 = none
   for(const part of parts){
     if(!part) continue;
-    const ox = part.dx*256 + Q, oy = part.dy*256 + Q, src = part.d.el;
+    const ox = part.dx*256 + Q, oy = part.dy*256 + Q, src = part.d.el, fsrc = part.d.forest;
     const i0 = Math.max(0, -ox), i1 = Math.min(256, W-ox);
     const j0 = Math.max(0, -oy), j1 = Math.min(256, W-oy);
     if(i0 >= i1) continue;
     for(let j=j0;j<j1;j++){
       el.set(src.subarray(j*256+i0, j*256+i1), (oy+j)*W + ox+i0);
+      if(fo && fsrc) fo.set(fsrc.subarray(j*256+i0, j*256+i1), (oy+j)*W + ox+i0);
     }
   }
+  /* Forest membership per tree cover value. Over 100 is the service's "no
+     data" (sea, outside Europe) and counts as open ground. */
+  const MF = new Float64Array(256), [fa, fb, fc] = o.forestMu;
+  for(let v=0; v<256; v++) MF[v] = v > 100 ? 1 : 1/(1 + Math.pow((v-fc)/fa, 2*fb));
 
   /* The cells within the radius on a lattice of o.spacing metres, NVE's
      10 m grid, rounded to our pixels. At 70°N a pixel is under 7 m and on
@@ -165,8 +175,9 @@ function praTile(parts, cell, opt){
       }
       if(!n) continue;
       const mw = 1/(1 + Math.pow((Math.atan(medianOf(buf, n)) - 3)/3, 20));
-      const m = Math.min(ms, mw);           // forest membership is 1: no data
-      if((1-m)*m + m*(ms+mw+1)/3 > thr) pra[(y-lo)*S + x-lo] = 1;
+      const mf = fo ? MF[fo[k]] : 1;
+      const m = Math.min(ms, mw, mf);
+      if((1-m)*m + m*(ms+mw+mf)/3 > thr) pra[(y-lo)*S + x-lo] = 1;
     }
   }
 
@@ -414,8 +425,8 @@ function runoutBands(b, start, maxSlope, opt){
 }
 
 /* The two jobs runout.js asks for, in the worker or, without one, on the
-   page. 'pra': release areas of one tile from it and its neighbours (only
-   el is needed). 'bands': the three bands of the middle tile, from the 3×3
+   page. 'pra': release areas of one tile from it and its neighbours (el
+   and forest are needed). 'bands': the three bands of the middle tile, from the 3×3
    tiles with el, slope, aspect, cell and pra. */
 function runoutJob(type, a){
   if(type === 'pra') return praTile(a.parts, a.cell);

@@ -38,6 +38,8 @@ let ALPHAS = RUNOUT_ALPHAS;                          // short, medium, long
 if(opt.alphas) ALPHAS = String(opt.alphas).split(',').map(Number);
 opt.release = +opt.release;
 const praOpt = opt.thr !== undefined ? {threshold:+opt.thr} : {};
+if(opt.forest !== undefined) praOpt.forest = !!+opt.forest;
+if(opt.forestmu !== undefined) praOpt.forestMu = String(opt.forestmu).split(',').map(Number);
 const flowOpt = {};
 for(const [k, a] of [['exp','exp'], ['thr','fthr'], ['persist','persist'], ['zmax','zmax'], ['flat','flat']]){
   if(opt[a] !== undefined) flowOpt[k] = k === 'persist' ? !!+opt[a] : +opt[a];
@@ -75,6 +77,8 @@ function loadTile(x,y){
   if(el){
     const cell = tileCell(z,y), sa = slopeAspect(el, cell);
     rec = {el:el, slope:sa.slope, aspect:sa.aspect, cell:cell};
+    const f = path.join(CACHE, 'forest', ''+z, `${x}_${y}.u8`);
+    if(fs.existsSync(f)) rec.forest = new Uint8Array(fs.readFileSync(f));
   }
   tiles.set(key, rec);
   return rec;
@@ -109,7 +113,7 @@ function block(x,y){
 function modelTile(b){
   const N = b.N;
   let out;
-  if(opt.model === 'app') out = runoutBands(b, b.start, maxSlope);
+  if(opt.model === 'app') out = runoutBands(b, b.start, maxSlope, flowOpt);
   else {
     out = new Uint8Array(N*N);
     for(let k=ALPHAS.length-1; k>=0; k--){             // long first, short last wins

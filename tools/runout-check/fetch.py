@@ -9,6 +9,8 @@ For each test area in areas.json:
     pixel grid, as float32 heights per tile. Used from session 3 on.
   - NVE "Bratthet med utlop" exports on the same grid, 256 px per tile, for
     the Norwegian and Svalbard areas: steepness class and runout band.
+  - Copernicus Tree Cover Density 2018 (0-100 %) on the same tiles as
+    Terrarium, fetched exactly as the app does (exportImage, format=bip).
 
 Usage: .venv/bin/python fetch.py [area ...]      (default: all areas)
 Files that are already in the cache are skipped, so it is safe to rerun.
@@ -27,6 +29,9 @@ NVE = 'https://gis3.nve.no/arcgis/rest/services/wmts/Bratthet_med_utlop_2024/Map
 NVE_LAYERS = {'norway': (1, 2, 3, 4), 'svalbard': (6, 7, 8, 9)}
 GLO30 = ('https://copernicus-dem-30m.s3.amazonaws.com/Copernicus_DSM_COG_10_{ns}{lat:02d}_00_{ew}{lon:03d}_00_DEM/'
          'Copernicus_DSM_COG_10_{ns}{lat:02d}_00_{ew}{lon:03d}_00_DEM.tif')
+TCD = ('https://image.discomap.eea.europa.eu/arcgis/rest/services/GioLandPublic/HRL_TreeCoverDensity_2018/'
+       'ImageServer/exportImage?bbox={bbox}&bboxSR=3857&imageSR=3857&size=256,256&format=bip&pixelType=U8'
+       '&interpolation=RSP_NearestNeighbor&f=image')
 # NVE steepness colours for pixel values 2..6 (value 1, below 27 degrees, is transparent)
 STEEP_RGB = np.array([(255, 255, 0), (255, 170, 0), (255, 85, 0), (255, 0, 0), (115, 0, 0)], float)
 
@@ -81,6 +86,31 @@ def fetch_terrarium(z, x0, y0, x1, y1):
 
     jobs = [(x, y) for x in range(x0 - 2, x1 + 3) for y in range(y0 - 2, y1 + 3)]
     with ThreadPoolExecutor(8) as ex:
+        n = sum(ex.map(one, jobs))
+    return n, len(jobs)
+
+
+def fetch_forest(z, x0, y0, x1, y1):
+    """Tree cover per Terrarium tile: the first 256*256 bytes of the bip
+    answer are the values (the rest is a validity mask). Over 100 means no
+    data and is kept as it is; run.js and the app read it as no forest."""
+    out = os.path.join(CACHE, 'forest', str(z))
+    os.makedirs(out, exist_ok=True)
+
+    def one(xy):
+        x, y = xy
+        path = os.path.join(out, f'{x}_{y}.u8')
+        if os.path.exists(path):
+            return 0
+        bbox = ','.join(f'{v:.3f}' for v in merc_bounds(z, x, y, x, y))
+        b = get(TCD.format(bbox=bbox))
+        assert len(b) >= 256 * 256, f'short tree cover answer for {x}/{y}'
+        with open(path, 'wb') as f:
+            f.write(b[:256 * 256])
+        return 1
+
+    jobs = [(x, y) for x in range(x0 - 2, x1 + 3) for y in range(y0 - 2, y1 + 3)]
+    with ThreadPoolExecutor(4) as ex:
         n = sum(ex.map(one, jobs))
     return n, len(jobs)
 
@@ -178,6 +208,8 @@ def main():
         n, tot = fetch_terrarium(z, x0, y0, x1, y1)
         print(f'    terrarium: {n} new of {tot}')
         print(f'    glo30: {fetch_glo30(z, x0, y0, x1, y1)} tiles written')
+        n, tot = fetch_forest(z, x0, y0, x1, y1)
+        print(f'    forest: {n} new of {tot}')
         if a.get('nve'):
             fetch_nve(a, z, x0, y0, x1, y1)
 

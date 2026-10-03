@@ -1,6 +1,6 @@
 /* ---------- avalanche runout, NVE's three alpha bands ----------
-   The model is in runout-core.js: release areas as in AutoATES (praTile),
-   then snow routed downhill until the line back to its start zone is
+   The model is in runout-core.js: release areas as in AutoATES (praTile,
+   with tree cover from loadForest below), then snow routed downhill until the line back to its start zone is
    flatter than 32°, 27° or 23° (runoutBands). Colours are NVE's. Unlike
    NVE's map the bands also cover the steep ground (see runoutMiddle).
    docs/alpha-runout-results.md has how closely it matches NVE in Norway. */
@@ -53,16 +53,46 @@ function runJob(type, args){
   });
 }
 
+/* ---------- tree cover ----------
+   Dense forest keeps avalanches from starting, so the release areas use
+   Copernicus' Tree Cover Density 2018 (10 m, 0–100 %), as AutoATES does.
+   It covers Europe up to about 72°N. EEA's image server sends it raw with
+   format=bip: the first 256×256 bytes are the values, a mask follows. If a
+   tile fails, its release areas are worked out without forest. */
+const FOREST_URL = 'https://image.discomap.eea.europa.eu/arcgis/rest/services/GioLandPublic/' +
+  'HRL_TreeCoverDensity_2018/ImageServer/exportImage';
+const forestCache = new Map();     // "z/x/y" -> promise of a Uint8Array or null
+function loadForest(z,x,y){
+  const key = z+'/'+x+'/'+y;
+  if(forestCache.has(key)) return forestCache.get(key);
+  const R = 20037508.342789244, s = 2*R/Math.pow(2,z);
+  const bbox = [-R+x*s, R-(y+1)*s, -R+(x+1)*s, R-y*s].map(v=>v.toFixed(3)).join(',');
+  const url = FOREST_URL + '?bbox=' + bbox + '&bboxSR=3857&imageSR=3857&size=256,256' +
+    '&format=bip&pixelType=U8&interpolation=RSP_NearestNeighbor&f=image';
+  const ctl = new AbortController(), timer = setTimeout(()=>ctl.abort(), 20000);
+  const p = fetch(url, {signal:ctl.signal})
+    .then(r=>{ if(!r.ok) throw new Error('tree cover ' + r.status); return r.arrayBuffer(); })
+    .then(b=>{
+      if(b.byteLength < 256*256) throw new Error('no tree cover here');   // an error message
+      return new Uint8Array(b.slice(0, 256*256));
+    })
+    .catch(()=>{ forestCache.delete(key); return null; })
+    .finally(()=>clearTimeout(timer));
+  forestCache.set(key, p);
+  return p;
+}
+
 /* Release areas per elevation tile, kept on the tile's demCache record.
    They need the tile's own neighbours for the wind shelter, so a runout
    tile looks two tiles out. */
 function loadPra(z,x,y){
   return loadDem(z,x,y).then(d=>{
     if(!d.praJob){
-      d.praJob = demParts(z,x,y).then(parts=>runJob('pra', {
-        parts: parts.map(p=>p && {dx:p.dx, dy:p.dy, d:{el:p.d.el}}),
-        cell: d.cell
-      })).then(pra=>{ d.pra = pra; return d; });
+      const withForest = (z,x,y)=>Promise.all([loadDem(z,x,y), loadForest(z,x,y)])
+        .then(r=>({el:r[0].el, forest:r[1]}));
+      d.praJob = demParts(z,x,y,withForest)
+        .then(parts=>runJob('pra', {parts:parts, cell:d.cell}))
+        .then(pra=>{ d.pra = pra; return d; });
       d.praJob.catch(()=>{ d.praJob = null; });
     }
     return d.praJob;
@@ -128,7 +158,8 @@ const RunoutLayer = L.GridLayer.extend({
     return tile;
   }
 });
-const runout = new RunoutLayer({maxZoom:18, opacity:0.55, tileSize:256, pane:'runoutPane'});
+const runout = new RunoutLayer({maxZoom:18, opacity:0.55, tileSize:256, pane:'runoutPane',
+  attribution:'Tree cover © European Union, Copernicus Land Monitoring Service'});
 
 function applyRunout(){
   const on = document.getElementById('runOn').checked;
