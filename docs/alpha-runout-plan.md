@@ -95,7 +95,7 @@ A command-line harness. It needs no browser, and it must not drift from the app'
 
 ### Session 1: harness and baseline (no UI change)
 1. Create `js/runout-core.js` holding the existing propagation, unchanged. `runout.js` calls it. Run the smoke test and commit.
-2. Build `tools/runout-check/` (fetch, run, score). Add a `.gitignore` for the venv and cache.
+2. Build `tools/runout-check/` (fetch, run, score). Have `fetch.py` also fetch the GLO-30 crops for every test area, Norwegian and Alpine (see session 3), so session 3 starts with the data in place. Add a `.gitignore` for the venv and cache.
 3. Settle the open questions about NVE's data: what legend value 2 means, the resolution of their runout, and Svalbard.
 4. **Baseline**: the current model (release = slope ≥30°, envelope routing) at α 32/27/23 against NVE in all areas. Save the results to `docs/alpha-runout-results.md`.
 5. Update Status here. Commit and push.
@@ -120,26 +120,26 @@ A command-line harness. It needs no browser, and it must not drift from the app'
 
 ### Session 3: the rest of Europe, and how accurate it is there
 Same algorithm, no code changes needed to "extend" it, since Terrarium covers Europe. The work is finding out how far to trust it:
-1. **The cost of a coarser DEM, measured in Norway** (the most valuable test, because NVE is the reference there). Run the model on **EU-DEM over the Norwegian test areas**, i.e. the exact terrain data the app gets in the Alps, and score it against NVE. The drop in F1 and edge distance relative to the Terrarium 10 m run is the **"Europe penalty"** that comes from the DEM alone. Before scoring, resample the EU-DEM onto the same Web Mercator z13 grid with bilinear interpolation, the way Terrarium does, then send it through `demBlock`'s halving, so the test sees what the app would see.
-2. **Alpine check with a good reference DEM.** In the Alps the app already gets EU-DEM from Terrarium, so what is missing there is a *better* DEM to compare against:
-   - Austria (Terrarium is 10 m there): Arlberg, Ötztal and Hohe Tauern, model on Terrarium 10 m versus on the downloaded EU-DEM.
-   - Switzerland: swissALTI3D (free, no login; 2 m tiles of 1 km² from the swisstopo STAC API, a few MB each, so about 100 tiles per 10 × 10 km area) resampled to 10 m as the reference run, compared with the Terrarium (EU-DEM) run. Davos and the Valais.
-   - Slope check: our slope >30° from Terrarium versus `ch.swisstopo.hangneigung-ueber_30` and IGN's carte des pentes (Chamonix/Écrins; both already in the app). This shows directly how many release cells EU-DEM misses in steep, narrow terrain.
+1. **The cost of a coarser DEM, measured in Norway** (the most valuable test, because NVE is the reference there). Run the model on **Copernicus GLO-30 over the Norwegian test areas** and score it against NVE. The drop in F1 and edge distance relative to the Terrarium 10 m run is the **"30 m penalty"**. Before scoring, resample GLO-30 onto the same Web Mercator z13 grid with bilinear interpolation, the way Terrarium does, then send it through `demBlock`'s halving, so the test sees what the app would see.
+   - **GLO-30 is not the same data the app uses in the Alps** (Terrarium serves EU-DEM there). GLO-30 comes from TanDEM-X radar with a vertical error of about 2–4 m. EU-DEM is an SRTM/ASTER hybrid with about 7 m error and known artefacts on steep faces. So the Norway number is most likely a **lower bound**: it measures what 30 m resolution costs, not what EU-DEM's extra errors cost. Step 2 measures that gap.
+   - GLO-30 is a surface model: forest and buildings are included in the heights. Expect small false slopes along forest edges. That matters little above the treeline, but note it when reading the Hemsedal numbers.
+   - As a second, cheaper proxy, also run Terrarium resampled to about 27 m (z12). If it gives about the same number as GLO-30, later checks can skip the download.
+2. **Alpine check with a good reference DEM.** In the Alps the app gets EU-DEM from Terrarium. GLO-30 and a high-quality reference can be put next to it over the same areas:
+   - **EU-DEM versus GLO-30**: run the model on both over the same Alpine areas (Chamonix, Davos, Dolomites) and compare each with the reference below. That gives the size of the EU-DEM-versus-GLO-30 gap, so **EU-DEM penalty ≈ 30 m penalty from Norway + this gap**. This is how the Norway result carries over to what the app actually uses.
+   - Austria (Terrarium is 10 m there): Arlberg, Ötztal and Hohe Tauern, model on Terrarium 10 m versus on GLO-30. This checks that the 30 m penalty from Norway also holds in Alpine terrain.
+   - Switzerland: swissALTI3D (free, no login; 2 m tiles of 1 km² from the swisstopo STAC API, a few MB each, so about 100 tiles per 10 × 10 km area) resampled to 10 m as the reference run, compared with the Terrarium (EU-DEM) run and the GLO-30 run. Davos and the Valais.
+   - Slope check: our slope >30° from Terrarium (EU-DEM) and from GLO-30, versus `ch.swisstopo.hangneigung-ueber_30` and IGN's carte des pentes (Chamonix/Écrins; both already in the app). This shows directly how many release cells each 30 m DEM misses in steep, narrow terrain.
    - Qualitative cross-check against `ch.bafu.silvaprotect-lawinen` (SilvaProtect-CH, a modelled avalanche process layer with different assumptions, so it serves as a sanity check rather than ground truth).
+   - **Side question:** if GLO-30 turns out clearly better than EU-DEM, find out whether a free terrain tile source in the same Terrarium format built on GLO-30 exists (e.g. Mapterhorn; verify licence, coverage and CORS) that the app could use in Europe instead. This would be a separate change, not part of this work.
 
-   **Getting the EU-DEM data (decided: download it rather than use GLO-30).** EU-DEM v1.1 comes in 1000 × 1000 km tiles in EPSG:3035, named after their south-west corner. Every test area falls in just **three tiles** (checked with pyproj):
-
-   | Tile | Covers | Test areas |
-   |---|---|---|
-   | **E40N20** | the whole Alps, from the Maritime Alps (44°N) to the Julian Alps | Chamonix, Écrins, Davos, Arlberg, Ötztal, Dolomites, Hohe Tauern |
-   | **E40N40** | southern Norway | Romsdalen, Sunnmøre, Jotunheimen, Hemsedal |
-   | **E40N50** | northern Norway | Lyngen, Tamok, Senja, Narvik |
-   | *E30N20* (optional) | Western Alps edge (Vercors, Chartreuse), Pyrenees | only if the Pyrenees are tested |
-
-   About 350–400 MB each, so roughly 1.2 GB for the three (1.6 GB with the optional one). That is easily feasible, and the six to eight tiles once considered aren't needed.
-   - Mads downloads the tiles from the Copernicus Land Monitoring Service (free login) and puts the zips in `tools/runout-check/dem/` (gitignored). Check first that EU-DEM v1.1 is still offered there, because it has been marked as superseded by the Copernicus DEM. If it is gone, GLO-30 (open on AWS, `s3://copernicus-dem-30m`, no login) is the fallback.
-   - `fetch.py` reads only a window of each test area out of the GeoTIFF (with rasterio windowed reads, without loading the whole tile), reprojects it to Web Mercator, and saves a small crop (a few MB) to the cache. After that the full tiles can be deleted.
-   - Do this download while session 2 is running, so it is ready when session 3 starts.
+   **Getting the GLO-30 data (decided: GLO-30, not EU-DEM).** It is open on AWS and needs no login or manual download:
+   - 1° × 1° Cloud-Optimised GeoTIFFs, URL pattern
+     `https://copernicus-dem-30m.s3.amazonaws.com/Copernicus_DSM_COG_10_N46_00_E009_00_DEM/Copernicus_DSM_COG_10_N46_00_E009_00_DEM.tif`
+     (south-west corner in the name). Checked during planning: 18–20 MB per tile in Norway, about 42 MB in the Alps.
+   - EPSG:4326 with heights relative to EGM2008, which doesn't matter because only height differences are used. North of 50°N the longitude spacing widens (1.5″ at 50–60°N, 2″ at 60–70°N, 3″ above) so cells stay about 30 m square. Reproject to Web Mercator before use.
+   - `fetch.py` works out from each test area's bounding box which tiles it needs (some areas cross a degree line). It reads just the window with rasterio over HTTP (`/vsicurl/`), or downloads the whole tile if that is simpler. That is roughly 15–20 tiles in total, well under 1 GB. It saves a small Web Mercator crop per area to `tools/runout-check/cache/` (gitignored).
+   - Attribution in the results file: "Copernicus DEM GLO-30 © DLR e.V. 2010–2014 and © Airbus Defence and Space GmbH 2014–2018, provided under COPERNICUS by the European Union and ESA."
+   - This can be fetched by session 1 along with the rest, since it needs nothing from Mads.
 3. **Things a DEM can't fix**, from the literature and written up briefly:
    - Alpha statistics in the Alps (NVE's 19k-avalanche check, plus published alpha–beta fits for Austria and Switzerland)
    - Forest: the treeline is at about 2000 m in the Alps versus 600–1000 m in Norway, so far more steep forest will be marked as release area (the same simplification Varsom makes, but it matters more there)
@@ -166,7 +166,7 @@ Same algorithm, no code changes needed to "extend" it, since Terrarium covers Eu
 - Each has a clear, testable result and a commit (harness + baseline → calibrated app layer → Europe study), and this file passes the state between them.
 - Session 2 is an iterative calibration loop and session 3 is mostly data-heavy research (downloads, resampling, literature). Running them in one session would mean carrying large, unrelated context and risks the Europe work being rushed.
 - Session 1 is a hard prerequisite for both: without the harness there is no way to say what "matches Varsom" means.
-- Some parallelism is possible: the data work in session 3 (the EU-DEM download, swissALTI3D for the test areas, the slope comparison against swisstopo/IGN) only needs the session 1 harness and could run alongside session 2. Its final numbers must still be produced with session 2's calibrated model.
+- Some parallelism is possible: the data work in session 3 (GLO-30 and swissALTI3D for the test areas, the slope comparison against swisstopo/IGN) only needs the session 1 harness and could run alongside session 2. Its final numbers must still be produced with session 2's calibrated model.
 
 ---
 
@@ -174,10 +174,10 @@ Same algorithm, no code changes needed to "extend" it, since Terrarium covers Eu
 
 1. **The NVE-style bands replace the custom single-alpha layer.** There is no custom alpha or release input, and no colour picker.
 2. **The new layer is off by default everywhere**, Norway included. It is never switched on automatically.
-3. **EU-DEM will be downloaded** (three tiles, about 1.2 GB; see session 3) instead of using GLO-30 as a stand-in.
+3. **Copernicus GLO-30** (open on AWS, no login) stands in for EU-DEM in the DEM tests. The gap between GLO-30 and EU-DEM is measured in the Alps, where both are available (see session 3).
 4. **Colours match NVE's layer**: `#004DA8` / `#4C9BFF` / `#9AB1E6` for short / medium / long.
 
 ## Status
 
-- 2026-10-03: decisions added (section 7): replace the custom mode, off by default, NVE colours, EU-DEM tiles E40N20/E40N40/E40N50. Still no code changed.
+- 2026-10-03: decisions added (section 7): replace the custom mode, off by default, NVE colours. Then switched from downloading EU-DEM to GLO-30 from AWS (tile URLs checked). Still no code changed.
 - 2026-10-01: plan written. Checked during planning: the NVE per-class export and its band encoding, the Terrarium source per region, and the PRA and Flow-Py parameters from the AutoATES v2.0 code. No code changed yet.
