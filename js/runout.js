@@ -161,13 +161,57 @@ const RunoutLayer = L.GridLayer.extend({
 const runout = new RunoutLayer({maxZoom:18, opacity:0.55, tileSize:256, pane:'runoutPane',
   attribution:'Tree cover © European Union, Copernicus Land Monitoring Service'});
 
+/* ---------- how far to trust it here ----------
+   The bands are only as good as the elevation tiles under them, and those
+   differ a lot by country (docs/alpha-runout-results.md, session 3).
+   Terrarium names its sources in a header that CORS lets us read, so the
+   note says what is under the middle of the map. The worst source in a
+   tile decides, so the first match wins. */
+const RUN_TERRAIN = [
+  [/eudem/, 'Terrain here: EU-DEM, about 25 m. Compared with Swiss 2 m lidar it finds only half to four fifths of the ground over 30°, so narrow gullies, couloirs and small start zones are often missing, and so is their runout: in tests about a quarter of the short band was missing. A gap in the bands here does not mean safe ground.'],
+  [/pgdc|arctic/i, 'Terrain here: ArcticDEM, 5 m from satellite images. Sharp, but with spikes and noise over water, glaciers and steep shade. On Svalbard the medium and long bands matched NVE about as well as on the mainland; the short band less well.'],
+  [/kartverket/, 'Terrain here: Kartverket 10 m, the same kind of data NVE uses. In test areas around Norway about nine in ten cells agree with NVE\'s bands, and half the edges are within 20–30 m of NVE\'s.'],
+  [/austria/, 'Terrain here: Austria\'s 10 m model. It finds 95 % of the ground swisstopo marks as over 30°, and the bands should be about as close as in Norway.']
+];
+const RUN_TERRAIN_OTHER = 'Terrain here: coarse global data (SRTM or similar, 30–90 m). Treat the bands as rough: narrow terrain and small start zones are missed.';
+const runSources = new Map();      // "z/x/y" -> promise of the source list
+let runTerrainToken = 0;
+function runTerrainNote(){
+  const el = document.getElementById('runTerrain');
+  const c = map.getCenter(), z = DEM_MAX_Z, n = Math.pow(2,z);
+  const x = ((Math.floor((c.lng+180)/360*n) % n) + n) % n;      // wrapped round the date line
+  const y = Math.floor((1 - Math.asinh(Math.tan(c.lat*Math.PI/180))/Math.PI)/2*n);
+  if(y < 0 || y >= n) return;
+  const key = z+'/'+x+'/'+y;
+  if(!runSources.has(key)){
+    /* S3 refuses HEAD across origins, so GET and drop the body: the
+       tile is usually in the browser cache already. */
+    runSources.set(key, fetch(demTileUrl(z,x,y))
+      .then(r=>{
+        if(r.body) r.body.cancel();
+        return r.headers.get('x-amz-meta-x-imagery-sources') || '';
+      })
+      .catch(()=>{ runSources.delete(key); return null; }));
+  }
+  const token = ++runTerrainToken;
+  runSources.get(key).then(src=>{
+    if(token !== runTerrainToken || src === null) return;
+    const hit = RUN_TERRAIN.find(r=>r[0].test(src));
+    el.textContent = hit ? hit[1] : RUN_TERRAIN_OTHER;
+  });
+}
+
 function applyRunout(){
   const on = document.getElementById('runOn').checked;
   if(map.hasLayer(runout)) map.removeLayer(runout);
   if(!on) return;
   runout.setOpacity(+document.getElementById('runOpacity').value/100);
   runout.addTo(map);
+  runTerrainNote();
 }
+map.on('moveend', debounce(()=>{
+  if(document.getElementById('runOn').checked) runTerrainNote();
+}, 300));
 
 function applySlopeVisible(){
   const on = document.getElementById('slopeOn').checked;

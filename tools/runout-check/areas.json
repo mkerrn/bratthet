@@ -1,5 +1,5 @@
 {
-  "_comment": "Test areas for the runout harness. lon/lat is the centre, size_km the side of the square. set: 'calib' areas are used to tune the model, 'holdout' areas only to report on, 'alps' areas have no NVE reference (GLO-30 work in session 3). nve: which NVE sublayers to use.",
+  "_comment": "Test areas for the runout harness. lon/lat is the centre, size_km the side of the square. set: 'calib' areas are used to tune the model, 'holdout' areas only to report on, 'alps' areas have no NVE reference (GLO-30 work in session 3). nve: which NVE sublayers to use. swiss: fetch swissALTI3D as a reference DEM.",
   "zoom": 13,
   "areas": [
     {"name": "lyngen",      "lon": 20.10, "lat": 69.58, "size_km": 10, "set": "calib",   "nve": "norway"},
@@ -12,8 +12,8 @@
     {"name": "jotunheimen", "lon": 8.35,  "lat": 61.60, "size_km": 10, "set": "holdout", "nve": "norway"},
     {"name": "svalbard",    "lon": 15.60, "lat": 78.20, "size_km": 10, "set": "holdout", "nve": "svalbard"},
     {"name": "chamonix",    "lon": 6.90,  "lat": 45.90, "size_km": 10, "set": "alps"},
-    {"name": "valais",      "lon": 7.75,  "lat": 46.02, "size_km": 10, "set": "alps"},
-    {"name": "davos",       "lon": 9.85,  "lat": 46.78, "size_km": 10, "set": "alps"},
+    {"name": "valais",      "lon": 7.75,  "lat": 46.02, "size_km": 10, "set": "alps", "swiss": true},
+    {"name": "davos",       "lon": 9.85,  "lat": 46.78, "size_km": 10, "set": "alps", "swiss": true},
     {"name": "dolomites",   "lon": 11.85, "lat": 46.50, "size_km": 10, "set": "alps"},
     {"name": "arlberg",     "lon": 10.20, "lat": 47.13, "size_km": 10, "set": "alps"},
     {"name": "otztal",      "lon": 10.95, "lat": 46.85, "size_km": 10, "set": "alps"},

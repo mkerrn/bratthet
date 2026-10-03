@@ -176,9 +176,20 @@ Same algorithm, no code changes needed to "extend" it, since Terrarium covers Eu
 2. **The new layer is off by default everywhere**, Norway included. It is never switched on automatically.
 3. **Copernicus GLO-30** (open on AWS, no login) stands in for EU-DEM in the DEM tests. The gap between GLO-30 and EU-DEM is measured in the Alps, where both are available (see session 3).
 4. **Colours match NVE's layer**: `#004DA8` / `#4C9BFF` / `#9AB1E6` for short / medium / long.
+5. **Forest**: include it if feasible (2026-10-03). It was, see Status.
+6. **Blanking over 27°**: left to Claude's judgement (2026-10-03); kept unblanked, see Status.
 
 ## Status
 
+- 2026-10-03, **session 3 done** (plus forest). Numbers are in [alpha-runout-results.md](alpha-runout-results.md#session-3-forest-in-the-start-zones) and the sections after it.
+  - **Forest (Mads: include it if feasible). Done.** Copernicus Tree Cover Density 2018 (10 m, Europe to about 72°N) comes raw from EEA's image server (`format=bip`, CORS), fetched per tile by `loadForest` in `js/runout.js`, and enters the PRA with AutoATES' canopy cover curve. Calibration F1 goes from 0.84 / 0.84 / 0.80 to 0.85 / 0.85 / 0.82, held-out is unchanged at 0.86 / 0.90 / 0.90, and the held-out p90 edge at 23° drops from 164 to 147 m. Forest friction in the runout was tried and rejected. Forest explains only part of NVE's gaps below the treeline: patch size matters more, so NVE may use a bigger minimum release area or another forest input.
+  - **Blanking ground over 27° (Mads: "do whatever you think is better").** Left as it is: the bands also cover steep ground. Blanking cost 0.07–0.10 F1 because our slope from 7 m pixels runs steeper than NVE's 10 m classes, and on our map the slope layer is optional anyway. The note says so.
+  - **30 m in Norway costs nothing measurable against NVE.** GLO-30 scores 0.87 / 0.91 / 0.91 held out (Terrarium 0.86 / 0.90 / 0.90). Terrarium averaged to 30 m costs 0.01–0.02. GLO-30's registration offset varies by area (−1 to +2 px) and is not a convention error, so it was left unshifted.
+  - **EU-DEM is what hurts in the Alps.** Against a swissALTI3D run (Davos, Valais), the model on EU-DEM scores 0.80 / 0.85 / 0.87 and misses a quarter of the short band (a third at Davos). On GLO-30 it scores 0.89 / 0.92 / 0.92. EU-DEM finds 52–80 % of swisstopo's and IGN's >30° ground, against 92–95 % for 10 m data. Austria (10 m in Terrarium) behaves like Norway.
+  - **In the app:** a terrain note under the runout layer names the elevation data under the map centre, read from Terrarium's `x-amz-meta-x-imagery-sources` header, with the measured caveat for EU-DEM.
+  - **Side question answered: Mapterhorn** serves Terrarium-encoded tiles (CORS) built on GLO-30 plus national lidar (swissALTI3D, IGN, Italy's Alpine regions, Austria, Spain, Scotland, Norway, Sweden…). On it the model reproduces the swissALTI3D run (F1 0.98–0.99). Switching would remove most of the EU-DEM penalty, but it touches every terrain layer and has no published usage policy. **Decision for Mads**, not made here.
+  - Harness additions: `register.py`, `derive.py` (`terr30`), `slopecheck.py`, swissALTI3D and tree cover in `fetch.py`, and `score.py --ref/--mask`.
+  - Still open: timing on a real phone (now with up to 41 extra tree cover requests per screen, about 0.3 s each, cached); Mapterhorn (above).
 - 2026-10-03, **session 2 done.** Numbers, the variants tried and the forest finding are in [alpha-runout-results.md](alpha-runout-results.md#session-2-the-nve-style-model-in-the-app).
   - The app now draws three NVE-coloured bands (32/27/23°) from AutoATES release areas (`praTile`, PRA threshold 0.25, shelter on a 10 m lattice) and a routed runout (`runoutFlow`: Flow-Py's exp-8 weights times persistence, a spreading budget of 0.5, a 270 m energy cap, heading carried on ground under 3°). The custom alpha/release/colour inputs are gone. The layer is still off by default, its opacity starts at 55, and each band has a checkbox.
   - Held-out F1 is **0.86 / 0.90 / 0.90** (baseline 0.79 / 0.84 / 0.85), and the p90 edge distance NVE→model is 82 / 116 / 164 m (baseline 132 / 176 / 297).

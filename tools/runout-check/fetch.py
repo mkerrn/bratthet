@@ -9,6 +9,7 @@ For each test area in areas.json:
     pixel grid, as float32 heights per tile. Used from session 3 on.
   - NVE "Bratthet med utlop" exports on the same grid, 256 px per tile, for
     the Norwegian and Svalbard areas: steepness class and runout band.
+  - swissALTI3D for the areas marked "swiss", as a reference DEM.
   - Copernicus Tree Cover Density 2018 (0-100 %) on the same tiles as
     Terrarium, fetched exactly as the app does (exportImage, format=bip).
 
@@ -162,6 +163,85 @@ def fetch_glo30(z, x0, y0, x1, y1):
     return len(want)
 
 
+SWISS_STAC = 'https://data.geo.admin.ch/api/stac/v0.9/collections/ch.swisstopo.swissalti3d/items'
+
+
+def fetch_swiss(a, z, x0, y0, x1, y1):
+    """swissALTI3D (2 m lidar, latest year per km2 tile) as a reference DEM
+    for the Swiss areas: read at its 4 m overview, averaged onto the z13
+    pixel grid (two rings of tiles, as for Terrarium) into cache/swiss/13.
+    Outside Switzerland the tiles are filled from GLO-30 (or Terrarium), and
+    cache/<area>/mask-swiss.npy marks the block cells of the scored area
+    that are Swiss data, so score.py --mask swiss leaves the rest out."""
+    import rasterio
+    from rasterio.warp import reproject, Resampling, transform_bounds
+    from rasterio.transform import from_bounds, from_origin
+    from register import mosaic
+
+    mpath = os.path.join(CACHE, a['name'], 'mask-swiss.npy')
+    if os.path.exists(mpath):
+        return 0
+    pad = 2
+    X0, Y0, X1, Y1 = x0 - pad, y0 - pad, x1 + pad, y1 + pad
+    mb = merc_bounds(z, X0, Y0, X1, Y1)
+    bb = transform_bounds('EPSG:3857', 'EPSG:4326', *mb)
+    items, url = {}, f'{SWISS_STAC}?bbox={",".join(f"{v:.5f}" for v in bb)}&limit=100'
+    while url:
+        page = json.loads(get(url))
+        for f in page['features']:
+            key = f['id'].rsplit('_', 1)[1]                  # "2783-1182"
+            year = int(f['id'].split('_')[1])
+            href = next(v['href'] for k, v in f['assets'].items() if k.endswith('_2_2056_5728.tif'))
+            if key not in items or items[key][0] < year:
+                items[key] = (year, href)
+        url = next((l['href'] for l in page.get('links', []) if l['rel'] == 'next'), None)
+    keys = [tuple(map(int, k.split('-'))) for k in items]
+    e0, n0 = min(k[0] for k in keys), min(k[1] for k in keys)
+    e1, n1 = max(k[0] for k in keys) + 1, max(k[1] for k in keys) + 1
+    res = 4.0
+    W, H = int((e1 - e0) * 1000 / res), int((n1 - n0) * 1000 / res)
+    lv95 = np.full((H, W), np.nan, np.float32)
+
+    def one(kv):
+        (e, n), (_, href) = kv
+        with rasterio.Env(GDAL_DISABLE_READDIR_ON_OPEN='EMPTY_DIR', CPL_VSIL_CURL_ALLOWED_EXTENSIONS='.tif'):
+            for k in range(4):
+                try:
+                    with rasterio.open('/vsicurl/' + href) as d:
+                        t = d.read(1, out_shape=(250, 250), masked=True).filled(np.nan)
+                    break
+                except Exception:
+                    if k == 3:
+                        raise
+                    time.sleep(2 * (k + 1))
+        j, i = int((n1 - n - 1) * 250), int((e - e0) * 250)
+        lv95[j:j + 250, i:i + 250] = t
+        return 1
+
+    with ThreadPoolExecutor(16) as ex:
+        n = sum(ex.map(one, [((tuple(map(int, k.split('-')))), v) for k, v in items.items()]))
+    Wm, Hm = (X1 - X0 + 1) * 256, (Y1 - Y0 + 1) * 256
+    dst = np.full((Hm, Wm), np.nan, np.float32)
+    reproject(lv95, dst, src_transform=from_origin(e0 * 1000, n1 * 1000, res, res), src_crs='EPSG:2056',
+              src_nodata=np.nan, dst_transform=from_bounds(*mb, Wm, Hm), dst_crs='EPSG:3857',
+              dst_nodata=np.nan, resampling=Resampling.average)
+    swiss = ~np.isnan(dst)
+    for dem in ('glo30', 'terrarium'):
+        fill = mosaic(dem, z, x0, y0, x1, y1, pad=pad)
+        dst = np.where(np.isnan(dst), fill, dst)
+    out = os.path.join(CACHE, 'swiss', str(z))
+    os.makedirs(out, exist_ok=True)
+    for y in range(Y0, Y1 + 1):
+        for x in range(X0, X1 + 1):
+            j, i = (y - Y0) * 256, (x - X0) * 256
+            np.ascontiguousarray(dst[j:j + 256, i:i + 256]).tofile(os.path.join(out, f'{x}_{y}.f32'))
+    inner = swiss[pad * 256:(pad + y1 - y0 + 1) * 256, pad * 256:(pad + x1 - x0 + 1) * 256]
+    os.makedirs(os.path.dirname(mpath), exist_ok=True)
+    np.save(mpath, inner[::2, ::2])
+    print(f'    swissALTI3D: {n} km2 tiles, {inner.mean():.0%} of the area is Swiss data')
+    return n
+
+
 def nve_export(layer, bbox, w, h):
     url = (f'{NVE}/export?bbox={",".join(f"{v:.3f}" for v in bbox)}&bboxSR=3857&imageSR=3857'
            f'&size={w},{h}&format=png32&transparent=true&layers=show:{layer}&f=image')
@@ -212,6 +292,8 @@ def main():
         print(f'    forest: {n} new of {tot}')
         if a.get('nve'):
             fetch_nve(a, z, x0, y0, x1, y1)
+        if a.get('swiss'):
+            fetch_swiss(a, z, x0, y0, x1, y1)
 
 
 if __name__ == '__main__':

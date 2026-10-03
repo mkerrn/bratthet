@@ -20,7 +20,7 @@ while args:
     if k == '--tag': tag = args.pop(0)
     elif k == '--class': cls = args.pop(0)
 k = {'short': 1, 'medium': 2, 'long': 3}[cls]
-meta, mod, steep, band = score.load(area, tag)
+meta, mod, steep, band, _ = score.load(area, tag)
 ig = steep > 0
 n = (band > 0) & (band <= k) & ~ig
 m = ((mod & 3) > 0) & ((mod & 3) <= k) & ~ig

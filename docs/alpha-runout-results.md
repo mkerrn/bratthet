@@ -9,9 +9,17 @@ cd tools/runout-check
 python3 -m venv .venv && .venv/bin/pip install numpy pillow scipy rasterio
 .venv/bin/python fetch.py            # Terrarium, GLO-30, tree cover and NVE into cache/ (a few minutes)
 node run.js                          # session 1 baseline -> cache/<area>/model-baseline.u8
-node run.js --model app --tag app    # what the app draws now (session 2)
+node run.js --model app --tag app    # what the app draws now
 .venv/bin/python score.py            # baseline tables; add --tag app for the app's
 .venv/bin/python view.py lyngen      # picture: blue both, red model only, orange NVE only, grey NVE >27°
+
+# session 3: other DEMs
+.venv/bin/python register.py --dem glo30                  # registration against NVE
+.venv/bin/python derive.py terr30                         # Terrarium averaged to ~30 m
+node run.js --model app --dem glo30 --tag app-glo30       # also terr30, swiss (Davos, Valais)
+.venv/bin/python score.py --tag app-glo30                 # against NVE
+.venv/bin/python score.py --tag app-terrarium --ref app-swiss --mask swiss   # against another run
+.venv/bin/python slopecheck.py                            # slope >30° against swisstopo and IGN
 ```
 
 `run.js` takes `--model app|baseline|pra`, `--dem terrarium|glo30`, `--forest 0|1`, `--forestmu a,b,c` and `--tag <name>`, plus the model knobs listed at the top of the file. `score.py`/`view.py` take the same `--tag`. `fetch.py` fetches two rings of Terrarium tiles around each area, because each tile's release areas look into its own neighbours. Test areas, and which are for calibration and which are held out, are in `areas.json`.
@@ -283,7 +291,110 @@ Full tables for the app as it is now: `node run.js --model app --tag app && .ven
 
 Tree cover attribution: Copernicus Land Monitoring Service, High Resolution Layer Tree Cover Density 2018, © European Union.
 
-## Notes for session 3 (GLO-30)
+## Session 3: the rest of Europe, and how accurate it is there
+
+All runs use the app's model as it is now (forest in the start zones), on different DEMs. 2026-10-03.
+
+### Registration first
+
+`register.py` compares slope >27° from each DEM with NVE's steepness layer, with the DEM shifted by whole pixels. **Terrarium lines up exactly**: the best shift is 0,0 in every Norwegian area (one pixel off in y at Romsdalen and Svalbard, gaining under 0.002 IoU). **GLO-30's best shift varies by area**: +1 or +2 pixels east at Lyngen, Narvik and Hemsedal, −1 at Tamok, Senja, Sunnmøre and Jotunheimen, and 0 to −2 in y. That is not a half-cell convention error, which would be the same everywhere. It is local geolocation error of a few metres in GLO-30 (the session 1 offset of 7–9 m was the average at Lyngen). A shift gains at most 0.03 IoU, so the scores below use GLO-30 as it comes, the way an app would get it.
+
+### Norway: what 30 m costs against NVE
+
+| DEM | calib F1 32° / 27° / 23° | holdout F1 | holdout edge NVE→model p90 (m) |
+|---|---|---|---|
+| Terrarium (Kartverket DTM10), the app | 0.85 / 0.85 / 0.82 | 0.86 / 0.90 / 0.90 | 87 / 111 / 147 |
+| **Copernicus GLO-30** | 0.85 / 0.85 / 0.82 | **0.87 / 0.91 / 0.91** | 91 / 117 / 147 |
+| Terrarium averaged to 26–31 m (`terr30`) | 0.85 / 0.85 / 0.82 | 0.84 / 0.89 / 0.89 | 100 / 137 / 179 |
+
+- **GLO-30 matches NVE as well as Terrarium 10 m does.** The model run on GLO-30 and the one on Terrarium agree with each other at F1 0.93 / 0.94 / 0.95 (both sets), with start zone IoU 0.75–0.82. The "30 m penalty" against NVE is zero within the noise.
+- **Plain averaging to 30 m costs a little**: 0.01–0.02 F1 on the held-out set and 13–35 m on the p90 edge distance. GLO-30 is sharper than a 30 m average because it is a 30 m sample of a 12 m TanDEM-X product, not a blur of a 10 m model. The coarse cell also takes away some of our steep bias: on 7–9 m Terrarium pixels the slope runs steeper than NVE's 10 m classes (session 2), and GLO-30 matches NVE's >27° class as well as Terrarium does (`register.py`: IoU 0.67–0.87 against 0.67–0.86).
+- **Svalbard is better on GLO-30 than on ArcticDEM** (F1 0.83 against 0.72 at 32°, 0.94 against 0.89 at 23°), because ArcticDEM's noise and spikes are gone.
+- **Hemsedal**, where GLO-30 includes the forest canopy, is unchanged (F1 0.75 / 0.71 at 32° / 23° against 0.76 / 0.71). Forest edges don't make enough false slope to matter at this scale.
+- So **the cost of a coarser DEM is small as long as that DEM is good**. The question for the Alps is not resolution but EU-DEM's quality, which the next part measures.
+
+### The Alps: EU-DEM against GLO-30 against lidar
+
+Terrarium serves EU-DEM in Switzerland, France, Italy, Slovenia, Slovakia, the Pyrenees, Scotland and Sierra Nevada, and Austria's 10 m model in Austria (checked from the `x-amz-meta-x-imagery-sources` header at 20 places). **Reference**: swissALTI3D (2 m lidar, latest year per km² tile, read at its 4 m overview and averaged onto the z13 grid) at Davos and Valais (Zermatt). The model runs on each DEM are compared with the run on swissALTI3D (`score.py --ref app-swiss --mask swiss`, only Swiss ground, 99–100 % of both areas).
+
+Heights first, on the scored area: EU-DEM is 6.7 m (Davos) and 10.9 m (Valais) from swissALTI3D at the median, with a p90 of 19 and 40 m. GLO-30 is 4.3 and 6.3 m, with a p90 of 13 and 30 m.
+
+| DEM, against swissALTI3D | F1 32° / 27° / 23° | precision 32° | recall 32° / 27° / 23° | edge ref→model p90 (m) |
+|---|---|---|---|---|
+| Terrarium (EU-DEM), what the app uses | **0.80 / 0.85 / 0.87** | 0.89 | **0.73 / 0.81 / 0.84** | 265 / 320 / 375 |
+|   Davos alone | 0.74 / 0.82 / 0.83 | 0.88 | 0.64 / 0.75 / 0.79 | 216 / 282 / 341 |
+|   Valais alone | 0.84 / 0.88 / 0.90 | 0.90 | 0.79 / 0.85 / 0.89 | 297 / 354 / 399 |
+| GLO-30 | **0.89 / 0.92 / 0.92** | 0.92 | 0.87 / 0.90 / 0.92 | 119 / 150 / 159 |
+| Mapterhorn (see below) | 0.99 / 0.99 / 0.98 | 0.99 | 0.99 / 0.99 / 0.98 | 26 / 26 / 27 |
+
+Start zone overlap with the swissALTI3D run (IoU): EU-DEM 0.50 (Davos) and 0.58 (Valais); GLO-30 0.77 and 0.70.
+
+- **EU-DEM misses runout rather than inventing it.** Precision stays at 0.89, but a quarter of the reference's short band is missing (over a third at Davos), and the missing parts are whole paths, which is why the edge p90 runs to 265–375 m. These are the small and narrow start zones: gullies, couloirs and short steep steps that EU-DEM smooths away.
+- **Against the same reference, the EU-DEM-against-GLO-30 gap is 0.09 / 0.07 / 0.05 in F1.** Since GLO-30 costs nothing measurable against NVE in Norway, that gap is about the whole EU-DEM penalty. As a rough transfer: where the app gets 0.86 / 0.90 / 0.90 against NVE in Norway, expect something like **0.77 / 0.83 / 0.85 on EU-DEM in the Alps**, nearly all of it missed runout.
+
+Model on Terrarium against model on GLO-30 elsewhere (no lidar reference; F1 32° / 27° / 23°):
+
+| area | Terrarium source | F1 | slope >30° IoU, Terrarium against GLO-30 |
+|---|---|---|---|
+| Arlberg | Austria 10 m | 0.91 / 0.93 / 0.94 | 0.80 |
+| Ötztal | Austria 10 m | 0.92 / 0.94 / 0.95 | 0.79 |
+| Hohe Tauern | Austria 10 m | 0.93 / 0.94 / 0.95 | 0.82 |
+| Chamonix | EU-DEM | 0.91 / 0.92 / 0.93 | 0.73 |
+| Dolomites | EU-DEM | 0.83 / 0.86 / 0.87 | 0.58 |
+| (Norway, all 9 areas) | Kartverket 10 m | 0.93 / 0.94 / 0.95 | |
+
+In Austria, two good DEMs agree as closely as in Norway, so **Norway's numbers carry over to Austria**. The Dolomites look like Davos, and Chamonix is between EU-DEM's worst and Austria.
+
+### Slope over 30° against the official slope maps
+
+`slopecheck.py`: our slope >30° (Horn, on the z13 pixels) against swisstopo's `hangneigung-ueber_30` (10 m, reaches about 100 km past the Swiss border) and IGN's carte des pentes (BD ALTI 5 m).
+
+| area | reference | ref >30° km² | DEM | DEM >30° km² | share of ref found | IoU |
+|---|---|---|---|---|---|---|
+| Chamonix | swisstopo | 103.8 | EU-DEM | 94.2 | 0.80 | 0.72 |
+| Chamonix | swisstopo | 103.8 | GLO-30 | 100.0 | 0.88 | 0.81 |
+| Chamonix | IGN | 101.8 | EU-DEM | 94.2 | 0.80 | 0.71 |
+| Chamonix | IGN | 101.8 | GLO-30 | 100.0 | 0.88 | 0.79 |
+| Valais | swisstopo | 84.3 | EU-DEM | 67.8 | 0.68 | 0.60 |
+| Valais | swisstopo | 84.3 | GLO-30 | 76.7 | 0.79 | 0.71 |
+| Valais | swisstopo | 84.3 | swissALTI3D | 83.0 | 0.95 | 0.91 |
+| Davos | swisstopo | 69.8 | EU-DEM | 46.6 | 0.52 | 0.46 |
+| Davos | swisstopo | 69.8 | GLO-30 | 60.8 | 0.76 | 0.68 |
+| Davos | swisstopo | 69.8 | swissALTI3D | 67.1 | 0.92 | 0.89 |
+| Arlberg | swisstopo | 88.9 | Terrarium (Austria 10 m) | 88.2 | 0.95 | 0.92 |
+| Arlberg | swisstopo | 88.9 | GLO-30 | 81.6 | 0.85 | 0.80 |
+| Ötztal | swisstopo | 91.4 | Terrarium (Austria 10 m) | 90.4 | 0.95 | 0.92 |
+| Ötztal | swisstopo | 91.4 | GLO-30 | 86.8 | 0.86 | 0.79 |
+
+(The Dolomites are left out: swisstopo's layer fades out there.) **EU-DEM finds only 52–80 % of the official >30° ground**, GLO-30 76–88 %, and 10 m data (Austria, swissALTI3D) 92–95 %. The same ranking as the runout scores, from an independent reference.
+
+SilvaProtect-CH was not checked: with swissALTI3D as a reference run, a modelled process layer with other assumptions would add little.
+
+### Side question: a better tile source exists (Mapterhorn)
+
+[Mapterhorn](https://mapterhorn.com) serves free terrain tiles in the **same Terrarium encoding** (512 px lossless WebP, `https://tiles.mapterhorn.com/{z}/{x}/{y}.webp`, z0–12 for the world and z13–17 where there is high-resolution data), with `Access-Control-Allow-Origin: *`. It is built from GLO-30 worldwide and national lidar where it is open, including swissALTI3D, IGN RGE ALTI 1 m (France), Austria (1 m and 10 m), Bavaria, South Tyrol, Trentino, Aosta, Lombardy, Piedmont, Slovenia, Poland, Spain, Scotland, Kartverket 1 m, Lantmäteriet (Sweden), Iceland and Norwegian Polar Institute (Svalbard). Licences are CC BY 4.0 or similar per source ([attribution.json](https://download.mapterhorn.com/attribution.json)). Its z12 tiles have the same pixel size as Terrarium's z13, so spot checks used them as they are:
+
+| area | Mapterhorn slope >30°: share of swisstopo found, IoU | Terrarium |
+|---|---|---|
+| Davos | 0.92, 0.89 | 0.52, 0.46 |
+| Valais | 0.95, 0.91 | 0.68, 0.60 |
+| Chamonix | 0.94, 0.85 | 0.80, 0.72 |
+| Lyngen, slope >27° against NVE | IoU 0.845 | 0.801 |
+
+The model on Mapterhorn reproduces the swissALTI3D run (F1 0.98–0.99), and at Lyngen it matches NVE as well as Terrarium in F1 (0.87 / 0.90 / 0.90) with a much tighter NVE→model edge (p90 42 / 57 / 72 m against 123 / 173 / 215 m). **Switching the app's elevation tiles to Mapterhorn would remove the EU-DEM penalty in most of the Alps, the Pyrenees and Scotland.** That would be a separate change, which the plan asked not to make here, and it touches every terrain layer: the 512 px WebP tiles need `loadDem` to decode a z12 tile into four z13 tiles, or to use z13 where it exists. It also needs a decision from Mads. The service is run by volunteers on Cloudflare sponsorship, with no published usage policy, and Python's default User-Agent gets a 403 (browsers and curl are fine).
+
+### Things a DEM can't fix
+
+- **Alpha statistics outside Norway.** NVE checked its angles against about 19,000 avalanches in the Alps as well as 18,000 in Troms and found nearly the same values (Varsom's description). The α–β model fitted to 80 long Austrian avalanches (α = 0.946β − 0.83°) gives almost the same runout as the Norwegian fit over the relevant range (Lied, Weiler, Bakkehøi and Hopf 1995, NGI report 581240-1, as summarised in [Jóhannesson 1998, Veðurstofa Íslands VÍ-G98003](https://www.vedur.is/media/vedurstofan/utgafa/greinargerdir/1998/98003.pdf)). The three angles are a fair choice for the Alps too. They describe large avalanches in known paths, not day-to-day ones.
+- **Forest.** The treeline is near 2000 m in the Alps against 600–1000 m in Norway, so much more steep forest matters there. The app now uses tree cover (see the forest section), which covers the Alps. The runout still runs through forest.
+- **Glaciers and seasonal change.** All DEMs here are snow-free or summer surfaces from a given year. Glacier surfaces have dropped tens of metres since EU-DEM (about 2000) and GLO-30 (2011–2015), and seracs and crevasses aren't in any of them. A winter snowpack fills gullies and softens steps, so start zones can be bigger than the summer terrain suggests.
+- **Snow climate and wind.** The wind shelter index has no wind direction (all directions count the same, as in AutoATES v2.0 with `windtol` 180). Continental areas with thin, weak snowpacks (inner Alps, Tatra) can release on smaller and gentler slopes than the PRA allows, and maritime ones (Scotland, western Norway) often load mainly from one direction.
+
+### In the app
+
+The runout section now has a terrain note that names the elevation data under the middle of the map. Terrarium sends its source list in an `x-amz-meta-x-imagery-sources` header that CORS exposes, read with a GET because S3 refuses HEAD across origins. The notes (`RUN_TERRAIN` in `js/runout.js`) cover Kartverket 10 m (close to NVE), Austria 10 m (about as good), ArcticDEM (sharp but noisy), EU-DEM ("finds only half to four fifths of the ground over 30°… a gap here does not mean safe ground") and other global data (rough).
+
+## Notes for session 3 (GLO-30), written before it
 
 - GLO-30 crops are already cached for all 16 areas (`cache/glo30/13/`), resampled bilinearly to the z13 pixel grid.
 - Against Terrarium, the median absolute height difference on land is 1.5–4 m in Norway and Arlberg, but 7–10 m at Davos and Chamonix (EU-DEM in Terrarium).
