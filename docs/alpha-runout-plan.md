@@ -179,5 +179,12 @@ Same algorithm, no code changes needed to "extend" it, since Terrarium covers Eu
 
 ## Status
 
+- 2026-10-03, **session 1 done.** Results and how to rerun are in [alpha-runout-results.md](alpha-runout-results.md).
+  - `js/runout-core.js` now holds the pure maths: `tileLat`, `tileCell`, `terrariumDecode`, `slopeAspect`, `blockFromTiles`, `runoutCone` and `runoutMiddle`. It loads before `slope.js`. `loadDem`/`demBlock` in `slope.js` and `runoutMask` in `runout.js` call it. Its output is identical to the old code (0 differing cells on Lyngen tiles at α 18/23/32).
+  - The `tools/runout-check/` harness has `areas.json`, `fetch.py`, `run.js`, `score.py` and `view.py`. The cache holds Terrarium, GLO-30 and NVE data for all 16 areas: 9 Norwegian/Svalbard (4 for calibration, 5 held out) and 7 Alpine.
+  - NVE answers: legend value 1 means "not in band" and 2 means "band". The runout is on a 10 m grid (DTM10, not lidar), and Svalbard is 10 m too. The bands are exclusive except for small seam patches, and NVE draws runout on the sea as well.
+  - Baseline (slope ≥30°, envelope): F1 is 0.81/0.79/0.75 on the calibration set at 32/27/23° and 0.79/0.84/0.85 on the held-out set, with median edge distance 20–70 m. The main error is over-warning on flat ground, which grows as alpha falls. Svalbard is hurt by ArcticDEM spikes and noise over water.
+  - **Next (session 2):** start with the PRA (step 2.1), then routing variant b/c to cut the flat-ground spreading. Add new model variants as extra `modelTile` options in `run.js` (with `--tag`) so the baseline stays reproducible.
+  - Open for session 3: in Norway GLO-30 sits about 7–9 m west of Terrarium (x only). Check this against NVE before scoring the 30 m penalty.
 - 2026-10-03: decisions added (section 7): replace the custom mode, off by default, NVE colours. Then switched from downloading EU-DEM to GLO-30 from AWS (tile URLs checked). Still no code changed.
 - 2026-10-01: plan written. Checked during planning: the NVE per-class export and its band encoding, the Terrarium source per region, and the PRA and Flow-Py parameters from the AutoATES v2.0 code. No code changed yet.

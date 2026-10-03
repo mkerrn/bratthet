@@ -36,9 +36,10 @@ Bratthet is a static GitHub Pages site (a Leaflet map for planning ski tours). I
 | `js/pistes.js` | OpenSnowMap ski piste overlay |
 | `js/gpxtrack.js` | Uploaded GPX files (tracks, routes, waypoints) shown as an overlay |
 | `js/huts.js` | DNT and other huts from the `data/huts.json` OpenStreetMap snapshot (refresh with `tools/update-huts.py`) |
+| `js/runout-core.js` | Pure terrain maths, no DOM: `tileLat`, `tileCell`, `terrariumDecode`, `slopeAspect`, `blockFromTiles`, the alpha-cone runout (`runoutCone`, `runoutMiddle`). Also run in Node by `tools/runout-check`, so keep it free of DOM/Leaflet |
 | `js/slope.js` | Terrarium DEM tile loading/cache (`loadDem`, `demCache`), `demBlock` (a tile plus its 8 neighbours at half resolution) and the computed slope layer |
 | `js/hillshade.js` | Hillshade layer and the sun-direction dial |
-| `js/runout.js` | Alpha-angle runout model layer; `applySlopeVisible`; first `applySteep()` |
+| `js/runout.js` | Alpha-angle runout map layer (the maths is in `runout-core.js`); `applySlopeVisible`; first `applySteep()` |
 | `js/exposure.js` | Sun exposure (solar position, cast shadows, sun hours/time of day) and wind exposure (Winstral shelter index, Open-Meteo wind of the last 3 days, wind dial); `exposureLine` for the readout |
 | `js/readout.js` | Tap the map → slope/elevation/aspect readout |
 | `js/scale.js` | Scale bar and the base map's contour interval |
@@ -55,6 +56,7 @@ Bratthet is a static GitHub Pages site (a Leaflet map for planning ski tours). I
 | `js/controls.js` | Wires up the remaining panel controls, base-map auto switching (`setBase`, `autoBase`), panel collapse. Runs last. |
 | `tools/smoke-test.sh` | Headless Chrome load test |
 | `tools/update-huts.py` | Rebuilds `data/huts.json` from Overpass |
+| `tools/runout-check/` | Harness that scores the runout model against NVE's runout layer (see `docs/alpha-runout-results.md`). Its venv and `cache/` are gitignored |
 
 ## Common changes
 
