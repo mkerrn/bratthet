@@ -49,9 +49,8 @@ function repaintShade(){
 function applyShade(){
   const ticked = document.getElementById('shadeOn').checked;
   document.getElementById('shadeRow').classList.toggle('off', !ticked);
-  const on = ticked && currentBase === 'otm';
-  if(on && !map.hasLayer(shade)) shade.addTo(map);
-  if(!on && map.hasLayer(shade)) map.removeLayer(shade);
+  if(ticked && !map.hasLayer(shade)) shade.addTo(map);
+  if(!ticked && map.hasLayer(shade)) map.removeLayer(shade);
 }
 document.getElementById('shadeOn').onchange = ()=> applyShade();
 document.getElementById('shadeOpacity').oninput = e=> shade.setOpacity(e.target.value/100);
@@ -77,7 +76,7 @@ function setSun(deg){
   paintSun();
   /* Choosing a light direction means you want to see it. */
   const box = document.getElementById('shadeOn');
-  if(!box.checked){ box.checked = true; applyShade(); }
+  if(!box.checked){ box.checked = true; applyShade(); syncOrderChecks(); }
   if(!sunQueued){
     sunQueued = true;
     requestAnimationFrame(()=>{ sunQueued = false; repaintShade(); });

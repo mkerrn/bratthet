@@ -66,6 +66,7 @@ input[type=text]{
 #order li + li{border-top:1px solid var(--line)}
 #order li span{flex:1}
 #order li.fixed{background:transparent;color:var(--muted);padding-left:30px}
+#order li.pinned{border-top-style:dashed}
 #order button{
   width:24px;height:22px;padding:0;font-size:11px;line-height:1;background:var(--panel);color:var(--text);
   border:1px solid var(--line);border-radius:3px;cursor:pointer;

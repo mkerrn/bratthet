@@ -96,7 +96,7 @@
     <section>
       <h2>Layer order</h2>
       <ul id="order"></ul>
-      <p class="note">The top row is drawn on top. Use the arrows to move a layer up or down, the tick box to show or hide it, and tap its name to open its settings below.</p>
+      <p class="note">The top row is drawn on top. Use the arrows to move a layer up or down, the tick box to show or hide it, and tap its name to open its settings below. Hillshading always sits right above the base map, since it darkens the map itself.</p>
     </section>
 
     <section>
@@ -293,16 +293,34 @@
       <p class="note">Show a track, route or waypoints from a GPX file, for example last season's trip or a route someone shared. The file is read on your device and not uploaded anywhere. Someone else's line was right for their day, their snow and their group, not necessarily for yours.</p>
     </section>
 
+    <section>
+      <h2 data-layer="shade">Hillshading</h2>
+      <div class="row shade-row off" id="shadeRow">
+        <input type="checkbox" id="shadeOn" hidden>
+        <label for="shadeOn">Light from</label>
+        <span class="sun-deg" id="sunDeg" aria-hidden="true">NW</span>
+        <svg class="sun-dial" id="sunDial" viewBox="-20 -20 40 40" tabindex="0" role="slider"
+             aria-label="Direction the light comes from" aria-valuemin="0" aria-valuemax="359" aria-valuenow="315">
+          <circle class="dial" r="18"/>
+          <path class="tick" d="M0 -18 L0 -13"/>
+          <path class="ray" id="sunRay"/>
+          <circle class="sun" id="sunDot" r="3.5"/>
+        </svg>
+      </div>
+      <input type="range" id="shadeOpacity" min="0" max="100" value="55" aria-label="Hillshading strength">
+      <p class="note">Shades slopes that face away from the light, drawn from the same elevation data as the slope colours. Tap or drag the small dial to set where the light comes from; northwest gives the clearest relief, while the real sun direction (south around midday in winter) shows roughly which slopes stay in shade. Each slope is shaded on its own, so shadows cast by neighbouring mountains are not shown. The slider sets how dark the shading gets.</p>
+    </section>
+
     <section style="border-top:1px solid var(--line);padding-top:12px">
       <h2>Base map</h2>
       <div class="row">
         <select id="baseSel" class="sel wide" aria-label="Base map">
           <option value="auto" selected>Follow the map</option>
           <option value="otm">OpenTopoMap (world)</option>
+          <option value="esri">Esri aerial photo (world)</option>
           <optgroup label="Norway">
             <option value="kv">Kartverket topo</option>
             <option value="kvgrey">Kartverket grey</option>
-            <option value="esri">Aerial photo (Esri, worldwide)</option>
           </optgroup>
           <optgroup label="Switzerland">
             <option value="ch">swisstopo map</option>
@@ -318,20 +336,7 @@
           </optgroup>
         </select>
       </div>
-      <div class="row shade-row off" id="shadeRow" style="margin-top:12px">
-        <input type="checkbox" id="shadeOn">
-        <label for="shadeOn">Hillshading on OpenTopoMap</label>
-        <span class="sun-deg" id="sunDeg" aria-hidden="true">NW</span>
-        <svg class="sun-dial" id="sunDial" viewBox="-20 -20 40 40" tabindex="0" role="slider"
-             aria-label="Direction the light comes from" aria-valuemin="0" aria-valuemax="359" aria-valuenow="315">
-          <circle class="dial" r="18"/>
-          <path class="tick" d="M0 -18 L0 -13"/>
-          <path class="ray" id="sunRay"/>
-          <circle class="sun" id="sunDot" r="3.5"/>
-        </svg>
-      </div>
-      <input type="range" id="shadeOpacity" min="0" max="100" value="55" aria-label="Hillshading strength">
-      <p class="note">Shades slopes that face away from the light, drawn from the same elevation data as the slope colours. Tap or drag the small dial to set where the light comes from; northwest gives the clearest relief, while the real sun direction (south around midday in winter) shows roughly which slopes stay in shade. Each slope is shaded on its own, so shadows cast by neighbouring mountains are not shown. The slider sets how dark the shading gets.</p>
+      <div class="live" id="baseAcc" aria-live="polite"></div>
       <p class="note">Kartverket only covers Norway, so "follow the map" swaps to OpenTopoMap once you leave it. The national maps and aerial photos for Switzerland, France and Austria only cover their own country and are blank or coarse outside it, so you pick those by hand. Aerial photos are taken in summer, which makes them good for reading rock, forest and gullies, not snow. The grey Kartverket map lets the slope colours stand out.</p>
       <p class="note">The corner shows a scale bar and, when the base map draws named contours, its published interval for the zoom you are at: 20 m on Kartverket topo, 10 m on OpenTopoMap from zoom 15 and coarser below. Raster tiles carry no metadata, so this is the map series' equidistance, not something read out of the tile, and it can differ locally. The ruler button measures straight legs between the points you tap, and reads ascent and descent off the same coarse elevation tiles the slope colours use — expect it to smooth away small rolls and to run short on a line drawn with few points.</p>
       <p class="note">While measuring, the curve at the bottom shows the elevation along the line, coloured by how steep the ground under it is; drag along it to find the spot on the map. The menu above the curve switches between the fixed avalanche colours and your own slope classes; with your classes, direction and altitude filters count just as on the map (marked * in the key), and edits show up when you press Redraw map. "Steepest ground" is the slope of the terrain the line crosses, which is what matters for avalanches, and a dot marks its steepest spot on the map. "Steepest track" is how steeply the line itself climbs or drops, averaged over about 60 m, in the direction you drew it — a comfortable skin track is usually 10–15°. Both come from the same coarse elevation tiles, so short steep steps can hide between the samples.</p>

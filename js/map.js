@@ -122,7 +122,9 @@ const LAYER_TOGGLES = {
   sun:    {get:()=>document.getElementById('sunOn').checked,
            set:v=>{ document.getElementById('sunOn').checked = v; applySun(); }},
   snow:   {get:()=>document.getElementById('snowOn').checked,
-           set:v=>{ document.getElementById('snowOn').checked = v; applySnow(); }}
+           set:v=>{ document.getElementById('snowOn').checked = v; applySnow(); }},
+  shade:  {get:()=>document.getElementById('shadeOn').checked,
+           set:v=>{ document.getElementById('shadeOn').checked = v; applyShade(); }}
 };
 function syncOrderChecks(){
   document.querySelectorAll('#order li[data-key]').forEach(li=>{
@@ -176,6 +178,20 @@ function renderOrder(){
     box.onchange = ()=>{ LAYER_TOGGLES[key].set(box.checked); syncOrderChecks(); };
     ul.appendChild(li);
   });
+  /* Hillshading multiplies onto the base map, so it always sits right above
+     it: it can be shown, hidden and set up here, but not moved. */
+  const sh = document.createElement('li');
+  sh.dataset.key = 'shade';
+  sh.className = 'pinned';
+  sh.classList.toggle('open', openLayer === 'shade');
+  sh.innerHTML = '<input type="checkbox" aria-label="Show Hillshading on the map">' +
+    '<button type="button" class="name" aria-expanded="' + (openLayer === 'shade') + '" title="Settings for Hillshading">Hillshading</button>';
+  sh.querySelector('.name').onclick = ()=> showLayerSettings('shade');
+  const shBox = sh.querySelector('input');
+  shBox.checked = LAYER_TOGGLES.shade.get();
+  sh.classList.toggle('hidden-layer', !shBox.checked);
+  shBox.onchange = ()=>{ LAYER_TOGGLES.shade.set(shBox.checked); syncOrderChecks(); };
+  ul.appendChild(sh);
   const base = document.createElement('li');
   base.className = 'fixed';
   base.innerHTML = '<span>Base map</span>';

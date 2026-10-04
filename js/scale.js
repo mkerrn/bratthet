@@ -49,6 +49,26 @@ function updateContour(){
   contourEl.classList.add('on');
 }
 
+/* ---------- accuracy of the base map ----------
+   One line under the base map menu, shown even with explanations off, since
+   it says how far to trust what you read off the map. The figures are the
+   publishers' own or typical values for the series, rounded and approximate. */
+const BASE_ACCURACY = {
+  otm:    'OpenStreetMap features, mostly within 5–20 m; contours from 30 m SRTM elevation data, which can be off by tens of metres in steep terrain.',
+  esri:   'Satellite and aerial photos with 0.3–1 m pixels in most places, coarser in remote areas; usually within 5–10 m. Capture dates vary from tile to tile.',
+  kv:     'Kartverket N50 data (1:50 000) in the mountains, within about 10–20 m; 20 m contours.',
+  kvgrey: 'Kartverket N50 data (1:50 000) in the mountains, within about 10–20 m; 20 m contours.',
+  ch:     'swisstopo national map, 1:25 000 at close zoom, within about 3–5 m; 10 m contours.',
+  chimg:  'SWISSIMAGE aerial photos with 10 cm pixels, within about half a metre.',
+  ign:    'Plan IGN, built from IGN\'s BD TOPO, within a few metres.',
+  ignimg: 'BD ORTHO aerial photos with 20 cm pixels, within about 1 m.',
+  at:     'basemap.at, built from Austrian government data, within a few metres.',
+  atimg:  'basemap.at aerial photos with 30 cm pixels, within about 1 m.'
+};
+const baseAccEl = document.getElementById('baseAcc');
+function updateBaseAcc(){ baseAccEl.textContent = 'Accuracy: ' + (BASE_ACCURACY[currentBase] || 'unknown'); }
+
 map.on('move zoom zoomend moveend resize', ()=>{ updateScale(); updateContour(); });
 updateScale();
 updateContour();
+updateBaseAcc();

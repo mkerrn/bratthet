@@ -45,6 +45,7 @@ function setBase(key){
   currentBase = key;
   applyShade();
   updateContour();
+  updateBaseAcc();
   sync3dBase();
 }
 /* Kartverket stops at the border, so outside Norway the auto setting hands
