@@ -27,7 +27,7 @@ Bratthet is a static GitHub Pages site (a Leaflet map for planning ski tours). I
 | `css/panel.css` | Slope class rows, direction compass dial, inputs/buttons, layer-order list |
 | `css/map-ui.css` | Bottom-left cards, measuring tape, elevation profile, measure/locate buttons |
 | `css/controls.css` | Selects, date input, status lines, danger legend, **phone `@media` rules** |
-| `js/config.js` | `HEATMAP_URL` (empty string hides the heatmap entirely) |
+| `js/config.js` | `FRIENDS` (friends mode: `?friends` once per device; the plain link is the public site without the Strava heatmap and Esri imagery, and with a disclaimer pop-up) and `HEATMAP_URL` (empty string hides the heatmap entirely) |
 | `js/util.js` | `isoDay`, `addDays`, `TODAY`, `niceDate`, `esc`, `debounce`, `fetchJson` |
 | `js/bands.js` | Slope angle classes (`DEFAULT_BANDS`, `bands`) and their editor UI with the aspect dial |
 | `js/map.js` | Base maps (`bases`: Kartverket, OpenTopoMap, swisstopo, IGN, basemap.at), the `map` object, layer panes, `LAYER_GROUPS`, `LAYER_TOGGLES`, layer-order list |

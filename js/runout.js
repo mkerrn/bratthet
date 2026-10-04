@@ -160,6 +160,10 @@ const RunoutLayer = L.GridLayer.extend({
 });
 const runout = new RunoutLayer({maxZoom:18, opacity:0.55, tileSize:256, pane:'runoutPane',
   attribution:'Tree cover © European Union, Copernicus Land Monitoring Service'});
+/* A layer has only one credit, so the elevation one is added by hand. The
+   control counts them, so it shows once even with the slope layer on too. */
+runout.on('add', ()=>map.attributionControl.addAttribution(DEM_CREDIT));
+runout.on('remove', ()=>map.attributionControl.removeAttribution(DEM_CREDIT));
 
 /* ---------- how far to trust it here ----------
    The bands are only as good as the elevation tiles under them, and those

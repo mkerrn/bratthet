@@ -108,3 +108,24 @@ document.addEventListener('keydown', e=>{
     syncOrderChecks();
   }
 });
+
+/* ---------- disclaimer ----------
+   The public site opens with a disclaimer that has to be accepted once per
+   device. Change the stored version when the wording changes, so everyone
+   sees the new text. Friends mode skips it, and also keeps the heatmap
+   sentence in "Before you use this". */
+const DISCLAIMER_VERSION = '1';
+if(!FRIENDS){
+  document.getElementById('heatCaveat').hidden = true;
+  let seen = false;
+  try{ seen = localStorage.getItem('bratthet.disclaimer') === DISCLAIMER_VERSION; }catch(e){}
+  if(!seen){
+    const box = document.getElementById('disclaimer');
+    box.hidden = false;
+    document.getElementById('disclaimerOk').focus();
+    document.getElementById('disclaimerOk').onclick = ()=>{
+      box.hidden = true;
+      try{ localStorage.setItem('bratthet.disclaimer', DISCLAIMER_VERSION); }catch(e){}
+    };
+  }
+}

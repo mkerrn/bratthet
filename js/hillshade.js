@@ -39,7 +39,7 @@ const ShadeLayer = L.GridLayer.extend({
     return tile;
   }
 });
-const shade = new ShadeLayer({maxZoom:18, opacity:0.55, tileSize:256, pane:'shadePane'});
+const shade = new ShadeLayer({maxZoom:18, opacity:0.55, tileSize:256, pane:'shadePane', attribution:DEM_CREDIT});
 /* Turning the light repaints the tiles already on screen rather than
    rebuilding the layer, so dragging the dial does not flash. */
 function repaintShade(){

@@ -374,11 +374,22 @@
 
     <section class="always" style="border-top:1px solid var(--line);padding-top:12px">
       <h2>Before you use this</h2>
-      <p class="note">Slope colors are calculated from coarse open elevation data and can be several degrees off. The avalanche terrain layer is a model. The heatmap only shows where people happened to record activities. The snow layers are a 1 km model or coarse satellite pixels, and the forecast colours summarise a whole region. None of it knows what has already slid or what the snow is like on the slope in front of you.</p>
+      <p class="note">Slope colors are calculated from coarse open elevation data and can be several degrees off. The avalanche terrain layer is a model. <span id="heatCaveat">The heatmap only shows where people happened to record activities. </span>The snow layers are a 1 km model or coarse satellite pixels, and the forecast colours summarise a whole region. None of it knows what has already slid or what the snow is like on the slope in front of you.</p>
       <p class="note">The locate button shows your GPS position, a circle for its uncertainty, and a dashed line along whichever way the phone is pointed. The compass is magnetic, drifts near metal and electronics, and points a couple of degrees off true north in Norway. It is a rough pointer, not a bearing you should navigate on.</p>
       <p class="note">Use it to find ideas worth investigating, then read the full forecast from <span id="fcLink"><a href="https://www.varsom.no/en/avalanches/avalanche-warnings/" target="_blank" rel="noopener">varsom.no</a></span>, bring the gear and the training to use it, and make your own decisions in the terrain. This is not an avalanche safety tool, comes with no guarantee of any kind, and is used entirely at your own risk.</p>
     </section>
 
+  </div>
+</div>
+
+<!-- Shown once per device on the public site (not in friends mode). -->
+<div id="disclaimer" hidden>
+  <div class="card" role="dialog" aria-modal="true" aria-labelledby="disclaimerTitle">
+    <h2 id="disclaimerTitle">Bratthet is a hobby project, not an avalanche safety tool</h2>
+    <p>The slope angles, avalanche runout, sun, wind and snow layers are rough estimates calculated from coarse open data. They have not been checked or verified by experts, and they can be wrong. Map data and forecasts come from third parties and may be out of date or missing.</p>
+    <p>Always read the official avalanche forecast, carry avalanche gear and know how to use it, and make your own decisions in the terrain.</p>
+    <p>I take no responsibility for how this site is used, and you use it entirely at your own risk.</p>
+    <button type="button" id="disclaimerOk">I understand</button>
   </div>
 </div>
 

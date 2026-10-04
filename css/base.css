@@ -59,3 +59,22 @@ section:last-child{margin-bottom:0}
 h2{margin:0 0 8px;font-size:12px;font-weight:600;color:var(--snow)}
 p.note{margin:6px 0 0;font-size:11px;line-height:1.5;color:var(--muted)}
 a{color:var(--snow)}
+
+/* ---------- disclaimer ----------
+   Covers the whole page until it is accepted, above the panel and map cards. */
+#disclaimer{
+  position:fixed;inset:0;z-index:2000;display:flex;align-items:center;justify-content:center;
+  padding:16px;background:rgba(5,12,16,.72);
+}
+#disclaimer[hidden]{display:none}
+#disclaimer .card{
+  max-width:440px;max-height:100%;overflow:auto;padding:18px 20px;background:var(--panel);
+  border:1px solid var(--line);border-radius:6px;box-shadow:0 10px 30px rgba(0,0,0,.45);
+}
+#disclaimer h2{font-size:15px;line-height:1.35;margin-bottom:10px}
+#disclaimer p{margin:0 0 10px;font-size:13px;line-height:1.5;color:var(--text)}
+#disclaimer button{
+  margin-top:6px;width:100%;padding:10px;font:inherit;font-size:14px;font-weight:600;cursor:pointer;
+  color:var(--ink);background:var(--snow);border:none;border-radius:4px;
+}
+#disclaimer button:hover{background:#fff}

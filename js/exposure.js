@@ -224,7 +224,7 @@ function paintSunTile(tile, coords){
     });
   });
 }
-const sunLayer = new ExposureLayer({maxZoom:18, opacity:0.7, tileSize:256, pane:'sunPane', paint:paintSunTile});
+const sunLayer = new ExposureLayer({maxZoom:18, opacity:0.7, tileSize:256, pane:'sunPane', paint:paintSunTile, attribution:DEM_CREDIT});
 
 /* Status line and legend for the map centre. */
 function updateSunInfo(){
@@ -354,7 +354,7 @@ function paintWindTile(tile, coords){
     });
   });
 }
-const windLayer = new ExposureLayer({maxZoom:18, opacity:0.6, tileSize:256, pane:'windPane', paint:paintWindTile});
+const windLayer = new ExposureLayer({maxZoom:18, opacity:0.6, tileSize:256, pane:'windPane', paint:paintWindTile, attribution:DEM_CREDIT});
 
 function updateWindInfo(){
   const from = windFromNow();

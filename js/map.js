@@ -35,6 +35,12 @@ const bases = {
   atimg: L.tileLayer('https://mapsneu.wien.gv.at/basemap/bmaporthofoto30cm/normal/google3857/{z}/{y}/{x}.jpeg',
       {maxZoom:18, attribution:'© basemap.at'})
 };
+/* Esri's imagery is not clearly licensed for a public site without an ArcGIS
+   key, so only friends mode offers it. */
+if(!FRIENDS){
+  delete bases.esri;
+  document.querySelector('#baseSel option[value="esri"]').remove();
+}
 
 const map = L.map('map', {center:[61.63, 8.31], zoom:12, layers:[bases.kv], zoomControl:true});
 

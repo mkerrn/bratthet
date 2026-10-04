@@ -1,6 +1,8 @@
 /* ---------- slope layer, computed from terrarium elevation tiles ---------- */
 const DEM_MAX_Z = 13;
 const DEM_URL = 'https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png';
+/* The computed layers credit the elevation data they are made from. */
+const DEM_CREDIT = 'Elevation: <a href="https://github.com/tilezen/joerd/blob/master/docs/attribution.md">Mapzen terrain tiles</a>';
 const demCache = new Map();     // "z/x/y" -> {el, slope, cell}
 let demFailed = false;
 
@@ -99,5 +101,5 @@ const SlopeLayer = L.GridLayer.extend({
     return tile;
   }
 });
-const slope = new SlopeLayer({maxZoom:18, opacity:0.65, tileSize:256, pane:'slopePane'});
+const slope = new SlopeLayer({maxZoom:18, opacity:0.65, tileSize:256, pane:'slopePane', attribution:DEM_CREDIT});
 document.getElementById('slopeOpacity').oninput = e=> slope.setOpacity(e.target.value/100);
