@@ -3,9 +3,11 @@
    laid over the Leaflet one. It drapes the current base map over the same
    terrarium elevation tiles the slope layer reads (DEM_URL). MapLibre is
    about 800 KB, so it is only fetched the first time someone opens 3D. The
-   tile overlays (official steepness, pistes, heatmap), GPX tracks and the
-   measured line are copied across from their Leaflet layers; the computed
-   layers are drawn on Leaflet canvases and stay in the 2D map. */
+   tile overlays (official steepness, pistes), GPX tracks and the measured
+   line are copied across from their Leaflet layers; the computed layers are
+   drawn on Leaflet canvases and stay in the 2D map. The Strava heatmap stays
+   in 2D too: its server sends no CORS headers, and WebGL may only draw images
+   that say they can be shared with other sites, so the browser refuses them. */
 const ML_CDN = 'https://cdnjs.cloudflare.com/ajax/libs/maplibre-gl/5.24.0/';
 const btn3d = document.getElementById('btn3d');
 const box3d = document.getElementById('map3d');
@@ -85,7 +87,6 @@ function tileOverlays3d(){
   const steep = steepCurrent && steepLayers[steepCurrent];
   if(steep && map.hasLayer(steep)) out.aval = steep;
   if(map.hasLayer(pisteLayer)) out.piste = pisteLayer;
-  if(heatLayer && map.hasLayer(heatLayer)) out.heat = heatLayer;
   return out;
 }
 function gpxGeo3d(){
@@ -170,11 +171,6 @@ const sync3dSoon = debounce(sync3dOverlays, 150);
 map.on('layeradd layerremove', ()=>{ if(is3d) sync3dSoon(); });
 ['input', 'change'].forEach(ev=> document.getElementById('panel').addEventListener(ev, ()=>{ if(is3d) sync3dSoon(); }));
 
-/* The Strava heatmap answers only with the login cookie the browser holds for it. */
-function request3d(url){
-  return url.includes('strava.com') ? {url, credentials:'include'} : {url};
-}
-
 async function open3d(){
   btn3d.disabled = true;
   try { await loadMapLibre(); }
@@ -187,8 +183,7 @@ async function open3d(){
   btn3d.setAttribute('aria-pressed', 'true');
   if(!map3d){
     map3d = new maplibregl.Map({container:box3d, style:style3d(), ...camFromLeaflet(),
-                                pitch:60, maxPitch:80, attributionControl:{compact:true},
-                                transformRequest:request3d});
+                                pitch:60, maxPitch:80, attributionControl:{compact:true}});
     map3d.addControl(new maplibregl.NavigationControl({visualizePitch:true}), 'top-left');
     map3d.on('style.load', ()=>{ ready3d = true; sync3dOverlays(); });
   } else {
