@@ -54,7 +54,7 @@ Bratthet is a static GitHub Pages site (a Leaflet map for planning ski tours). I
 | `js/snow.js` | UTM33 conversion, seNorge layer, `SNOW_SOURCES` (seNorge, MODIS, Sentinel…), date stepper |
 | `js/avalanche/data.js` | `SERVICES` (every forecast service: link, bbox, EAWS or not), geometry helpers, fetching and caching regions/ratings (EAWS + Varsom) |
 | `js/avalanche/layer.js` | Danger-level map layer, forecast line in the readout, "which service" link |
-| `js/terrain3d.js` | 3D view: a MapLibre GL map over the Leaflet one, draping the current base map on the terrarium DEM; `sync3dBase` is called from `setBase` |
+| `js/terrain3d.js` | 3D view: a MapLibre GL map over the Leaflet one, draping the current base map on the terrarium DEM; `sync3dBase` is called from `setBase`. Computed layers (`GRID3D`) reach 3D through a `bratthet://` tile protocol that calls their Leaflet `createTile`; call `changed3d(layer)` after repainting one in 2D |
 | `js/controls.js` | Wires up the remaining panel controls, base-map auto switching (`setBase`, `autoBase`), panel collapse. Runs last. |
 | `tools/smoke-test.sh` | Headless Chrome load test |
 | `tools/update-huts.py` | Rebuilds `data/huts.json` from Overpass |

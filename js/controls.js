@@ -6,6 +6,7 @@ document.getElementById('infoOn').onchange = e=>{
 /* ---------- controls ---------- */
 document.getElementById('apply').onclick = ()=>{
   slope.redraw();
+  changed3d(slope);
   renderProfileKey();
   renderProfile();
   detectedZ = null;
@@ -27,7 +28,7 @@ document.getElementById('steepSrc').onchange = e=>{
 };
 document.getElementById('runOn').onchange = applyRunout;
 for(const id of RUN_BAND_IDS){
-  document.getElementById(id).onchange = ()=>{ if(map.hasLayer(runout)) runout.redraw(); };
+  document.getElementById(id).onchange = ()=>{ if(map.hasLayer(runout)){ runout.redraw(); changed3d(runout); } };
 }
 document.getElementById('runOpacity').oninput = e=> runout.setOpacity(e.target.value/100);
 document.getElementById('heatOn').onchange = ()=> buildHeatmap();

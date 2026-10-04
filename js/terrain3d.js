@@ -4,8 +4,9 @@
    terrarium elevation tiles the slope layer reads (DEM_URL). MapLibre is
    about 800 KB, so it is only fetched the first time someone opens 3D. The
    tile overlays (official steepness, pistes), GPX tracks and the measured
-   line are copied across from their Leaflet layers; the computed layers are
-   drawn on Leaflet canvases and stay in the 2D map. The Strava heatmap stays
+   line are copied across from their Leaflet layers, and the computed layers
+   (angle classes, runout, sun and wind) are painted by their own Leaflet
+   tile code and handed over through a tile protocol. The Strava heatmap stays
    in 2D too: its server sends no CORS headers, and WebGL may only draw images
    that say they can be shared with other sites, so the browser refuses them. */
 const ML_CDN = 'https://cdnjs.cloudflare.com/ajax/libs/maplibre-gl/5.24.0/';
@@ -40,6 +41,48 @@ function tileSource(l){
           attribution:o.attribution || ''};
 }
 function baseSource(key){ return tileSource(bases[key]); }
+
+/* ---------- computed layers in 3D ----------
+   MapLibre fetches every tile by URL, but these layers paint canvases in the
+   browser. A bratthet://key/z/x/y protocol asks the Leaflet layer's own
+   createTile for the tile (same z/x/y numbering at 256 px) and hands back the
+   canvas as a PNG, so the colours and maths live in one place. Our hillshade
+   is left out: MapLibre shades the terrain itself. seNorge is left out too,
+   because its tiles are reprojected through the Leaflet map. Tiles stop at
+   the elevation data's zoom, where they have all their detail; MapLibre
+   enlarges them past that, which keeps the runout workers from being asked
+   for many copies of the same tile. */
+const GRID3D = {slope, runout, sun:sunLayer, wind:windLayer};
+const GRID3D_SHARP = {slope:true, runout:true};   // class colours, no smoothing, as in 2D
+const ver3d = {};
+/* A layer repainted in 2D gets a new ?v= in its 3D URL, which makes
+   sync3dOverlays fetch its tiles again. */
+function changed3d(layer){
+  const key = Object.keys(GRID3D).find(k=> GRID3D[k] === layer);
+  if(!key) return;
+  ver3d[key] = (ver3d[key] || 0) + 1;
+  if(is3d) sync3dSoon();
+}
+function gridSource(key){
+  return {type:'raster', tiles:['bratthet://' + key + '/{z}/{x}/{y}?v=' + (ver3d[key] || 0)],
+          tileSize:256, maxzoom:DEM_MAX_Z, attribution:GRID3D[key].options.attribution || ''};
+}
+let protocol3d = false;
+function addProtocol3d(){
+  if(protocol3d) return;
+  protocol3d = true;
+  maplibregl.addProtocol('bratthet', params=> new Promise((ok, fail)=>{
+    const m = /^bratthet:\/\/(\w+)\/(\d+)\/(\d+)\/(\d+)/.exec(params.url);
+    const l = m && GRID3D[m[1]];
+    if(!l){ fail(new Error('unknown 3D layer')); return; }
+    l.createTile({z:+m[2], x:+m[3], y:+m[4]}, (err, tile)=>{
+      tile.toBlob(b=>{
+        if(!b){ fail(new Error('tile did not encode')); return; }
+        b.arrayBuffer().then(data=> ok({data}), fail);
+      }, 'image/png');
+    });
+  }));
+}
 
 function style3d(){
   return {
@@ -87,6 +130,7 @@ function tileOverlays3d(){
   const steep = steepCurrent && steepLayers[steepCurrent];
   if(steep && map.hasLayer(steep)) out.aval = steep;
   if(map.hasLayer(pisteLayer)) out.piste = pisteLayer;
+  Object.entries(GRID3D).forEach(([k, l])=>{ if(map.hasLayer(l)) out[k] = l; });
   return out;
 }
 function gpxGeo3d(){
@@ -137,9 +181,10 @@ function sync3dOverlays(){
   layerOrder.slice().reverse().forEach(key=>{
     const l = tiles[key];
     if(l){
-      sources[OVL3D + key] = tileSource(l);
-      stack.push({id:OVL3D + key, type:'raster', source:OVL3D + key,
-                  paint:{'raster-opacity':l.options.opacity}});
+      sources[OVL3D + key] = GRID3D[key] ? gridSource(key) : tileSource(l);
+      const paint = {'raster-opacity':l.options.opacity};
+      if(GRID3D_SHARP[key]) paint['raster-resampling'] = 'nearest';
+      stack.push({id:OVL3D + key, type:'raster', source:OVL3D + key, paint});
     } else if(key === 'gpx'){
       sources[OVL3D + 'gpx'] = {type:'geojson', data:gpxGeo3d()};
       stack.push(...vecLayers3d('gpx', '#e040fb', gpxOpacity, '#fff'));
@@ -176,6 +221,7 @@ async function open3d(){
   try { await loadMapLibre(); }
   catch(e){ btn3d.disabled = false; btn3d.title = 'The 3D view could not load. Try again later.'; return; }
   btn3d.disabled = false;
+  addProtocol3d();
   if(measuring) setMeasuring(false);
   is3d = true;
   document.body.classList.add('is3d');

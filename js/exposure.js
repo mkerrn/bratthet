@@ -44,6 +44,7 @@ const ExposureLayer = L.GridLayer.extend({
 function repaintExposure(layer){
   if(!map.hasLayer(layer)) return;
   Object.values(layer._tiles).forEach(t=>{ layer.options.paint(t.el, t.coords).catch(()=>{}); });
+  changed3d(layer);
 }
 function colourRamp(stops){
   /* 101 steps of [r,g,b,a] between the stops, a in 0..255 */
