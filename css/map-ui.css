@@ -156,3 +156,26 @@ body.has-profile.profile-off #bottomLeft{bottom:24px}
 #locBtn svg{width:22px;height:22px;display:block}
 .me-arrow{width:34px;height:34px;transition:transform .12s linear}
 .leaflet-control-attribution{font-size:10px}
+
+/* 3D view: a MapLibre map over the Leaflet one, below the panel and buttons.
+   The 2D-only tools (measure, locate, readout, profile) are hidden meanwhile. */
+#map3d{position:absolute;inset:0;z-index:900;display:none;background:var(--paper)}
+body.is3d #map3d{display:block}
+body.is3d #bottomLeft,body.is3d #profileBox,body.is3d #measBtn,body.is3d #locBtn,
+body.is3d #map .leaflet-control-container{display:none}
+#note3d{position:absolute;z-index:1000;left:12px;bottom:24px;max-width:300px;font-size:11.5px;
+  color:var(--muted);display:none}
+body.is3d #note3d{display:block}
+#btn3d{
+  position:absolute;z-index:1000;right:12px;bottom:136px;width:46px;height:46px;
+  display:flex;align-items:center;justify-content:center;
+  background:rgba(18,35,44,.92);border:1px solid var(--line);border-radius:50%;
+  color:var(--text);cursor:pointer;padding:0;font-family:inherit;font-size:14px;font-weight:600;line-height:1;
+}
+#btn3d.on{background:var(--snow);border-color:var(--snow);color:var(--ink)}
+#btn3d:disabled{opacity:.5;cursor:wait}
+/* alone at the bottom in 3D, so it drops to where the locate button was */
+body.is3d #btn3d{bottom:24px}
+@media (max-width:640px){
+  #note3d{right:70px;bottom:44px;max-width:none}
+}

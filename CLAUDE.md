@@ -16,7 +16,7 @@ Bratthet is a static GitHub Pages site (a Leaflet map for planning ski tours). I
 - **Load order matters.** Top-level code that runs while a file loads (e.g. `renderBands()`, `debounce(...)`, `map.on(...)`) can only use names from files loaded *earlier*. Code inside functions and event handlers can use anything. If you add a new file, put its `<script>` tag in the right spot. Shared helpers go in `js/util.js`, which loads early.
 - Don't turn the files into modules and don't add a bundler or npm unless the user asks.
 - Never declare the same top-level name in two files (that throws a SyntaxError and that whole file stops running).
-- GitHub Pages serves the files as they are. External libraries come from cdnjs (Leaflet 1.9.4 only).
+- GitHub Pages serves the files as they are. External libraries come from cdnjs: Leaflet 1.9.4, plus MapLibre GL 5.24.0, which `js/terrain3d.js` loads only when the 3D view is first opened (cdnjs's 6.x entries ship only the CSS).
 
 ## File map
 
@@ -54,6 +54,7 @@ Bratthet is a static GitHub Pages site (a Leaflet map for planning ski tours). I
 | `js/snow.js` | UTM33 conversion, seNorge layer, `SNOW_SOURCES` (seNorge, MODIS, Sentinel…), date stepper |
 | `js/avalanche/data.js` | `SERVICES` (every forecast service: link, bbox, EAWS or not), geometry helpers, fetching and caching regions/ratings (EAWS + Varsom) |
 | `js/avalanche/layer.js` | Danger-level map layer, forecast line in the readout, "which service" link |
+| `js/terrain3d.js` | 3D view: a MapLibre GL map over the Leaflet one, draping the current base map on the terrarium DEM; `sync3dBase` is called from `setBase` |
 | `js/controls.js` | Wires up the remaining panel controls, base-map auto switching (`setBase`, `autoBase`), panel collapse. Runs last. |
 | `tools/smoke-test.sh` | Headless Chrome load test |
 | `tools/update-huts.py` | Rebuilds `data/huts.json` from Overpass |

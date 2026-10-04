@@ -44,6 +44,7 @@ function setBase(key){
   currentBase = key;
   applyShade();
   updateContour();
+  sync3dBase();
 }
 /* Kartverket stops at the border, so outside Norway the auto setting hands
    over to OpenTopoMap rather than showing you blank paper. */
