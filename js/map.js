@@ -4,6 +4,12 @@ const bases = {
       {maxZoom:18, attribution:'© Kartverket'}),
   otm: L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png',
       {maxZoom:17, attribution:'© OpenTopoMap, OpenStreetMap contributors'}),
+  /* Kartverket's own aerial photos (Norge i bilder) need a token, so Norway
+     gets Esri's world imagery instead. It is free to show with attribution,
+     sends CORS headers (so it drapes in 3D too) and is sharp in most of
+     Norway's mountains. */
+  esri: L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+      {maxZoom:18, attribution:'© Esri, Maxar, Earthstar Geographics'}),
   /* National maps that are free to use with attribution: Kartverket and
      basemap.at under CC BY 4.0, IGN under the Etalab open licence, swisstopo
      under its FSDI terms (free, fair use up to about 20,000 users a day).
