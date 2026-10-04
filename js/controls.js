@@ -77,3 +77,33 @@ document.getElementById('panelHead').onclick = ()=>{
 setTimeout(()=>{
   if(demFailed) readout.textContent = 'Elevation tiles blocked here — open the file directly in a browser';
 }, 6000);
+
+/* ---------- keyboard shortcuts ----------
+   Cmd (Mac) or Ctrl (elsewhere) plus a letter shows or hides a layer. The
+   letter is the layer's first letter, except where two layers would share
+   one. Cmd/Ctrl+3 switches between 2D and 3D, Cmd/Ctrl+L the layers panel.
+   Some combinations belong to the browser or the OS and never reach the page
+   (Cmd+W/Ctrl+W closes the tab, Cmd+H hides the browser on a Mac). */
+const IS_MAC = /Mac|iPhone|iPad/.test(navigator.platform || navigator.userAgent);
+const LAYER_KEYS = {a:'slope', o:'aval', r:'runout', s:'sun', w:'wind', c:'snow',
+                    f:'danger', h:'heat', p:'piste', u:'hut', g:'gpx'};
+document.addEventListener('keydown', e=>{
+  if(!(IS_MAC ? e.metaKey && !e.ctrlKey : e.ctrlKey && !e.metaKey) || e.altKey || e.shiftKey) return;
+  /* Leave copy, paste and select-all alone while typing in a field. */
+  const t = e.target;
+  if(t.isContentEditable || t.tagName === 'TEXTAREA' ||
+     (t.tagName === 'INPUT' && !['checkbox', 'radio', 'button', 'range'].includes(t.type))) return;
+  const k = e.key.toLowerCase();
+  if(k === '3'){
+    e.preventDefault();
+    if(!btn3d.disabled) btn3d.click();
+  } else if(k === 'l'){
+    e.preventDefault();
+    document.getElementById('panelHead').click();
+  } else if(LAYER_KEYS[k] && LAYER_GROUPS[LAYER_KEYS[k]]){
+    e.preventDefault();
+    const tog = LAYER_TOGGLES[LAYER_KEYS[k]];
+    tog.set(!tog.get());
+    syncOrderChecks();
+  }
+});
